@@ -45,6 +45,7 @@ logs/
 *.env
 
 ### Local Spring Config ###
+application.properties
 application-local.yml
 application-local.properties
 application-dev.yml
