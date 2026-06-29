@@ -1,0 +1,29 @@
+name: "Feature"
+description: "새로운 기능 추가"
+labels: ["feature"]
+body:
+  - type: textarea
+    attributes:
+      label: "기능 설명"
+      description: "추가하려는 기능을 설명해주세요."
+      placeholder: "예: 사용자가 관심사를 선택하면 맞춤 강의를 추천한다."
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: "작업 내용"
+      description: "구현할 작업을 체크리스트로 작성해주세요."
+      placeholder: |
+        - [ ] Entity 작성
+        - [ ] Mapper 작성
+        - [ ] Service 작성
+        - [ ] Controller 작성
+        - [ ] 화면 연결
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: "참고 사항"
+      description: "관련 ERD, API, 화면, 문서가 있다면 작성해주세요."
