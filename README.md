@@ -1,8 +1,28 @@
 # H-Links
-- 도건우
-- 위재원
-- 김철용
-- 최우진
+---
+
+## 👥 팀 구성원
+
+<table width="50%" align="center">
+    <tr>
+        <td align="center"><b>팀장</b></td>
+        <td align="center"><b>팀원</b></td>
+        <td align="center"><b>팀원</b></td>
+        <td align="center"><b>팀원</b></td>
+    </tr>
+    <tr>
+        <td align="center"><img src="https://avatars.githubusercontent.com/u/147317355?v=4"></td>
+        <td align="center"><img src="https://avatars.githubusercontent.com/u/80496853?v=4"></td>
+        <td align="center"><img src="https://avatars.githubusercontent.com/u/202517610?v=4"></td>
+        <td align="center"><img src="https://avatars.githubusercontent.com/u/181914316?v=4"></td>
+    </tr>
+    <tr>
+        <td align="center"><b><a href="https://github.com/woodgeon">도건우</a></b></td>
+        <td align="center"><b><a href="https://github.com/jaewonwi">위재원</a></b></td>
+        <td align="center"><b><a href="https://github.com/CheolyongKim">김철용</a></b></td>
+        <td align="center"><b><a href="https://github.com/woojin-devv">최우진</a></b></td>
+    </tr>
+</table>
 
 
 ## 🦴 Commit Convention
