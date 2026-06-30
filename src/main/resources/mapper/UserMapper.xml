@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.user.mapper.UserMapper">
+
+    <select id="findByLoginId"
+            parameterType="string"
+            resultType="com.hlinks.domain.user.dto.LoginUserDto">
+        SELECT
+        USER_ID,
+        LOGIN_ID,
+        PASSWORD,
+        NAME,
+        STATUS
+        FROM USERS
+        WHERE LOGIN_ID = #{loginId}
+    </select>
+
+    <select id="findRoleCodesByUserId"
+            parameterType="long"
+            resultType="string">
+        SELECT
+        r.ROLE_CODE
+        FROM USER_ROLE ur
+        JOIN ROLES r
+        ON ur.ROLE_ID = r.ROLE_ID
+        WHERE ur.USER_ID = #{userId}
+        ORDER BY r.ROLE_CODE
+    </select>
+
+</mapper>
