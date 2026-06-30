@@ -1,4 +1,4 @@
-package com.hlinks.hlinks;
+package com.hlinks;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
