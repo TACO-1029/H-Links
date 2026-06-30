@@ -24,6 +24,28 @@
     </tr>
 </table>
 
+## 🐳 Local DB & Flyway 실행 가이드
+
+H-Links는 로컬 개발 DB를 Docker Compose로 실행하고, DB 스키마는 Flyway migration으로 관리합니다.
+
+### 1. 로컬 DB 실행
+
+```bash
+docker compose up -d
+
+// 컨테이너 상태 확인
+docker compose ps
+````
+
+### 2. IntelliJ 실행 설정
+IntelliJ Run/Debug Configurations에서 HLinksApplication 실행 설정에 아래 환경변수를 등록합니다.
+
+또는 EnvFile 플러그인을 사용하는 경우 프로젝트 루트의 .env 파일을 연결합니다. .env 파일은 민감정보를 포함할 수 있으므로 Git에 올리지 않습니다.
+```bash
+DB_URL={DB_URL}
+DB_USERNAME={USER_NAME}
+DB_PASSWORD={PASSWORD}
+```
 
 ## 🦴 Commit Convention
 ### 커밋 메시지 규칙
