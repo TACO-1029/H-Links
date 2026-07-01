@@ -118,15 +118,22 @@ public class FfmpegService {
         try {
             Process process = processBuilder.start();
 
+            // waitFor와 동시에 출력 스트림을 소비하여 파이프 버퍼 포화로 인한 데드락을 방지
+            StringBuilder logs = new StringBuilder();
+            Thread logReader = new Thread(() -> {
+                try (var reader = process.inputReader(StandardCharsets.UTF_8)) {
+                    reader.lines().forEach(line -> logs.append(line).append(System.lineSeparator()));
+                } catch (IOException ignored) {
+                }
+            });
+            logReader.start();
+
             boolean finished = process.waitFor(
                     properties.getTimeoutSeconds(),
                     TimeUnit.SECONDS
             );
 
-            String logs = new String(
-                    process.getInputStream().readAllBytes(),
-                    StandardCharsets.UTF_8
-            );
+            logReader.join(TimeUnit.SECONDS.toMillis(5));
 
             if (!finished) {
                 process.destroyForcibly();
