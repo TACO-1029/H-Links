@@ -1,12 +1,14 @@
 package com.hlinks.domain.hr.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class HrController {
   @GetMapping("/hr")
-  public String index() {
+  public String index(Model model) {
+    model.addAttribute("activeMenu", "hr");
     return "hr/index";
   }
 }

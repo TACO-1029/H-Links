@@ -13,9 +13,15 @@
     </a>
 
     <nav class="site-header__nav" aria-label="주요 메뉴">
-      <a class="site-header__nav-item is-active" th:href="@{/}">홈</a>
-      <a class="site-header__nav-item" th:href="@{/courses}">교육 콘텐츠</a>
-      <a class="site-header__nav-item" th:href="@{/recommend}">추천</a>
+      <a class="site-header__nav-item"
+         th:classappend="${activeMenu == 'home'} ? ' is-active'"
+         th:href="@{/}">홈</a>
+      <a class="site-header__nav-item"
+         th:classappend="${activeMenu == 'courses'} ? ' is-active'"
+         th:href="@{/courses}">교육 콘텐츠</a>
+      <a class="site-header__nav-item"
+         th:classappend="${activeMenu == 'recommend'} ? ' is-active'"
+         th:href="@{/recommend}">추천</a>
 
       <div class="site-header__role-actions">
         <a class="site-header__team-button"
