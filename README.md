@@ -24,20 +24,41 @@
     </tr>
 </table>
 
-## 🐳 Local DB & Flyway 실행 가이드
+## 🐳 Local DB & App Docker 실행 가이드
 
-H-Links는 로컬 개발 DB를 Docker Compose로 실행하고, DB 스키마는 Flyway migration으로 관리합니다.
+H-Links는 평소 개발 중 Oracle DB만 Docker Compose로 실행하고, Spring Boot 애플리케이션은 IntelliJ에서 실행합니다.
+앱 컨테이너까지 필요한 통합 테스트 상황에서는 별도 compose 파일을 함께 사용합니다.
 
-### 1. 로컬 DB 실행
+자세한 Docker 빌드 및 실행 명세는 [docs/docker-build-spec.md](docs/docker-build-spec.md)를 참고합니다.
+
+### 1. 개발 기본 실행
 
 ```bash
 docker compose up -d
 
 // 컨테이너 상태 확인
 docker compose ps
-````
+```
 
-### 2. IntelliJ 실행 설정
+- Oracle만 실행됩니다.
+- Spring Boot는 IntelliJ에서 실행합니다.
+- 애플리케이션 접속 주소는 `http://localhost:8080`입니다.
+- datasource URL은 `localhost:1522` 기준을 사용합니다.
+- IntelliJ 로컬 실행 시 ffmpeg는 각자 로컬 PC에 설치된 ffmpeg를 사용합니다.
+
+### 2. 앱 Docker 통합 테스트 실행
+
+```bash
+./gradlew clean bootJar
+docker compose -f docker-compose.yml -f docker-compose.app.yml up --build
+```
+
+- Oracle과 app이 함께 실행됩니다.
+- Docker app 접속 주소는 `http://localhost:8081`입니다.
+- app 컨테이너 내부에서는 `oracle:1521`로 DB에 접근합니다.
+- app 컨테이너 내부 ffmpeg는 Dockerfile에서 설치된 ffmpeg를 사용합니다.
+
+### 3. IntelliJ 실행 설정
 IntelliJ Run/Debug Configurations에서 HLinksApplication 실행 설정에 아래 환경변수를 등록합니다.
 
 또는 EnvFile 플러그인을 사용하는 경우 프로젝트 루트의 .env 파일을 연결합니다. .env 파일은 민감정보를 포함할 수 있으므로 Git에 올리지 않습니다.

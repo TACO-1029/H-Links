@@ -17,19 +17,5 @@ services:
       retries: 10
       start_period: 40s
 
-  app:
-    build: .
-    container_name: h-links-app
-    ports:
-      - "8081:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@oracle:1521/XEPDB1
-      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      HLINKS_FFMPEG_COMMAND: ffmpeg
-    depends_on:
-      oracle:
-        condition: service_healthy
-
 volumes:
   oracle-data:
