@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>로그인</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+</head>
+<body class="auth-page">
+<main class="auth-card">
+    <header class="auth-header">
+        <h1 class="auth-title">로그인</h1>
+        <p class="auth-description">H-Links에 오신 것을 환영합니다<span class="auth-accent">.</span></p>
+    </header>
+
+    <p class="auth-alert auth-alert--danger" th:if="${param.error}" role="alert">사번 또는 비밀번호가 올바르지 않습니다.</p>
+    <p class="auth-alert auth-alert--success" th:if="${param.logout}">로그아웃되었습니다.</p>
+
+    <form class="auth-form" th:action="@{/login}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+        <div class="auth-field">
+            <label class="auth-label" for="loginId">사번</label>
+            <input class="auth-input" id="loginId" name="loginId" type="text" autocomplete="username">
+        </div>
+
+        <div class="auth-field">
+            <label class="auth-label" for="password">비밀번호</label>
+            <input class="auth-input" id="password" name="password" type="password" autocomplete="current-password">
+        </div>
+
+        <button class="auth-submit" type="submit">로그인</button>
+    </form>
+</main>
+</body>
+</html>
