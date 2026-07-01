@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse<String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<ErrorResponse<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(fieldError -> fieldError.getDefaultMessage())
@@ -51,10 +51,9 @@ public class GlobalExceptionHandler {
 
         log.warn("MethodArgumentNotValidException: {}", message);
 
-        ErrorResponse<String> errorResponse = ErrorResponse.of(
+        ErrorResponse<Void> errorResponse = ErrorResponse.from(
                 ErrorResponseCode.INVALID_REQUEST_BODY,
-                message,
-                ErrorResponseCode.INVALID_REQUEST_BODY.getMessage()
+                message
         );
 
         return ResponseEntity
@@ -63,7 +62,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BindException.class)
-    public ResponseEntity<ErrorResponse<String>> handleBindException(BindException e) {
+    public ResponseEntity<ErrorResponse<Void>> handleBindException(BindException e) {
         String message = e.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(fieldError -> fieldError.getDefaultMessage())
@@ -71,10 +70,9 @@ public class GlobalExceptionHandler {
 
         log.warn("BindException: {}", message);
 
-        ErrorResponse<String> errorResponse = ErrorResponse.of(
-                ErrorResponseCode.INVALID_REQUEST_PARAMETER,
-                message,
-                ErrorResponseCode.INVALID_REQUEST_PARAMETER.getMessage()
+        ErrorResponse<Void> errorResponse = ErrorResponse.from(
+                ErrorResponseCode.INVALID_REQUEST_BODY,
+                message
         );
 
         return ResponseEntity

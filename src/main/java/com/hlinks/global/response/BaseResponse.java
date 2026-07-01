@@ -3,7 +3,6 @@ package com.hlinks.global.response;
 import com.hlinks.global.response.code.BaseResponseCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
