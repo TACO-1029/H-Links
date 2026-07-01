@@ -46,18 +46,21 @@
                     <!-- TODO: 하드코딩 된 부분 처리 (우진) -->
                     <div class="site-header__profile-text">
                         <span class="site-header__team"
-                              th:text="${#authentication.principal.departmentName != null ? #authentication.principal.departmentName : '소속 미지정'}">
+                              th:text="${`#authentication.principal.departmentName` != null ? `#authentication.principal.departmentName` : '소속 미지정'}">
                           소속 미지정
                         </span>
                         <strong class="site-header__name">
-                            <span th:text="${#authentication.principal.name}">사용자</span>
-                            <span th:if="${#authentication.principal.positionName != null}"
-                                  th:text="${' ' + #authentication.principal.positionName}">
+                            <span th:text="${`#authentication.principal.name`}">사용자</span>
+                            <span th:if="${`#authentication.principal.positionName` != null}"
+                                  th:text="${' ' + `#authentication.principal.positionName`}">
                               직급
                             </span>
                         </strong>
                     </div>
-                    <div class="site-header__avatar" aria-hidden="true">MG</div>
+                    <div class="site-header__avatar" aria-hidden="true"
+                         th:text="${`#authentication.principal.name` != null ? `#authentication.principal.name.substring`(0, 1) : '?'}">
+                        MG
+                    </div>
                 </a>
 
                 <div class="site-header__dropdown" role="menu">
