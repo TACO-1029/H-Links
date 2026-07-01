@@ -10,8 +10,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Spring Security는 우리가 만든 LoginUserDto를 바로 인증 객체로 쓰지 않고, UserDetails 타입을 요구합니다.
- * 이에따라 LoginUserDto + roleCodes를 Spring Security가 이해하는 형태로 포장
+ * Spring Security는 우리가 만든 LoginUserDto를 바로 인증 객체로 쓰지 않고, UserDetails 타입을 요구합니다. 이에따라 LoginUserDto +
+ * roleCodes를 Spring Security가 이해하는 형태로 포장
  */
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
@@ -26,6 +26,30 @@ public class CustomUserDetails implements UserDetails {
 
     public String getName() {
         return user.getName();
+    }
+
+    public Long getDepartmentId() {
+        return user.getDepartmentId();
+    }
+
+    public String getDepartmentName() {
+        return user.getDepartmentName();
+    }
+
+    public Long getJobId() {
+        return user.getJobId();
+    }
+
+    public String getJobName() {
+        return user.getJobName();
+    }
+
+    public Long getPositionId() {
+        return user.getPositionId();
+    }
+
+    public String getPositionName() {
+        return user.getPositionName();
     }
 
     @Override

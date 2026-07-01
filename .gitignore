@@ -60,3 +60,7 @@ Thumbs.db
 *.db
 *.sqlite
 *.sqlite3
+
+##ffmpeg
+/storage/
+/src/main/java/com/hlinks/global/ffmpeg/test/

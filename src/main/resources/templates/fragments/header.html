@@ -4,68 +4,80 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 <header class="site-header" th:fragment="header">
-  <div class="site-header__inner">
-    <a class="site-header__logo" th:href="@{/}" aria-label="H-Links 홈">
-      <span class="site-header__logo-prefix">THE</span>
-      <span class="site-header__logo-main">
+    <div class="site-header__inner">
+        <a class="site-header__logo" th:href="@{/}" aria-label="H-Links 홈">
+            <span class="site-header__logo-prefix">THE</span>
+            <span class="site-header__logo-main">
                 <span class="site-header__logo-accent">H</span>LINKs
             </span>
-    </a>
-
-    <nav class="site-header__nav" aria-label="주요 메뉴">
-      <a class="site-header__nav-item"
-         th:classappend="${activeMenu == 'home'} ? ' is-active'"
-         th:href="@{/}">홈</a>
-      <a class="site-header__nav-item"
-         th:classappend="${activeMenu == 'courses'} ? ' is-active'"
-         th:href="@{/courses}">교육 콘텐츠</a>
-      <a class="site-header__nav-item"
-         th:classappend="${activeMenu == 'recommend'} ? ' is-active'"
-         th:href="@{/recommend}">추천</a>
-
-      <div class="site-header__role-actions">
-        <a class="site-header__team-button"
-           th:href="@{/team}"
-           sec:authorize="hasAuthority('ROLE_LEADER')">
-          My팀
         </a>
 
-        <a class="site-header__hr-button"
-           th:href="@{/hr}"
-           sec:authorize="hasAuthority('ROLE_HR')">
-          관리자 대시보드
-        </a>
-      </div>
-    </nav>
+        <nav class="site-header__nav" aria-label="주요 메뉴">
+            <a class="site-header__nav-item"
+               th:classappend="${activeMenu == 'home'} ? ' is-active'"
+               th:href="@{/}">홈</a>
+            <a class="site-header__nav-item"
+               th:classappend="${activeMenu == 'courses'} ? ' is-active'"
+               th:href="@{/courses}">교육 콘텐츠</a>
+            <a class="site-header__nav-item"
+               th:classappend="${activeMenu == 'recommend'} ? ' is-active'"
+               th:href="@{/recommend}">추천</a>
 
-    <div class="site-header__actions">
-      <div class="site-header__profile-menu">
-        <a class="site-header__profile"
-           th:href="@{/mypage}"
-           aria-label="마이페이지로 이동">
-          <!-- TODO: 하드코딩 된 부분 처리 (우진) -->
-          <div class="site-header__profile-text">
-            <span class="site-header__team">한섬3팀</span>
-            <strong class="site-header__name">김민지 대리</strong>
-          </div>
-          <div class="site-header__avatar" aria-hidden="true">MG</div>
-        </a>
+            <div class="site-header__role-actions">
+                <a class="site-header__team-button"
+                   th:href="@{/team}"
+                   sec:authorize="hasAuthority('ROLE_LEADER')">
+                    My팀
+                </a>
 
-        <div class="site-header__dropdown" role="menu">
-          <form class="site-header__logout-form" th:action="@{/logout}" method="post">
-            <input type="hidden"
-                   th:name="${_csrf.parameterName}"
-                   th:value="${_csrf.token}" />
-            <button type="submit"
-                    class="site-header__logout-button"
-                    role="menuitem">
-              로그아웃
-            </button>
-          </form>
+                <a class="site-header__hr-button"
+                   th:href="@{/hr}"
+                   sec:authorize="hasAuthority('ROLE_HR')">
+                    관리자 대시보드
+                </a>
+            </div>
+        </nav>
+
+        <div class="site-header__actions" sec:authorize="isAuthenticated()">
+            <div class="site-header__profile-menu">
+                <a class="site-header__profile"
+                   th:href="@{/mypage}"
+                   aria-label="마이페이지로 이동">
+                    <!-- TODO: 하드코딩 된 부분 처리 (우진) -->
+                    <div class="site-header__profile-text">
+                        <span class="site-header__team"
+                              th:text="${`#authentication.principal.departmentName` != null ? `#authentication.principal.departmentName` : '소속 미지정'}">
+                          소속 미지정
+                        </span>
+                        <strong class="site-header__name">
+                            <span th:text="${`#authentication.principal.name`}">사용자</span>
+                            <span th:if="${`#authentication.principal.positionName` != null}"
+                                  th:text="${' ' + `#authentication.principal.positionName`}">
+                              직급
+                            </span>
+                        </strong>
+                    </div>
+                    <div class="site-header__avatar" aria-hidden="true"
+                         th:text="${`#authentication.principal.name` != null ? `#authentication.principal.name.substring`(0, 1) : '?'}">
+                        MG
+                    </div>
+                </a>
+
+                <div class="site-header__dropdown" role="menu">
+                    <form class="site-header__logout-form" th:action="@{/logout}" method="post">
+                        <input type="hidden"
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}"/>
+                        <button type="submit"
+                                class="site-header__logout-button"
+                                role="menuitem">
+                            로그아웃
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </header>
 </body>
 </html>
