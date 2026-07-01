@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>HR</title>
+  <link rel="stylesheet" th:href="@{/css/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/common.css}">
+  <link rel="stylesheet" th:href="@{/css/header.css}">
+  <link rel="stylesheet" th:href="@{/css/footer.css}">
+  <link rel="stylesheet" th:href="@{/css/home.css}">
+</head>
+<body class="home-page">
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="home-shell">
+  <section class="home-hero">
+    <p class="home-brand">THE HLINKs</p>
+    <h1 class="home-title">HR</h1>
+    <p class="home-description">HR 권한으로 접근 가능한 팀 현황 화면입니다.</p>
+  </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

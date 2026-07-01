@@ -1,16 +1,15 @@
-package com.hlinks.global.web;
+package com.hlinks.domain.team.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
-public class MainController {
+public class TeamController {
 
-    @GetMapping({"/", "/home"})
+    @GetMapping("/team")
     public String index(Model model) {
-        model.addAttribute("activeMenu", "home");
-
-        return "home/index";
+        model.addAttribute("activeMenu", "team");
+        return "team/index";
     }
 }
