@@ -1,0 +1,122 @@
+@font-face {
+    font-family: "Pretendard";
+    src: url("/fonts/Pretendard-Regular.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Pretendard";
+    src: url("/fonts/Pretendard-Medium.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Pretendard";
+    src: url("/fonts/Pretendard-SemiBold.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Pretendard";
+    src: url("/fonts/Pretendard-Bold.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
+:root {
+    --primary-500: #009E7A;
+    --primary-600: #008768;
+    --primary-700: #007A5D;
+
+    --accent-500: #F1A400;
+
+    --black: #000000;
+    --white: #FFFFFF;
+
+    --category: #3B4043;
+
+    --orange-200: #FECBA1;
+    --orange-600: #CA6510;
+
+    --neutral-50: #F8FAFC;
+    --neutral-100: #F1F5F9;
+    --neutral-200: #E2E8F0;
+    --neutral-300: #CBD5E1;
+    --neutral-400: #94A3B8;
+    --neutral-500: #64748B;
+    --neutral-600: #475569;
+    --neutral-700: #334155;
+    --neutral-800: #1E293B;
+    --neutral-900: #0F172A;
+    --neutral-950: #020617;
+
+    --success-50: #ECFDF5;
+    --success-200: #A7F3D0;
+    --success-500: #10B981;
+    --success-600: #059669;
+    --success-700: #047857;
+
+    --danger-50: #FFF1F2;
+    --danger-200: #FECDD3;
+    --danger-500: #F43F5E;
+    --danger-600: #E11D48;
+
+    --color-brand: var(--primary-500);
+    --color-brand-hover: var(--primary-600);
+    --color-brand-pressed: var(--primary-700);
+    --color-accent: var(--accent-500);
+    --color-bg-page: var(--neutral-50);
+    --color-bg-surface: var(--white);
+    --color-bg-soft: var(--success-50);
+    --color-text-primary: var(--neutral-900);
+    --color-text-secondary: var(--neutral-600);
+    --color-text-muted: var(--neutral-400);
+    --color-text-inverse: var(--white);
+    --color-border-default: var(--neutral-200);
+    --color-border-strong: var(--neutral-300);
+    --color-border-brand: rgba(0, 158, 122, 0.24);
+    --color-success-bg: var(--success-50);
+    --color-success-border: var(--success-200);
+    --color-success-text: var(--success-700);
+    --color-danger-bg: var(--danger-50);
+    --color-danger-border: var(--danger-200);
+    --color-danger-text: var(--danger-600);
+    --color-warning-bg: #FFF7E0;
+    --color-warning-border: var(--orange-200);
+    --color-warning-text: var(--orange-600);
+
+    --font-sans: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --text-xs: 12px;
+    --text-sm: 14px;
+    --text-base: 16px;
+    --text-lg: 18px;
+    --text-xl: 20px;
+    --text-2xl: 24px;
+    --text-3xl: 32px;
+    --font-regular: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    --leading-tight: 1.25;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.7;
+    --tracking-tight: -0.02em;
+    --tracking-normal: 0;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-full: 999px;
+
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 20px 45px rgba(15, 23, 42, 0.10);
+}
