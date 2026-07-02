@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
   <title>HR</title>
   <link rel="stylesheet" th:href="@{/css/tokens.css}">
   <link rel="stylesheet" th:href="@{/css/common.css}">
@@ -20,5 +22,25 @@
   </section>
 </main>
 <div th:replace="~{fragments/footer :: footer}"></div>
+<script>
+  async function generateChapterQuizzes(chapterId, quizCount = 3, difficulty = 'MEDIUM') {
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    const params = new URLSearchParams({quizCount, difficulty});
+
+    const response = await fetch(`/api/quizzes/chapters/${chapterId}/generate?${params}`, {
+      method: 'POST',
+      headers: {
+        [csrfHeader]: csrfToken
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('AI 퀴즈 생성 요청에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+</script>
 </body>
 </html>
