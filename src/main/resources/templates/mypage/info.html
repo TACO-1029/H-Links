@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>내 정보</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+</head>
+<body class="mypage-page">
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="mypage-shell">
+    <section class="mypage-hero" aria-labelledby="mypage-title">
+        <div class="mypage-hero__identity">
+            <div class="mypage-avatar mypage-avatar--large" aria-hidden="true"
+                 th:text="${name != null ? #strings.substring(name, 0, 1) : '도'}">
+                최
+            </div>
+            <div class="mypage-hero__text">
+                <span class="mypage-badge"
+                      th:text="${loginId != null ? '사번 ' + loginId : '사번 EMP-2026-0147'}">
+                    사번 EMP-2026-0147
+                </span>
+                <h1 id="mypage-title" class="mypage-hero__title">
+                    <span th:text="${name != null ? name : '도건우'}">도건우</span>
+                    <span th:text="${positionName != null ? positionName : '사원'}">사원</span>
+                </h1>
+                <p class="mypage-hero__meta">
+                    <span th:text="${departmentName != null ? departmentName : 'DX 부트캠프'}">DX 부트캠프</span>
+                    <span aria-hidden="true">·</span>
+                    <span th:text="${jobName != null ? jobName : 'Frontend Engineer'}">Frontend Engineer</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="mypage-summary" aria-label="학습 요약">
+            <article class="mypage-summary-card">
+                <span class="mypage-summary-card__label">수강 중</span>
+                <strong class="mypage-summary-card__value"
+                        th:text="${inProgressCount != null ? inProgressCount : 1}">1</strong>
+            </article>
+            <article class="mypage-summary-card">
+                <span class="mypage-summary-card__label">수료 완료</span>
+                <strong class="mypage-summary-card__value mypage-summary-card__value--blue"
+                        th:text="${completedCount != null ? completedCount : 1}">1</strong>
+            </article>
+        </div>
+    </section>
+
+    <!-- 이 부분은 디자인 되어있긴 한데.. 일단 중복이라서 뺴두겠슴다
+    <nav class="mypage-tabs" aria-label="마이페이지 메뉴">
+        <a class="mypage-tab is-active" th:href="@{/mypage}">내 정보</a>
+        <a class="mypage-tab" th:href="@{/mypage/courses}">수강현황</a>
+        <a class="mypage-tab" th:href="@{/mypage/applications}">신청 내역</a>
+        <a class="mypage-tab" th:href="@{/mypage/evaluation}">역량 평가</a>
+    </nav>
+    -->
+
+    <section class="mypage-content" aria-label="내 정보 상세">
+        <article class="mypage-card mypage-profile-card">
+            <header class="mypage-card__header">
+                <p class="mypage-card__eyebrow">내 기본 정보</p>
+            </header>
+
+            <div class="mypage-profile-summary">
+                <div class="mypage-avatar mypage-avatar--square" aria-hidden="true"
+                     th:text="${name != null ? #strings.substring(name, 0, 1) : '도'}">
+                    최
+                </div>
+                <div class="mypage-profile-summary__text">
+                    <h2 class="mypage-profile-summary__name">
+                        <span th:text="${name != null ? name : '도건우'}">도건우</span>
+                        <span th:text="${positionName != null ? positionName : '사원'}">사원</span>
+                    </h2>
+                    <p>
+                        <span th:text="${departmentName != null ? departmentName : 'DX 부트캠프'}">DX 부트캠프</span>
+                        <span aria-hidden="true">·</span>
+                        <span th:text="${jobName != null ? jobName : 'Frontend Engineer'}">Frontend Engineer</span>
+                        <span aria-hidden="true">·</span>
+                        <span>정상 이용 중</span>
+                    </p>
+                </div>
+            </div>
+
+            <dl class="mypage-info-grid">
+                <div class="mypage-info-row">
+                    <dt>사번</dt>
+                    <dd th:text="${loginId != null ? loginId : 'EMP-2026-0147'}">EMP-2026-0147</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>소속 부서</dt>
+                    <dd th:text="${departmentName != null ? departmentName : 'DX 부트캠프'}">DX 부트캠프</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>이름</dt>
+                    <dd th:text="${name != null ? name : '도건우'}">도건우</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>직무</dt>
+                    <dd th:text="${jobName != null ? jobName : 'Frontend Engineer'}">Frontend Engineer</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>이메일</dt>
+                    <dd th:text="${email != null ? email : 'woojin.choi@enterprise.co.kr'}">woojin.choi@enterprise.co.kr</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>직급</dt>
+                    <dd th:text="${positionName != null ? positionName : '사원'}">사원</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>연락처</dt>
+                    <dd th:text="${phone != null ? phone : '010-1234-5678'}">010-1234-5678</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>초기 비밀번호 변경</dt>
+                    <dd th:text="${firstLoginChanged != null ? firstLoginChanged : '미완료'}">미완료</dd>
+                </div>
+                <div class="mypage-info-row mypage-info-row--spacer" aria-hidden="true"></div>
+                <div class="mypage-info-row">
+                    <dt>최근 정보 수정일</dt>
+                    <dd th:text="${updatedAt != null ? updatedAt : '2026.06.30'}">2026.06.30</dd>
+                </div>
+            </dl>
+        </article>
+
+        <aside class="mypage-side">
+            <article class="mypage-card mypage-side-card">
+                <h2 class="mypage-side-card__title">권한과 관심 분야</h2>
+
+                <section class="mypage-chip-section">
+                    <h3>서비스 권한</h3>
+                    <div class="mypage-chip-group">
+                        <span class="mypage-chip mypage-chip--dark"
+                              th:each="role : ${roles}"
+                              th:text="${role}">임직원</span>
+                        <span class="mypage-chip mypage-chip--dark"
+                              th:if="${roles == null}">임직원</span>
+                        <span class="mypage-chip mypage-chip--dark"
+                              th:if="${roles == null}">학습자</span>
+                    </div>
+                </section>
+
+                <section class="mypage-chip-section">
+                    <h3>관심 분야</h3>
+                    <div class="mypage-chip-group">
+                        <span class="mypage-chip"
+                              th:each="interest : ${interests}"
+                              th:text="${interest}">프론트엔드</span>
+                        <span class="mypage-chip" th:if="${interests == null}">프론트엔드</span>
+                        <span class="mypage-chip" th:if="${interests == null}">클라우드</span>
+                        <span class="mypage-chip" th:if="${interests == null}">AI 자동화</span>
+                    </div>
+                </section>
+            </article>
+
+            <article class="mypage-insight-card mypage-insight-card--kcy">
+                <p class="mypage-insight-card__eyebrow">KCY 결과</p>
+                <p class="mypage-insight-card__date"
+                   th:text="${kcyDate != null ? '최근 검사일: ' + kcyDate : '최근 검사일: 2026.06.12'}">
+                    최근 검사일: 2026.06.12
+                </p>
+                <h2 th:text="${kcyTitle != null ? kcyTitle : '실행형 문제 해결가'}">실행형 문제 해결가</h2>
+                <p th:text="${kcyDescription != null ? kcyDescription : '실험과 검증을 빠르게 반복하며, 팀의 목표를 실제 결과물로 연결하는 성향이 강합니다.'}">
+                    실험과 검증을 빠르게 반복하며, 팀의 목표를 실제 결과물로 연결하는 성향이 강합니다.
+                </p>
+            </article>
+
+            <article class="mypage-insight-card mypage-insight-card--career">
+                <p class="mypage-insight-card__eyebrow">커리어패스</p>
+                <p class="mypage-insight-card__date"
+                   th:text="${careerDate != null ? '진단일: ' + careerDate : '진단일: 2026.06.18'}">
+                    진단일: 2026.06.18
+                </p>
+                <h2 th:text="${careerTitle != null ? careerTitle : '프론트엔드 리드 트랙'}">프론트엔드 리드 트랙</h2>
+                <p th:text="${careerDescription != null ? careerDescription : 'UI 아키텍처와 클라우드 기반 배포 역량을 함께 강화하면 제품형 엔지니어로 성장 가능성이 높습니다.'}">
+                    UI 아키텍처와 클라우드 기반 배포 역량을 함께 강화하면 제품형 엔지니어로 성장 가능성이 높습니다.
+                </p>
+            </article>
+        </aside>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
