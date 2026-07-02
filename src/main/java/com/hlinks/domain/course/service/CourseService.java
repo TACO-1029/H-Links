@@ -8,6 +8,10 @@ import com.hlinks.domain.course.dto.CourseDetailResponseDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.domain.course.exception.CourseErrorCode;
 import com.hlinks.domain.course.mapper.CourseMapper;
+import com.hlinks.domain.course.type.ApplicationType;
+import com.hlinks.domain.course.type.CourseStatus;
+import com.hlinks.domain.course.type.CourseType;
+import com.hlinks.domain.course.type.LearningStatus;
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.global.response.code.ErrorResponseCode;
 import com.hlinks.global.type.ApplicationStatus;
@@ -24,15 +28,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CourseService {
-
-    private static final String COURSE_TYPE_OFFLINE = "OFFLINE";
-    private static final String STATUS_OPEN = "OPEN";
-    private static final String APPLICATION_STATUS_APPROVED = ApplicationStatus.APPROVED.name();
-    private static final String APPLICATION_STATUS_CANCELED = ApplicationStatus.CANCELED.name();
-    private static final String APPLICATION_TYPE_USER = "USER";
-    private static final String LEARNING_STATUS_NOT_STARTED = "NOT_STARTED";
-    private static final String LEARNING_STATUS_IN_PROGRESS = "IN_PROGRESS";
-    private static final String LEARNING_STATUS_CANCELED = "CANCELED";
 
     private final CourseMapper courseMapper;
 
@@ -158,7 +153,7 @@ public class CourseService {
                 userId,
                 courseId,
                 chapterId,
-                LEARNING_STATUS_NOT_STARTED
+                LearningStatus.NOT_STARTED.name()
         );
 
         return courseDetail;
@@ -167,8 +162,8 @@ public class CourseService {
     @Transactional
     public void startOnlineChapterLearning(Long courseId, Long chapterId, Long userId) {
         getOnlineChapterPage(courseId, chapterId, userId);
-        courseMapper.startCourseLearning(userId, courseId, LEARNING_STATUS_IN_PROGRESS);
-        courseMapper.startChapterLearning(userId, courseId, chapterId, LEARNING_STATUS_IN_PROGRESS);
+        courseMapper.startCourseLearning(userId, courseId, LearningStatus.IN_PROGRESS.name());
+        courseMapper.startChapterLearning(userId, courseId, chapterId, LearningStatus.IN_PROGRESS.name());
     }
     @Transactional
     public CourseApplyResponseDto applyCourse(Long courseId, Long userId) {
@@ -178,8 +173,8 @@ public class CourseService {
         validateCourseAvailability(target);
         validateUserCanApply(userId, courseId);
 
-        String applicationStatus = APPLICATION_STATUS_APPROVED;
-        Long applicationId = createCourseApplication(courseId, userId, applicationStatus);
+        ApplicationStatus applicationStatus = ApplicationStatus.APPROVED;
+        Long applicationId = createCourseApplication(courseId, userId, applicationStatus.name());
         Long courseLearningId = initializeCourseLearningStatusIfApproved(
                 applicationId,
                 userId,
@@ -187,7 +182,7 @@ public class CourseService {
                 applicationStatus
         );
 
-        if (COURSE_TYPE_OFFLINE.equals(target.getCourseType())) {
+        if (CourseType.OFFLINE.name().equals(target.getCourseType())) {
             courseMapper.increaseOfflineCurrentApplicantCount(courseId);
         }
 
@@ -198,8 +193,8 @@ public class CourseService {
                 .applicationId(applicationId)
                 .courseLearningId(courseLearningId)
                 .courseId(courseId)
-                .applicationStatus(applicationStatus)
-                .learningStatus(LEARNING_STATUS_NOT_STARTED)
+                .applicationStatus(applicationStatus.name())
+                .learningStatus(LearningStatus.NOT_STARTED.name())
                 .build();
     }
 
@@ -216,7 +211,7 @@ public class CourseService {
 
         int canceledApplicationCount = courseMapper.cancelCourseApplication(
                 application.getApplicationId(),
-                APPLICATION_STATUS_CANCELED
+                ApplicationStatus.CANCELED.name()
         );
         if (canceledApplicationCount == 0) {
             throw new BaseException(CourseErrorCode.COURSE_APPLICATION_NOT_FOUND);
@@ -224,11 +219,11 @@ public class CourseService {
 
         courseMapper.cancelCourseLearningStatus(
                 application.getApplicationId(),
-                LEARNING_STATUS_CANCELED
+                LearningStatus.CANCELED.name()
         );
 
-        if (COURSE_TYPE_OFFLINE.equals(target.getCourseType())
-                && APPLICATION_STATUS_APPROVED.equals(application.getApplicationStatus())) {
+        if (CourseType.OFFLINE.name().equals(target.getCourseType())
+                && ApplicationStatus.APPROVED.name().equals(application.getApplicationStatus())) {
             courseMapper.decreaseOfflineCurrentApplicantCount(courseId);
         }
 
@@ -242,7 +237,7 @@ public class CourseService {
             throw new BaseException(CourseErrorCode.COURSE_NOT_FOUND);
         }
 
-        if (!COURSE_TYPE_OFFLINE.equals(target.getCourseType())) {
+        if (!CourseType.OFFLINE.name().equals(target.getCourseType())) {
             return target;
         }
 
@@ -254,11 +249,11 @@ public class CourseService {
     }
 
     private void validateCourseAvailability(CourseApplyTargetDto target) {
-        if (!STATUS_OPEN.equals(target.getCourseStatus())) {
+        if (!CourseStatus.OPEN.name().equals(target.getCourseStatus())) {
             throw new BaseException(CourseErrorCode.COURSE_NOT_OPEN);
         }
 
-        if (!COURSE_TYPE_OFFLINE.equals(target.getCourseType())) {
+        if (!CourseType.OFFLINE.name().equals(target.getCourseType())) {
             return;
         }
 
@@ -290,7 +285,7 @@ public class CourseService {
                 userId,
                 courseId,
                 applicationStatus,
-                APPLICATION_TYPE_USER
+                ApplicationType.USER.name()
         );
         return applicationId;
     }
@@ -299,9 +294,9 @@ public class CourseService {
             Long applicationId,
             Long userId,
             Long courseId,
-            String applicationStatus) {
+            ApplicationStatus applicationStatus) {
 
-        if (!APPLICATION_STATUS_APPROVED.equals(applicationStatus)) {
+        if (applicationStatus != ApplicationStatus.APPROVED) {
             return null;
         }
 
@@ -317,13 +312,13 @@ public class CourseService {
                     applicationId,
                     userId,
                     courseId,
-                    LEARNING_STATUS_NOT_STARTED
+                    LearningStatus.NOT_STARTED.name()
             );
         } else {
             courseMapper.resetCourseLearningStatus(
                     courseLearningId,
                     applicationId,
-                    LEARNING_STATUS_NOT_STARTED
+                    LearningStatus.NOT_STARTED.name()
             );
         }
 
