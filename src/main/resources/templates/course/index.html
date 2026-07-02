@@ -1,24 +1,577 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>HR</title>
-  <link rel="stylesheet" th:href="@{/css/tokens.css}">
-  <link rel="stylesheet" th:href="@{/css/common.css}">
-  <link rel="stylesheet" th:href="@{/css/header.css}">
-  <link rel="stylesheet" th:href="@{/css/footer.css}">
-  <link rel="stylesheet" th:href="@{/css/home.css}">
+    <meta charset="UTF-8">
+    <title>교육 콘텐츠 - H-Link</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+
+    <style>
+        /* =========================================
+           1. 프리미엄 디자인 토큰 (Fallback 및 고도화)
+           ========================================= */
+        :root {
+            --color-bg-main: #F8FAFC;
+            --color-bg-card: #FFFFFF;
+            --color-bg-subtle: #F1F5F9;
+            --color-border-subtle: rgba(15, 23, 42, 0.06);
+            --color-border-focus: #CBD5E1;
+            --color-text-primary: #0F172A;
+            --color-text-secondary: #475569;
+            --color-text-muted: #94A3B8;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+
+            /* 수작업으로 정교하게 튜닝된 다층 프리미엄 그림자 */
+            --shadow-premium: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02), 0 10px 15px -3px rgba(15, 23, 42, 0.03);
+            --shadow-premium-hover: 0 20px 25px -5px rgba(15, 23, 42, 0.05), 0 10px 10px -5px rgba(15, 23, 42, 0.03);
+        }
+
+        body {
+            background-color: var(--color-bg-main);
+            margin: 0;
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            color: var(--color-text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* =========================================
+           2. [오류 수정] GNB 헤더 서브메뉴 가로 Align 강제 교정
+           ========================================= */
+        header, .header-container, .nav, .menu-item {
+            position: relative;
+        }
+
+        /* 교육 콘텐츠 메뉴 하위의 서브메뉴 컨테이너 치우침 방지 및 가로 정렬 리셋 */
+        .sub-menu, [class*="sub-menu"], [class*="dropdown"] {
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            right: auto !important;
+            margin-left: 0 !important;
+            display: flex !important;
+            justify-content: center !important;
+            gap: 20px !important;
+        }
+
+        /* =========================================
+           3. 상단 헤더 배너 영역
+           ========================================= */
+        .page-header-banner {
+            background-color: var(--color-bg-card);
+            padding: 48px 0 0 0;
+            border-bottom: 1px solid var(--color-border-subtle);
+            margin-bottom: 40px;
+        }
+
+        .banner-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .banner-title {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--color-text-primary);
+            margin: 0 0 10px 0;
+            letter-spacing: -0.02em;
+        }
+
+        .banner-subtitle {
+            font-size: 16px;
+            color: var(--color-text-secondary);
+            margin: 0 0 32px 0;
+            font-weight: 400;
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 32px;
+        }
+
+        .tab-link {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            text-decoration: none;
+            padding-bottom: 16px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.25s ease;
+        }
+
+        .tab-link:hover {
+            color: var(--color-text-secondary);
+        }
+
+        .tab-link.active {
+            color: var(--color-brand);
+            border-bottom-color: var(--color-brand);
+        }
+
+        /* =========================================
+           4. 메인 레이아웃 구획
+           ========================================= */
+        .main-layout {
+            display: flex;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px 80px 24px;
+        }
+
+        /* [UI 개선] 좌측 필터 사이드바 서면 현대화 */
+        .sidebar {
+            width: 260px;
+            flex-shrink: 0;
+        }
+
+        .filter-section {
+            background: var(--color-bg-card);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid var(--color-border-subtle);
+            box-shadow: var(--shadow-premium);
+        }
+
+        .filter-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin: 0 0 20px 0;
+            color: var(--color-text-primary);
+            letter-spacing: -0.01em;
+        }
+
+        .filter-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            color: var(--color-text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .filter-label:hover {
+            color: var(--color-text-primary);
+        }
+
+        .filter-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            border: 1px solid var(--color-text-muted);
+            border-radius: 4px;
+            cursor: pointer;
+            accent-color: var(--color-brand);
+        }
+
+        /* 우측 콘텐츠 메인 */
+        .content-area {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .content-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .total-count {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+
+        .total-count span {
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* [UI 개선] 정렬 드롭다운 셀렉트 박스 커스텀 고급화 */
+        .select-custom-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .select-custom {
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: var(--color-bg-card);
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-md);
+            padding: 8px 36px 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-premium);
+        }
+
+        .select-custom:hover {
+            border-color: var(--color-border-focus);
+            color: var(--color-text-primary);
+        }
+
+        .select-custom-wrap::after {
+            content: "";
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            pointer-events: none;
+        }
+
+        /* 토글 버튼 스타일 */
+        .view-controls {
+            display: flex;
+            gap: 6px;
+            background: #E2E8F0;
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .view-btn {
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: var(--color-bg-card);
+            color: var(--color-brand);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .view-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        /* =========================================
+           5. 카드형(Grid 4열) / 목록형(List) 하이브리드 UI
+           ========================================= */
+        .course-container {
+            display: grid;
+            gap: 24px;
+            transition: all 0.3s ease;
+        }
+
+        /* 카드형 - 무조건 한 열에 4개 배치 */
+        .course-container.view-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        /* 목록형 - 한 열에 1개 배치 */
+        .course-container.view-list {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .course-card-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        /* 세포(Cell) 단위 프리미엄 컴포넌트 설계 */
+        .course-card {
+            background: var(--color-bg-card);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--color-border-subtle);
+            box-shadow: var(--shadow-premium);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .course-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-premium-hover);
+            border-color: rgba(37, 99, 235, 0.15);
+        }
+
+        .card-thumb-wrap {
+            position: relative;
+            background: var(--color-bg-subtle);
+            overflow: hidden;
+        }
+
+        .card-thumbnail {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s;
+        }
+
+        .course-card:hover .card-thumbnail {
+            transform: scale(1.04);
+        }
+
+        .card-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .card-badges {
+            margin-bottom: 12px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            letter-spacing: -0.01em;
+        }
+
+        .badge-online {
+            background-color: #EFF6FF;
+            color: #1E40AF;
+        }
+
+        .badge-offline {
+            background-color: #FEF2F2;
+            color: #991B1B;
+        }
+
+        .badge-status {
+            background-color: #F0FDF4;
+            color: #166534;
+            border: 1px solid rgba(22, 101, 52, 0.08);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            color: var(--color-text-primary);
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 46px;
+            letter-spacing: -0.02em;
+        }
+
+        .card-instructor {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-top: auto;
+            font-weight: 500;
+        }
+
+        /* =========================================
+           6. 목록형(List) 활성화 시 내부 레이아웃 대전환
+           ========================================= */
+        .course-container.view-list .course-card {
+            flex-direction: row;
+            align-items: center;
+            height: 120px;
+            padding-right: 24px;
+        }
+
+        .course-container.view-list .card-thumb-wrap {
+            width: 180px;
+            height: 100%;
+            flex-shrink: 0;
+            border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+        }
+
+        .course-container.view-list .card-thumbnail {
+            height: 100%;
+        }
+
+        .course-container.view-list .card-body {
+            padding: 0 24px;
+            justify-content: center;
+        }
+
+        .course-container.view-list .card-title {
+            font-size: 17px;
+            -webkit-line-clamp: 1;
+            height: auto;
+            margin-bottom: 6px;
+        }
+
+        .course-container.view-list .card-badges {
+            margin-bottom: 8px;
+        }
+
+        .course-container.view-list .card-instructor {
+            margin-top: 0;
+        }
+
+        /* 빈 목록 상태 공포 방지 */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 100px 20px;
+            color: var(--color-text-muted);
+            background: var(--color-bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border-subtle);
+            box-shadow: var(--shadow-premium);
+        }
+    </style>
 </head>
-<body class="home-page">
+<body>
 <div th:replace="~{fragments/header :: header}"></div>
 
-<main class="home-shell">
-  <section class="home-hero">
-    <p class="home-brand">THE HLINKs</p>
-    <h1 class="home-title">HR</h1>
-    <p class="home-description">HR 권한으로 접근 가능한 팀 현황 화면입니다.</p>
-  </section>
+<div class="page-header-banner">
+    <div class="banner-content">
+        <h1 class="banner-title">교육 콘텐츠</h1>
+        <!--
+        <p class="banner-subtitle">H-Link 플랫폼 안에서 대도약(Career-High)과 성장 경로(Career-Path)를 설계하세요.</p>
+        -->
+        <nav class="category-tabs">
+            <a th:href="@{/courses}" class="tab-link"
+               th:classappend="${currentCategory == null or currentCategory == ''} ? 'active' : ''">전체 강의</a>
+            <a th:href="@{/courses(categoryType='CAREER_HIGH')}" class="tab-link"
+               th:classappend="${currentCategory == 'CAREER_HIGH'} ? 'active' : ''">커리어 하이</a>
+            <a th:href="@{/courses(categoryType='CAREER_PATH')}" class="tab-link"
+               th:classappend="${currentCategory == 'CAREER_PATH'} ? 'active' : ''">커리어 패스</a>
+        </nav>
+    </div>
+</div>
+
+<main class="main-layout">
+    <aside class="sidebar">
+        <div class="filter-section">
+            <h3 class="filter-title">교육 운영 유형</h3>
+            <label class="filter-label"><input type="checkbox" checked> 온라인 상시 강좌</label>
+            <label class="filter-label"><input type="checkbox" checked> 오프라인 집합 특강</label>
+        </div>
+        <div class="filter-section">
+            <h3 class="filter-title">핵심 기술 스택 (Tech)</h3>
+            <label class="filter-label"><input type="checkbox"> Java / JDK 17</label>
+            <label class="filter-label"><input type="checkbox"> Spring Boot 3.x</label>
+            <label class="filter-label"><input type="checkbox"> React / Next.js</label>
+            <label class="filter-label"><input type="checkbox"> Oracle DB SQL</label>
+        </div>
+    </aside>
+
+    <section class="content-area">
+        <div class="content-toolbar">
+            <div class="total-count">조회된 강의 <span th:text="${courses != null ? courses.size() : 0}">0</span>건</div>
+
+            <div class="toolbar-right">
+                <div class="select-custom-wrap">
+                    <select class="select-custom">
+                        <option>최신 등록순</option>
+                        <option>인기 명품순</option>
+                    </select>
+                </div>
+
+                <div class="view-controls">
+                    <button type="button" id="btnGrid" class="view-btn active" title="카드형 보기">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z"/>
+                        </svg>
+                    </button>
+                    <button type="button" id="btnList" class="view-btn" title="목록형 보기">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="courseContainer" class="course-container view-grid">
+
+            <div th:if="${#lists.isEmpty(courses)}" class="empty-state">
+                <svg viewBox="0 0 24 24" style="width: 40px; height: 48px; fill: #94a3b8; margin-bottom: 12px;">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 7h2v6h-2zm0 8h2v2h-2z"/>
+                </svg>
+                <h4 style="margin:0 0 4px 0; color:var(--color-text-primary); font-size:16px;">개설된 교육 콘텐츠가 없습니다.</h4>
+                <p style="margin:0; font-size:13px;">현재 카테고리의 신규 명품 강의를 기획 및 준비하고 있습니다.</p>
+            </div>
+
+            <a th:each="course : ${courses}" th:href="@{/course/{id}(id=${course.courseId})}" class="course-card-link">
+                <article class="course-card">
+                    <div class="card-thumb-wrap">
+                        <img th:src="@{${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/default-thumbnail.png'}}"
+                             alt="강의 썸네일"
+                             class="card-thumbnail"
+                             onerror="this.onerror=null; this.src='/images/default-thumbnail.png';">
+                    </div>
+                    <div class="card-body">
+                        <div class="card-badges">
+                            <span class="badge"
+                                  th:classappend="${course.courseType == 'ONLINE' ? 'badge-online' : 'badge-offline'}"
+                                  th:text="${course.courseType}">ONLINE</span>
+                            <span class="badge badge-status" th:text="${course.virtualStatus}">상시 운영</span>
+                        </div>
+                        <h3 class="card-title" th:text="${course.courseTitle}">클라우드 네이티브 아키텍처</h3>
+                        <div class="card-instructor"
+                             th:text="|강사 : ${course.instructorName != null ? course.instructorName : '인재개발원'}|">강사 :
+                            홍길동
+                        </div>
+                    </div>
+                </article>
+            </a>
+
+        </div>
+    </section>
 </main>
+
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const btnGrid = document.getElementById('btnGrid');
+        const btnList = document.getElementById('btnList');
+        const courseContainer = document.getElementById('courseContainer');
+
+        btnGrid.addEventListener('click', function () {
+            btnGrid.classList.add('active');
+            btnList.classList.remove('active');
+            courseContainer.classList.remove('view-list');
+            courseContainer.classList.add('view-grid');
+        });
+
+        btnList.addEventListener('click', function () {
+            btnList.classList.add('active');
+            btnGrid.classList.remove('active');
+            courseContainer.classList.remove('view-grid');
+            courseContainer.classList.add('view-list');
+        });
+    });
+</script>
 </body>
 </html>
