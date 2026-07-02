@@ -29,6 +29,7 @@
         -- MyBatis XML에서는 부등호를 &lt; 와 &gt; 로 치환해야 오류가 나지 않습니다.
         WHEN SYSDATE &lt; ofc.apply_start_date THEN '모집 대기'
         WHEN SYSDATE BETWEEN ofc.apply_start_date AND ofc.apply_end_date THEN '모집 중'
+        WHEN SYSDATE BETWEEN ofc.apply_end_date AND ofc.course_start_date THEN '모집 마감'
         WHEN SYSDATE BETWEEN ofc.course_start_date AND ofc.course_end_date THEN '강의 진행 중'
         WHEN SYSDATE &gt; ofc.course_end_date THEN '강의 종료'
         ELSE '상태 불명'

@@ -459,11 +459,11 @@
         <p class="banner-subtitle">H-Link 플랫폼 안에서 대도약(Career-High)과 성장 경로(Career-Path)를 설계하세요.</p>
         -->
         <nav class="category-tabs">
-            <a th:href="@{/course}" class="tab-link"
+            <a th:href="@{/courses}" class="tab-link"
                th:classappend="${currentCategory == null or currentCategory == ''} ? 'active' : ''">전체 강의</a>
-            <a th:href="@{/course(categoryType='CAREER_HIGH')}" class="tab-link"
+            <a th:href="@{/courses(categoryType='CAREER_HIGH')}" class="tab-link"
                th:classappend="${currentCategory == 'CAREER_HIGH'} ? 'active' : ''">커리어 하이</a>
-            <a th:href="@{/course(categoryType='CAREER_PATH')}" class="tab-link"
+            <a th:href="@{/courses(categoryType='CAREER_PATH')}" class="tab-link"
                th:classappend="${currentCategory == 'CAREER_PATH'} ? 'active' : ''">커리어 패스</a>
         </nav>
     </div>
