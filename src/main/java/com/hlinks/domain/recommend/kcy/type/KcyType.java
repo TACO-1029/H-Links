@@ -3,6 +3,8 @@ package com.hlinks.domain.recommend.kcy.type;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
+
 @Getter
 @RequiredArgsConstructor
 public enum KcyType {
@@ -83,5 +85,11 @@ public enum KcyType {
     }
     public String getImagePath() {
         return "/images/kcy/" + name().toLowerCase() + ".webp";
+    }
+    public static KcyType from(String code) {
+        return Arrays.stream(values())
+                .filter(type -> type.name().equalsIgnoreCase(code))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown KCY type: " + code));
     }
 }
