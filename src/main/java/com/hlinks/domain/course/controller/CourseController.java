@@ -41,7 +41,7 @@ public class CourseController {
 
         // 3. UI 처리용 부가 정보 세팅
         // 3-1. 현재 활성화된 GNB(상단 메뉴) 표시를 위한 설정 (제공해주신 예시 참고)
-        model.addAttribute("activeMenu", "course");
+        model.addAttribute("activeMenu", "courses");
 
         // 3-2. 화면에서 현재 선택된 서브 탭(전체/커리어하이/커리어패스) CSS 활성화를 위해 담아둠
         model.addAttribute("currentCategory", categoryType);
@@ -70,7 +70,7 @@ public class CourseController {
 
         // 3. UI 레이아웃 유지를 위한 부가 정보 세팅
         // GNB(상단 네비게이션)의 '교육 콘텐츠' 탭을 활성화 상태로 유지하기 위한 설정
-        model.addAttribute("activeMenu", "course");
+        model.addAttribute("activeMenu", "courses");
 
         // 4. 단 하나의 상세 템플릿(src/main/resources/templates/course/detail.html)으로 포워딩
         return "course/detail";

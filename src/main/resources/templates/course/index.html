@@ -522,7 +522,7 @@
                 <p style="margin:0; font-size:13px;">현재 카테고리의 신규 명품 강의를 기획 및 준비하고 있습니다.</p>
             </div>
 
-            <a th:each="course : ${courses}" th:href="@{/course/{id}(id=${course.courseId})}" class="course-card-link">
+            <a th:each="course : ${courses}" th:href="@{/courses/{id}(id=${course.courseId})}" class="course-card-link">
                 <article class="course-card">
                     <div class="card-thumb-wrap">
                         <img th:src="@{${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/default-thumbnail.png'}}"
