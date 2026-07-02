@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${course.courseTitle} + ' - H-Link'">강의 상세 - H-Link</title>
+
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* =========================================
+           [이슈 #31] 강의 상세 페이지 전용 CSS
+           ========================================= */
+        .detail-wrap {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            font-family: "Pretendard", sans-serif;
+        }
+
+        /* 빵판(Breadcrumb) 네비게이션 */
+        .breadcrumb {
+            margin-bottom: 24px;
+            color: var(--color-text-muted, #94A3B8);
+            font-size: var(--text-sm, 14px);
+            display: flex;
+            align-items: center;
+        }
+        .breadcrumb i {
+            font-size: 10px;
+            margin: 0 10px;
+            color: var(--color-border-focus, #CBD5E1);
+        }
+
+        /* 메인 2단 그리드 레이아웃 */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        /* 좌측: 썸네일 및 강의 정보 */
+        .detail-main img.course-thumbnail {
+            width: 100%;
+            border-radius: var(--radius-lg, 16px);
+            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0,0,0,0.1));
+            margin-bottom: 24px;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            border: 1px solid var(--color-border-subtle, rgba(15, 23, 42, 0.06));
+        }
+
+        .detail-tags {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        .tag {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm, 6px);
+            font-size: var(--text-xs, 12px);
+            font-weight: var(--font-semibold, 600);
+        }
+        .tag-category {
+            background-color: var(--color-bg-subtle, #F1F5F9);
+            color: var(--color-text-secondary, #475569);
+        }
+        .tag-online {
+            background-color: #EFF6FF;
+            color: #2563EB; /* 블루 톤 */
+        }
+        .tag-offline {
+            background-color: #FEF2F2;
+            color: #DC2626; /* 레드 톤 */
+        }
+
+        .detail-title {
+            font-size: var(--text-3xl, 28px);
+            font-weight: var(--font-bold, 700);
+            color: var(--color-text-primary, #0F172A);
+            margin: 0 0 24px 0;
+            line-height: 1.35;
+        }
+
+        .detail-desc {
+            font-size: var(--text-base, 16px);
+            color: var(--color-text-secondary, #475569);
+            line-height: var(--leading-relaxed, 1.6);
+            white-space: pre-wrap; /* DB의 CLOB 개행 문자 유지 */
+            background: var(--color-bg-card, #FFFFFF);
+            padding: 32px;
+            border-radius: var(--radius-md, 10px);
+            border: 1px solid var(--color-border-subtle, rgba(15, 23, 42, 0.06));
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        /* 우측: Sticky 정보 카드 */
+        .detail-sidebar {
+            position: sticky;
+            top: 100px; /* 헤더 스크롤 여백 고려 */
+        }
+
+        .info-card {
+            background: var(--color-bg-card, #FFFFFF);
+            border: 1px solid var(--color-border-subtle, rgba(15, 23, 42, 0.06));
+            border-radius: var(--radius-lg, 16px);
+            padding: 32px;
+            box-shadow: var(--shadow-premium, 0 10px 25px -5px rgba(0,0,0,0.05));
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .info-icon {
+            color: var(--color-brand, #2563EB);
+            font-size: 18px;
+            margin-top: 2px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-label {
+            color: var(--color-text-muted, #94A3B8);
+            font-size: var(--text-xs, 12px);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .info-value {
+            color: var(--color-text-primary, #0F172A);
+            font-size: var(--text-sm, 14px);
+            font-weight: var(--font-semibold, 600);
+            line-height: 1.4;
+        }
+
+        /* 다운로드 링크 스타일 */
+        .link-download {
+            color: var(--color-brand, #2563EB);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+        .link-download:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        /* 신청/수강 버튼 */
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            text-align: center;
+            background: var(--color-brand, #2563EB);
+            color: #FFFFFF;
+            border: none;
+            border-radius: var(--radius-md, 10px);
+            font-weight: var(--font-bold, 700);
+            font-size: var(--text-base, 16px);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
+        }
+        .btn-disabled {
+            background: var(--color-border-focus, #CBD5E1);
+            color: #FFFFFF;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* 반응형 모바일 레이아웃 */
+        @media (max-width: 992px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+            .detail-sidebar {
+                position: static;
+                margin-top: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="detail-wrap">
+    <div class="breadcrumb">
+        <span>홈</span>
+        <i class="fas fa-chevron-right"></i>
+        <span>교육 콘텐츠</span>
+        <i class="fas fa-chevron-right"></i>
+        <span th:text="${course.categoryType == 'CAREER_HIGH' ? '커리어 하이' : '커리어 패스'}">카테고리</span>
+    </div>
+
+    <div class="detail-grid">
+        <div class="detail-main">
+            <img class="course-thumbnail"
+                 th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/default_course.png'}"
+                 alt="강의 썸네일">
+
+            <div class="detail-tags">
+                <span class="tag tag-category" th:text="${course.categoryType == 'CAREER_HIGH' ? '커리어 하이' : '커리어 패스'}"></span>
+                <span class="tag tag-online" th:if="${course.online}">온라인 강의</span>
+                <span class="tag tag-offline" th:unless="${course.online}">오프라인 특강</span>
+            </div>
+
+            <h1 class="detail-title" th:text="${course.courseTitle}">강의 제목</h1>
+
+            <p class="detail-desc" th:text="${course.description}">상세 설명이 노출됩니다.</p>
+        </div>
+
+        <aside class="detail-sidebar">
+            <div class="info-card">
+                <ul class="info-list">
+                    <li class="info-item">
+                        <i class="fas fa-chalkboard-teacher info-icon"></i>
+                        <div class="info-content">
+                            <div class="info-label">강사</div>
+                            <div class="info-value" th:text="${course.instructorName != null ? course.instructorName : '인재개발원'}"></div>
+                        </div>
+                    </li>
+
+                    <li class="info-item" th:if="${course.totalDurationTime != null}">
+                        <i class="fas fa-clock info-icon"></i>
+                        <div class="info-content">
+                            <div class="info-label">권장 학습 시간</div>
+                            <div class="info-value" th:text="${course.totalDurationTime} + ' 시간'"></div>
+                        </div>
+                    </li>
+
+                    <th:block th:unless="${course.online}">
+                        <li class="info-item">
+                            <i class="fas fa-map-marker-alt info-icon"></i>
+                            <div class="info-content">
+                                <div class="info-label">교육 장소</div>
+                                <div class="info-value" th:text="${course.location != null ? course.location : '추후 안내'}"></div>
+                            </div>
+                        </li>
+                        <li class="info-item">
+                            <i class="fas fa-users info-icon"></i>
+                            <div class="info-content">
+                                <div class="info-label">수강 정원</div>
+                                <div class="info-value" th:text="${course.capacity != null ? course.capacity + '명' : '제한 없음'}"></div>
+                            </div>
+                        </li>
+                        <li class="info-item" th:if="${course.applyStartDate != null}">
+                            <i class="fas fa-calendar-check info-icon"></i>
+                            <div class="info-content">
+                                <div class="info-label">신청 기간</div>
+                                <div class="info-value">
+                                    <span th:text="${#temporals.format(course.applyStartDate, 'yyyy.MM.dd')}"></span> ~
+                                    <span th:text="${#temporals.format(course.applyEndDate, 'yyyy.MM.dd')}"></span>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="info-item" th:if="${course.courseStartDate != null}">
+                            <i class="fas fa-calendar-alt info-icon"></i>
+                            <div class="info-content">
+                                <div class="info-label">교육 기간</div>
+                                <div class="info-value">
+                                    <span th:text="${#temporals.format(course.courseStartDate, 'yyyy.MM.dd')}"></span> ~
+                                    <span th:text="${#temporals.format(course.courseEndDate, 'yyyy.MM.dd')}"></span>
+                                </div>
+                            </div>
+                        </li>
+                    </th:block>
+
+                    <th:block th:if="${course.online}">
+                        <li class="info-item" th:if="${course.courseMaterialUrl != null}">
+                            <i class="fas fa-file-download info-icon"></i>
+                            <div class="info-content">
+                                <div class="info-label">강의 교재</div>
+                                <div class="info-value">
+                                    <a th:href="${course.courseMaterialUrl}" class="link-download" target="_blank" download>
+                                        자료 다운로드 <i class="fas fa-download" style="font-size: 12px; margin-left: 4px;"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </li>
+                    </th:block>
+                </ul>
+
+                <hr style="border: none; border-top: 1px solid var(--color-border-subtle); margin: 32px 0;">
+
+                <div th:if="${course.online}">
+                    <button th:if="${course.onlineStatus == 'OPEN'}" class="btn-submit" onclick="alert('온라인 수강 대시보드로 이동합니다. (다음 이슈에서 구현예정)')">
+                        온라인 수강하기
+                    </button>
+                    <button th:unless="${course.onlineStatus == 'OPEN'}" class="btn-submit btn-disabled" disabled>
+                        현재 수강할 수 없는 강의입니다
+                    </button>
+                </div>
+
+                <div th:unless="${course.online}">
+                    <button th:if="${course.offlineStatus == 'OPEN'}" class="btn-submit" onclick="alert('오프라인 특강 수강신청이 완료되었습니다. (다음 이슈에서 구현예정)')">
+                        오프라인 수강신청
+                    </button>
+                    <button th:unless="${course.offlineStatus == 'OPEN'}" class="btn-submit btn-disabled" disabled>
+                        수강 신청 마감
+                    </button>
+                </div>
+
+            </div>
+        </aside>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>
