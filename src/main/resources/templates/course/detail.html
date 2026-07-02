@@ -12,322 +12,467 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* =========================================
-           [이슈 #31] 강의 상세 페이지 전용 CSS
-           ========================================= */
-        .detail-wrap {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
+        /* ========================================================
+           [이슈 #31] 와이어프레임 100% 일치 고도화 컬러 및 스페이싱 토큰
+           ======================================================== */
+        :root {
+            --bg-main: #F4F5F7;          /* 레퍼런스 백그라운드 */
+            --bg-card: #FFFFFF;          /* 프리미엄 카드 */
+            --primary-green: #11A36A;    /* 레퍼런스 메인 그린 */
+            --text-primary: #111827;     /* 딥 다크 텍스트 */
+            --text-muted: #98A2B3;       /* 뮤트 그레이 */
+            --border-color: #E5E7EB;     /* 라이트 보더 */
+            --radius-premium: 24px;      /* 프리미엄 라디우스 24 */
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
             font-family: "Pretendard", sans-serif;
         }
 
-        /* 빵판(Breadcrumb) 네비게이션 */
-        .breadcrumb {
-            margin-bottom: 24px;
-            color: var(--color-text-muted, #94A3B8);
-            font-size: var(--text-sm, 14px);
-            display: flex;
-            align-items: center;
-        }
-        .breadcrumb i {
-            font-size: 10px;
-            margin: 0 10px;
-            color: var(--color-border-focus, #CBD5E1);
+        /* 와이드 레이아웃 스케일 (1520px) */
+        .detail-wrap {
+            max-width: 1520px;
+            margin: 32px auto 80px;
+            padding: 0 40px;
         }
 
-        /* 메인 2단 그리드 레이아웃 */
+        /* 7:3 가변 비율 및 48px 거터 그리드 */
         .detail-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 40px;
+            grid-template-columns: minmax(0, 1fr) 380px;
+            gap: 48px;
             align-items: start;
         }
 
-        /* 좌측: 썸네일 및 강의 정보 */
-        .detail-main img.course-thumbnail {
-            width: 100%;
-            border-radius: var(--radius-lg, 16px);
-            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0,0,0,0.1));
-            margin-bottom: 24px;
-            aspect-ratio: 16/9;
-            object-fit: cover;
-            border: 1px solid var(--color-border-subtle, rgba(15, 23, 42, 0.06));
-        }
-
-        .detail-tags {
-            margin-bottom: 16px;
-            display: flex;
-            gap: 8px;
-        }
-        .tag {
-            padding: 6px 12px;
-            border-radius: var(--radius-sm, 6px);
-            font-size: var(--text-xs, 12px);
-            font-weight: var(--font-semibold, 600);
-        }
-        .tag-category {
-            background-color: var(--color-bg-subtle, #F1F5F9);
-            color: var(--color-text-secondary, #475569);
-        }
-        .tag-online {
-            background-color: #EFF6FF;
-            color: #2563EB; /* 블루 톤 */
-        }
-        .tag-offline {
-            background-color: #FEF2F2;
-            color: #DC2626; /* 레드 톤 */
-        }
-
-        .detail-title {
-            font-size: var(--text-3xl, 28px);
-            font-weight: var(--font-bold, 700);
-            color: var(--color-text-primary, #0F172A);
-            margin: 0 0 24px 0;
-            line-height: 1.35;
-        }
-
-        .detail-desc {
-            font-size: var(--text-base, 16px);
-            color: var(--color-text-secondary, #475569);
-            line-height: var(--leading-relaxed, 1.6);
-            white-space: pre-wrap; /* DB의 CLOB 개행 문자 유지 */
-            background: var(--color-bg-card, #FFFFFF);
-            padding: 32px;
-            border-radius: var(--radius-md, 10px);
-            border: 1px solid var(--color-border-subtle, rgba(15, 23, 42, 0.06));
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        }
-
-        /* 우측: Sticky 정보 카드 */
-        .detail-sidebar {
-            position: sticky;
-            top: 100px; /* 헤더 스크롤 여백 고려 */
-        }
-
-        .info-card {
-            background: var(--color-bg-card, #FFFFFF);
-            border: 1px solid var(--color-border-subtle, rgba(15, 23, 42, 0.06));
-            border-radius: var(--radius-lg, 16px);
-            padding: 32px;
-            box-shadow: var(--shadow-premium, 0 10px 25px -5px rgba(0,0,0,0.05));
-        }
-
-        .info-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        /* ========================================================
+           [좌측 카드 영역: Left Card]
+           ======================================================== */
+        .left-card {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 32px;
         }
 
-        .info-item {
+        /* 4. 혁신적인 Thumbnail 텍스트 임베딩 히어로 배너 */
+        .hero-banner {
+            position: relative;
+            height: 470px;
+            border-radius: var(--radius-premium);
+            overflow: hidden;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .hero-banner img.banner-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 어두운 선형 그라디언트 딥 오버레이 */
+        .hero-banner::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                    180deg,
+                    rgba(0, 0, 0, 0.2) 0%,
+                    rgba(0, 0, 0, 0.75) 100%
+            );
+            z-index: 1;
+        }
+
+        /* 히어로 배너 내부 임베딩 콘텐츠 */
+        .hero-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 40px;
+            z-index: 2; /* 오버레이보다 위 */
+            box-sizing: border-box;
             display: flex;
-            align-items: flex-start;
+            flex-direction: column;
             gap: 16px;
         }
 
-        .info-icon {
-            color: var(--color-brand, #2563EB);
+        .badge-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .premium-badge {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .badge-cate {
+            background: rgba(255, 255, 255, 0.2);
+            color: #FFFFFF;
+            backdrop-filter: blur(4px);
+        }
+
+        .badge-type-online {
+            background: #E8F7F0;
+            color: var(--primary-green);
+        }
+
+        .badge-type-offline {
+            background: #FEF2F2;
+            color: #DC2626;
+        }
+
+        .embedded-title {
+            font-size: 34px;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin: 0;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* 메타 테이블 (배너 하단 정보 행) */
+        .meta-table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-premium);
+            padding: 24px 40px;
+            display: flex;
+            justify-content: flex-start;
+            gap: 64px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .meta-icon-wrapper {
+            width: 44px;
+            height: 44px;
+            background: #E8F7F0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-green);
             font-size: 18px;
-            margin-top: 2px;
-            width: 24px;
-            text-align: center;
         }
 
-        .info-content {
-            flex: 1;
+        .meta-info {
+            display: flex;
+            flex-direction: column;
         }
 
-        .info-label {
-            color: var(--color-text-muted, #94A3B8);
-            font-size: var(--text-xs, 12px);
-            font-weight: 500;
-            margin-bottom: 6px;
+        .meta-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
         }
 
-        .info-value {
-            color: var(--color-text-primary, #0F172A);
-            font-size: var(--text-sm, 14px);
-            font-weight: var(--font-semibold, 600);
-            line-height: 1.4;
+        .meta-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
-        /* 다운로드 링크 스타일 */
-        .link-download {
-            color: var(--color-brand, #2563EB);
-            text-decoration: none;
+        /* 소개 및 커리큘럼 카드 */
+        .curriculum-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-premium);
+            padding: 40px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: "";
+            width: 4px;
+            height: 18px;
+            background-color: var(--primary-green);
+            border-radius: 2px;
+        }
+
+        .course-description {
+            font-size: 16px;
+            color: #374151;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            margin: 0;
+        }
+
+        /* 다운로드 프리미엄 링크 */
+        .download-box {
+            margin-top: 24px;
+            padding: 16px 24px;
+            background: #F8FAFC;
+            border-radius: 12px;
+            border: 1px dashed var(--border-color);
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            transition: opacity 0.2s;
+            gap: 12px;
         }
-        .link-download:hover {
-            opacity: 0.8;
+
+        .download-box a {
+            color: var(--primary-green);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .download-box a:hover {
             text-decoration: underline;
         }
 
-        /* 신청/수강 버튼 */
-        .btn-submit {
-            display: block;
-            width: 100%;
-            padding: 16px;
-            text-align: center;
-            background: var(--color-brand, #2563EB);
-            color: #FFFFFF;
-            border: none;
-            border-radius: var(--radius-md, 10px);
-            font-weight: var(--font-bold, 700);
-            font-size: var(--text-base, 16px);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .btn-submit:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
-        }
-        .btn-disabled {
-            background: var(--color-border-focus, #CBD5E1);
-            color: #FFFFFF;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
+        /* ========================================================
+           [우측 카드 영역: Right Sticky Card]
+           ======================================================== */
+        .right-sticky-card {
+            position: sticky;
+            top: 100px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-premium);
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(17, 24, 39, 0.04);
         }
 
-        /* 반응형 모바일 레이아웃 */
-        @media (max-width: 992px) {
+        /* 모집/수강 상태 표시 헤더 */
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .status-title {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-open {
+            background-color: #E8F7F0;
+            color: var(--primary-green);
+        }
+
+        .status-closed {
+            background-color: #F3F4F6;
+            color: var(--text-muted);
+        }
+
+        /* 상세 스펙 리스트 (Stats) */
+        .stats-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-bottom: 32px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .stat-label {
+            color: var(--color-text-secondary, #475569);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-label i {
+            color: var(--text-muted);
+            width: 16px;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* 대형 CTA 버튼 */
+        .btn-cta {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            text-align: center;
+            background: var(--primary-green);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-cta:hover:not(:disabled) {
+            background: #0E8558;
+            box-shadow: 0 8px 20px rgba(17, 163, 106, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .btn-cta:disabled {
+            background: #D1D5DB;
+            color: #9CA3AF;
+            cursor: not-allowed;
+        }
+
+        /* 반응형 디바이스 튜닝 */
+        @media (max-width: 1200px) {
             .detail-grid {
                 grid-template-columns: 1fr;
+                gap: 32px;
             }
-            .detail-sidebar {
+            .right-sticky-card {
                 position: static;
-                margin-top: 32px;
             }
         }
     </style>
 </head>
 <body>
+
 <div th:replace="~{fragments/header :: header}"></div>
 
 <main class="detail-wrap">
-    <div class="breadcrumb">
-        <span>홈</span>
-        <i class="fas fa-chevron-right"></i>
-        <span>교육 콘텐츠</span>
-        <i class="fas fa-chevron-right"></i>
-        <span th:text="${course.categoryType == 'CAREER_HIGH' ? '커리어 하이' : '커리어 패스'}">카테고리</span>
-    </div>
-
     <div class="detail-grid">
-        <div class="detail-main">
-            <img class="course-thumbnail"
-                 th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/default_course.png'}"
-                 alt="강의 썸네일">
 
-            <div class="detail-tags">
-                <span class="tag tag-category" th:text="${course.categoryType == 'CAREER_HIGH' ? '커리어 하이' : '커리어 패스'}"></span>
-                <span class="tag tag-online" th:if="${course.online}">온라인 강의</span>
-                <span class="tag tag-offline" th:unless="${course.online}">오프라인 특강</span>
+        <div class="left-card">
+
+            <div class="hero-banner">
+                <img class="banner-img"
+                     th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/default_course.png'}"
+                     alt="강의 메인 배너">
+
+                <div class="hero-content">
+                    <div class="badge-row">
+                        <span class="premium-badge badge-cate" th:text="${course.categoryType == 'CAREER_HIGH' ? '커리어 하이' : '커리어 패스'}"></span>
+                        <span class="premium-badge badge-type-online" th:if="${course.online}">온라인 과정</span>
+                        <span class="premium-badge badge-type-offline" th:unless="${course.online}">오프라인 특강</span>
+                    </div>
+                    <h1 class="embedded-title" th:text="${course.courseTitle}">강의 타이틀 명세</h1>
+                </div>
             </div>
 
-            <h1 class="detail-title" th:text="${course.courseTitle}">강의 제목</h1>
+            <div class="meta-table-card">
+                <div class="meta-item">
+                    <div class="meta-icon-wrapper"><i class="fas fa-user-tie"></i></div>
+                    <div class="meta-info">
+                        <span class="meta-label">담당 강사</span>
+                        <span class="meta-value" th:text="${course.instructorName != null ? course.instructorName : 'HRD 인재개발원'}">김강사</span>
+                    </div>
+                </div>
+                <div class="meta-item" th:if="${course.totalDurationTime != null}">
+                    <div class="meta-icon-wrapper"><i class="fas fa-hourglass-half"></i></div>
+                    <div class="meta-info">
+                        <span class="meta-label">총 교육 시간</span>
+                        <span class="meta-value" th:text="${course.totalDurationTime} + '시간'">30시간</span>
+                    </div>
+                </div>
+            </div>
 
-            <p class="detail-desc" th:text="${course.description}">상세 설명이 노출됩니다.</p>
+            <div class="curriculum-card">
+                <h2 class="section-title">과정 상세 개요</h2>
+                <p class="course-description" th:text="${course.description}">과정 핵심 설계 목적 및 세부 학습 로직 명세 CLOB 데이터 바인딩 영역.</p>
+
+                <div class="download-box" th:if="${course.online and course.courseMaterialUrl != null}">
+                    <i class="fas fa-cloud-download-alt" style="color: var(--primary-green); font-size: 18px;"></i>
+                    <span>본 과정은 강의 교재 및 실습 가이드 PDF를 상시 제공합니다.</span>
+                    <a th:href="${course.courseMaterialUrl}" target="_blank" download>교재 다운로드</a>
+                </div>
+            </div>
+
         </div>
 
-        <aside class="detail-sidebar">
-            <div class="info-card">
-                <ul class="info-list">
-                    <li class="info-item">
-                        <i class="fas fa-chalkboard-teacher info-icon"></i>
-                        <div class="info-content">
-                            <div class="info-label">강사</div>
-                            <div class="info-value" th:text="${course.instructorName != null ? course.instructorName : '인재개발원'}"></div>
-                        </div>
-                    </li>
+        <aside class="right-sticky-card">
 
-                    <li class="info-item" th:if="${course.totalDurationTime != null}">
-                        <i class="fas fa-clock info-icon"></i>
-                        <div class="info-content">
-                            <div class="info-label">권장 학습 시간</div>
-                            <div class="info-value" th:text="${course.totalDurationTime} + ' 시간'"></div>
-                        </div>
-                    </li>
+            <div class="status-header">
+                <span class="status-title">현재 운영 상태</span>
 
-                    <th:block th:unless="${course.online}">
-                        <li class="info-item">
-                            <i class="fas fa-map-marker-alt info-icon"></i>
-                            <div class="info-content">
-                                <div class="info-label">교육 장소</div>
-                                <div class="info-value" th:text="${course.location != null ? course.location : '추후 안내'}"></div>
-                            </div>
-                        </li>
-                        <li class="info-item">
-                            <i class="fas fa-users info-icon"></i>
-                            <div class="info-content">
-                                <div class="info-label">수강 정원</div>
-                                <div class="info-value" th:text="${course.capacity != null ? course.capacity + '명' : '제한 없음'}"></div>
-                            </div>
-                        </li>
-                        <li class="info-item" th:if="${course.applyStartDate != null}">
-                            <i class="fas fa-calendar-check info-icon"></i>
-                            <div class="info-content">
-                                <div class="info-label">신청 기간</div>
-                                <div class="info-value">
-                                    <span th:text="${#temporals.format(course.applyStartDate, 'yyyy.MM.dd')}"></span> ~
-                                    <span th:text="${#temporals.format(course.applyEndDate, 'yyyy.MM.dd')}"></span>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="info-item" th:if="${course.courseStartDate != null}">
-                            <i class="fas fa-calendar-alt info-icon"></i>
-                            <div class="info-content">
-                                <div class="info-label">교육 기간</div>
-                                <div class="info-value">
-                                    <span th:text="${#temporals.format(course.courseStartDate, 'yyyy.MM.dd')}"></span> ~
-                                    <span th:text="${#temporals.format(course.courseEndDate, 'yyyy.MM.dd')}"></span>
-                                </div>
-                            </div>
-                        </li>
-                    </th:block>
+                <th:block th:if="${course.online}">
+                    <span class="status-indicator status-open" th:if="${course.onlineStatus == 'OPEN'}">수강 가능</span>
+                    <span class="status-indicator status-closed" th:unless="${course.onlineStatus == 'OPEN'}">수강 종료</span>
+                </th:block>
 
-                    <th:block th:if="${course.online}">
-                        <li class="info-item" th:if="${course.courseMaterialUrl != null}">
-                            <i class="fas fa-file-download info-icon"></i>
-                            <div class="info-content">
-                                <div class="info-label">강의 교재</div>
-                                <div class="info-value">
-                                    <a th:href="${course.courseMaterialUrl}" class="link-download" target="_blank" download>
-                                        자료 다운로드 <i class="fas fa-download" style="font-size: 12px; margin-left: 4px;"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </li>
-                    </th:block>
-                </ul>
-
-                <hr style="border: none; border-top: 1px solid var(--color-border-subtle); margin: 32px 0;">
-
-                <div th:if="${course.online}">
-                    <button th:if="${course.onlineStatus == 'OPEN'}" class="btn-submit" onclick="alert('온라인 수강 대시보드로 이동합니다. (다음 이슈에서 구현예정)')">
-                        온라인 수강하기
-                    </button>
-                    <button th:unless="${course.onlineStatus == 'OPEN'}" class="btn-submit btn-disabled" disabled>
-                        현재 수강할 수 없는 강의입니다
-                    </button>
-                </div>
-
-                <div th:unless="${course.online}">
-                    <button th:if="${course.offlineStatus == 'OPEN'}" class="btn-submit" onclick="alert('오프라인 특강 수강신청이 완료되었습니다. (다음 이슈에서 구현예정)')">
-                        오프라인 수강신청
-                    </button>
-                    <button th:unless="${course.offlineStatus == 'OPEN'}" class="btn-submit btn-disabled" disabled>
-                        수강 신청 마감
-                    </button>
-                </div>
-
+                <th:block th:unless="${course.online}">
+                    <span class="status-indicator status-open" th:if="${course.offlineStatus == 'OPEN'}">모집 중</span>
+                    <span class="status-indicator status-closed" th:unless="${course.offlineStatus == 'OPEN'}">모집 마감</span>
+                </th:block>
             </div>
+
+            <div class="stats-list">
+                <div class="stat-row">
+                    <span class="stat-label"><i class="fas fa-graduation-cap"></i> 교육 방식</span>
+                    <span class="stat-value" th:text="${course.online ? '온라인 VOD' : '오프라인 집합교육'}">방식</span>
+                </div>
+
+                <th:block th:unless="${course.online}">
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fas fa-map-marker-alt"></i> 집결 장소</span>
+                        <span class="stat-value" th:text="${course.location != null ? course.location : '사내 본관 교육장'}">IT센터</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label"><i class="fas fa-users"></i> 제한 정원</span>
+                        <span class="stat-value" th:text="${course.capacity != null ? course.capacity + '명 선착순' : '제한 없음'}">30명</span>
+                    </div>
+                    <div class="stat-row" th:if="${course.applyStartDate != null}">
+                        <span class="stat-label"><i class="fas fa-calendar-alt"></i> 신청 접수</span>
+                        <span class="stat-value" style="font-size: 13px;"
+                              th:text="|${#temporals.format(course.applyStartDate, 'MM/dd')} ~ ${#temporals.format(course.applyEndDate, 'MM/dd')}|">기간</span>
+                    </div>
+                    <div class="stat-row" th:if="${course.courseStartDate != null}">
+                        <span class="stat-label"><i class="fas fa-laptop-code"></i> 교육 기간</span>
+                        <span class="stat-value" style="font-size: 13px;"
+                              th:text="|${#temporals.format(course.courseStartDate, 'MM/dd')} ~ ${#temporals.format(course.courseEndDate, 'MM/dd')}|">기간</span>
+                    </div>
+                </th:block>
+            </div>
+
+            <div class="cta-action-area">
+                <th:block th:if="${course.online}">
+                    <button th:if="${course.onlineStatus == 'OPEN'}" class="btn-cta" onclick="alert('온라인 강의 학습 환경으로 이동합니다. (다음 이슈 연동)')">
+                        즉시 학습하기
+                    </button>
+                    <button th:unless="${course.onlineStatus == 'OPEN'}" class="btn-cta" disabled>
+                        학습이 불가능한 과정입니다
+                    </button>
+                </th:block>
+
+                <th:block th:unless="${course.online}">
+                    <button th:if="${course.offlineStatus == 'OPEN'}" class="btn-cta" onclick="alert('오프라인 집합 과정 수강 신청이 접수되었습니다. (다음 이슈 연동)')">
+                        수강 신청하기
+                    </button>
+                    <button th:unless="${course.offlineStatus == 'OPEN'}" class="btn-cta" disabled>
+                        신청이 마감되었습니다
+                    </button>
+                </th:block>
+            </div>
+
         </aside>
     </div>
 </main>
