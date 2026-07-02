@@ -16,18 +16,12 @@
             <a class="site-header__nav-item"
                th:classappend="${activeMenu == 'home'} ? ' is-active'"
                th:href="@{/}">홈</a>
-
-            <div class="site-header__nav-group site-header__nav-group--has-submenu">
-                <a class="site-header__nav-item"
-                   th:classappend="${activeMenu == 'courses'} ? ' is-active'"
-                   th:href="@{/courses}">교육 콘텐츠</a>
-            </div>
-
-            <div class="site-header__nav-group site-header__nav-group--has-submenu">
-                <a class="site-header__nav-item"
-                   th:classappend="${activeMenu == 'recommend'} ? ' is-active'"
-                   th:href="@{/recommend}">추천</a>
-            </div>
+            <a class="site-header__nav-item"
+               th:classappend="${activeMenu == 'courses'} ? ' is-active'"
+               th:href="@{/courses}">교육 콘텐츠</a>
+            <a class="site-header__nav-item"
+               th:classappend="${activeMenu == 'recommend'} ? ' is-active'"
+               th:href="@{/recommend}">추천</a>
 
             <div class="site-header__role-actions">
                 <a class="site-header__team-button"
