@@ -3,6 +3,8 @@ package com.hlinks.domain.course.service;
 import com.hlinks.domain.course.dto.CourseApplicationCancelTargetDto;
 import com.hlinks.domain.course.dto.CourseApplyResponseDto;
 import com.hlinks.domain.course.dto.CourseApplyTargetDto;
+import com.hlinks.domain.course.dto.ChapterResponseDto;
+import com.hlinks.domain.course.dto.CourseDetailResponseDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.domain.course.exception.CourseErrorCode;
 import com.hlinks.domain.course.mapper.CourseMapper;
@@ -29,6 +31,7 @@ public class CourseService {
     private static final String APPLICATION_STATUS_CANCELED = ApplicationStatus.CANCELED.name();
     private static final String APPLICATION_TYPE_USER = "USER";
     private static final String LEARNING_STATUS_NOT_STARTED = "NOT_STARTED";
+    private static final String LEARNING_STATUS_IN_PROGRESS = "IN_PROGRESS";
     private static final String LEARNING_STATUS_CANCELED = "CANCELED";
 
     private final CourseMapper courseMapper;
@@ -99,6 +102,9 @@ public class CourseService {
                 // 신청 이력이 존재하는 사원인 경우 데이터 덮어쓰기 주입 (WAITING, APPROVED, REJECTED 등)
                 courseDetail.setApplicationStatus(appInfo.getApplicationStatus());
                 courseDetail.setRejectReason(appInfo.getRejectReason());
+                courseDetail.setLearningStatus(appInfo.getLearningStatus());
+                courseDetail.setProgressRate(appInfo.getProgressRate());
+                courseDetail.setNextLearningChapterId(resolveNextLearningChapterId(courseDetail, userId, courseId));
                 log.info("사원 신청 정보 연동 성공 - 강좌 ID: {}, 상태값: {}", courseId, appInfo.getApplicationStatus());
             } else {
                 // 신청 이력이 전혀 없는 사원인 경우 null 상태 유지 -> 화면단에서 '즉시 신청하기' 활성화
@@ -111,8 +117,59 @@ public class CourseService {
 
         return courseDetail;
     }
-}
 
+    private Long resolveNextLearningChapterId(CourseDetailResponseDto courseDetail, Long userId, Long courseId) {
+        List<ChapterResponseDto> chapters = courseDetail.getChapters();
+        if (chapters == null || chapters.isEmpty()) {
+            return null;
+        }
+
+        if (courseDetail.isLearningInProgress()) {
+            Long latestChapterId = courseMapper.findLatestLearningChapterId(userId, courseId);
+            if (latestChapterId != null) {
+                return latestChapterId;
+            }
+        }
+
+        return chapters.get(0).getChapterId();
+    }
+
+    @Transactional
+    public CourseDetailResponseDto getOnlineChapterPage(Long courseId, Long chapterId, Long userId) {
+        CourseDetailResponseDto courseDetail = getCourseDetail(courseId, userId);
+
+        if (!courseDetail.isOnline() || courseDetail.isApplicationNotApplied()) {
+            throw new BaseException(ErrorResponseCode.FORBIDDEN);
+        }
+
+        boolean chapterExists = courseDetail.getChapters().stream()
+                .anyMatch(chapter -> chapter.getChapterId().equals(chapterId));
+        if (!chapterExists) {
+            throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "강의에 포함되지 않은 챕터입니다.");
+        }
+
+        Long courseLearningId = courseMapper.findCourseLearningId(userId, courseId);
+        if (courseLearningId == null) {
+            throw new BaseException(ErrorResponseCode.FORBIDDEN);
+        }
+
+        courseMapper.insertChapterLearningStatus(
+                courseLearningId,
+                userId,
+                courseId,
+                chapterId,
+                LEARNING_STATUS_NOT_STARTED
+        );
+
+        return courseDetail;
+    }
+
+    @Transactional
+    public void startOnlineChapterLearning(Long courseId, Long chapterId, Long userId) {
+        getOnlineChapterPage(courseId, chapterId, userId);
+        courseMapper.startCourseLearning(userId, courseId, LEARNING_STATUS_IN_PROGRESS);
+        courseMapper.startChapterLearning(userId, courseId, chapterId, LEARNING_STATUS_IN_PROGRESS);
+    }
     @Transactional
     public CourseApplyResponseDto applyCourse(Long courseId, Long userId) {
         log.info("강의 신청 요청 - courseId={}, userId={}", courseId, userId);
@@ -269,6 +326,7 @@ public class CourseService {
                     LEARNING_STATUS_NOT_STARTED
             );
         }
+
         return courseLearningId;
     }
 }

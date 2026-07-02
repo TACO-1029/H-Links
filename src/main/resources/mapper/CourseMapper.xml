@@ -77,6 +77,7 @@
 
         -- 오프라인 강의 정보
         OFF.CAPACITY            AS capacity,
+        OFF.CURRENT_APPLICANT_COUNT AS currentApplicantCount,
         OFF.LOCATION            AS location,
         OFF.STATUS              AS offlineStatus,
         OFF.APPLY_START_DATE    AS applyStartDate,
@@ -105,6 +106,24 @@
         ORDER BY CHAPTER_ORDER ASC
     </select>
 
+    <select id="findLatestLearningChapterId" resultType="long">
+        SELECT chapter_id
+        FROM (
+            SELECT cls.chapter_id
+            FROM CHAPTER_LEARNING_STATUS cls
+            JOIN COURSE_CHAPTER cc
+              ON cls.chapter_id = cc.chapter_id
+            WHERE cls.user_id = #{userId}
+              AND cls.course_id = #{courseId}
+              AND cls.status IN ('IN_PROGRESS', 'COMPLETED')
+              AND cc.use_yn = 'Y'
+            ORDER BY NVL(cls.updated_at, cls.started_at) DESC,
+                     cc.chapter_order DESC,
+                     cls.chapter_learning_id DESC
+        )
+        WHERE ROWNUM = 1
+    </select>
+
     <!-- 강의의 COURSE_SKILL을 싹 다 모아서 PARENT_SKILL_ID에 따라 대분류 Skill(ex: 백엔드, 인프라)만 반환하는 쿼리 -->
     <select id="findSkillNamesByCourseId" resultType="string">
         SELECT PS.SKILL_NAME
@@ -120,11 +139,20 @@
 
     <select id="findApplicationInfo" resultType="com.hlinks.domain.course.dto.CourseDetailResponseDto">
         SELECT
-        APPLICATION_STATUS AS applicationStatus,
-        REJECT_REASON      AS rejectReason
-        FROM COURSE_APPLICATION
-        WHERE COURSE_ID = #{courseId}
-        AND USER_ID = #{userId}
+        CA.APPLICATION_STATUS AS applicationStatus,
+        CA.REJECT_REASON      AS rejectReason,
+        CLS.STATUS            AS learningStatus,
+        CLS.PROGRESS_RATE     AS progressRate
+        FROM COURSE_APPLICATION CA
+        LEFT JOIN COURSE_LEARNING_STATUS CLS
+        ON CA.APPLICATION_ID = CLS.APPLICATION_ID
+        WHERE CA.APPLICATION_ID = (
+            SELECT MAX(APPLICATION_ID)
+            FROM COURSE_APPLICATION
+            WHERE COURSE_ID = #{courseId}
+              AND USER_ID = #{userId}
+              AND APPLICATION_STATUS IN ('WAITING', 'APPROVED', 'REJECTED')
+        )
     </select>
 
     <select id="findCourseApplyTarget"
@@ -244,6 +272,66 @@
             status = #{status},
             updated_at = SYSDATE
         WHERE course_learning_id = #{courseLearningId}
+    </update>
+
+    <insert id="insertChapterLearningStatus">
+        INSERT INTO CHAPTER_LEARNING_STATUS (
+            chapter_learning_id,
+            course_learning_id,
+            user_id,
+            course_id,
+            chapter_id,
+            progress_rate,
+            last_play_seconds,
+            max_play_seconds,
+            quiz_attempt_id,
+            status,
+            started_at,
+            completed_at,
+            updated_at
+        )
+        SELECT
+            CHAPTER_LEARNING_STATUS_SEQ.NEXTVAL,
+            #{courseLearningId},
+            #{userId},
+            #{courseId},
+            #{chapterId},
+            0,
+            0,
+            0,
+            NULL,
+            #{status},
+            NULL,
+            NULL,
+            SYSDATE
+        FROM DUAL
+        WHERE NOT EXISTS (
+              SELECT 1
+              FROM CHAPTER_LEARNING_STATUS cls
+              WHERE cls.course_learning_id = #{courseLearningId}
+                AND cls.chapter_id = #{chapterId}
+          )
+    </insert>
+
+    <update id="startCourseLearning">
+        UPDATE COURSE_LEARNING_STATUS
+        SET status = #{status},
+            started_at = NVL(started_at, SYSDATE),
+            updated_at = SYSDATE
+        WHERE user_id = #{userId}
+          AND course_id = #{courseId}
+          AND status = 'NOT_STARTED'
+    </update>
+
+    <update id="startChapterLearning">
+        UPDATE CHAPTER_LEARNING_STATUS
+        SET status = #{status},
+            started_at = NVL(started_at, SYSDATE),
+            updated_at = SYSDATE
+        WHERE user_id = #{userId}
+          AND course_id = #{courseId}
+          AND chapter_id = #{chapterId}
+          AND status = 'NOT_STARTED'
     </update>
 
     <update id="increaseOfflineCurrentApplicantCount">

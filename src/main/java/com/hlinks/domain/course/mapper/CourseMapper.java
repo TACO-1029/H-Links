@@ -54,6 +54,27 @@ public interface CourseMapper {
             @Param("status") String status
     );
 
+    int insertChapterLearningStatus(
+            @Param("courseLearningId") Long courseLearningId,
+            @Param("userId") Long userId,
+            @Param("courseId") Long courseId,
+            @Param("chapterId") Long chapterId,
+            @Param("status") String status
+    );
+
+    int startCourseLearning(
+            @Param("userId") Long userId,
+            @Param("courseId") Long courseId,
+            @Param("status") String status
+    );
+
+    int startChapterLearning(
+            @Param("userId") Long userId,
+            @Param("courseId") Long courseId,
+            @Param("chapterId") Long chapterId,
+            @Param("status") String status
+    );
+
     void increaseOfflineCurrentApplicantCount(@Param("courseId") Long courseId);
 
     CourseApplicationCancelTargetDto findActiveCourseApplicationForUpdate(
@@ -86,6 +107,8 @@ public interface CourseMapper {
      * @return 정렬된 챕터 리스트
      */
     List<ChapterResponseDto> findChaptersByCourseId(@Param("courseId") Long courseId);
+
+    Long findLatestLearningChapterId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
      * [이슈 #31] 3. 특정 강의에서 다루는 핵심 기술 스킬명(Tags) 목록 조회
