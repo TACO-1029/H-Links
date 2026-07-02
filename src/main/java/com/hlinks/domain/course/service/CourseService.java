@@ -1,5 +1,6 @@
 package com.hlinks.domain.course.service;
 
+import com.hlinks.domain.course.dto.ChapterResponseDto;
 import com.hlinks.domain.course.dto.CourseDetailResponseDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.domain.course.mapper.CourseMapper;
@@ -53,7 +54,7 @@ public class CourseService {
      * @return 검증 및 바인딩이 완료된 상세 정보 DTO
      * @throws BaseException 존재하지 않는 강의 ID일 경우 COURSE_NOT_FOUND 예외 발생
      */
-    public CourseDetailResponseDto getCourseDetail(Long courseId) {
+    public CourseDetailResponseDto getCourseDetail(Long courseId, Long userId) {
         log.info("강의 상세 조회 요청 - 강의 ID: {}", courseId);
 
         // 1. 파라미터 기본 검증 (ID가 null이거나 0 이하일 경우 예방)
@@ -71,8 +72,30 @@ public class CourseService {
             throw new BaseException(ErrorResponseCode.COURSE_NOT_FOUND);
         }
 
-        log.info("강의 상세 조회 완료 - 강의명: [{}], 강의 유형: [{}]",
-                courseDetail.getCourseTitle(), courseDetail.getCourseType());
+        // 4. [일대다 바인딩] 커리큘럼 영역에 정렬되어 뿌려질 챕터(Chapter) 목록 주입
+        List<ChapterResponseDto> chapters = courseMapper.findChaptersByCourseId(courseId);
+        courseDetail.setChapters(chapters);
+
+        // 5. [다대다 카테고리 변환 바인딩] 수정한 대분류 Skill 카테고리 리스트 주입
+        List<String> skillNames = courseMapper.findSkillNamesByCourseId(courseId);
+        courseDetail.setSkillNames(skillNames);
+
+        // 6. [유저 컨텍스트 동적 주입] 로그인한 유저 ID가 유효한 경우 수강 신청 이력 매핑
+        if (userId != null && userId > 0) {
+            CourseDetailResponseDto appInfo = courseMapper.findApplicationInfo(courseId, userId);
+            if (appInfo != null) {
+                // 신청 이력이 존재하는 사원인 경우 데이터 덮어쓰기 주입 (WAITING, APPROVED, REJECTED 등)
+                courseDetail.setApplicationStatus(appInfo.getApplicationStatus());
+                courseDetail.setRejectReason(appInfo.getRejectReason());
+                log.info("사원 신청 정보 연동 성공 - 강좌 ID: {}, 상태값: {}", courseId, appInfo.getApplicationStatus());
+            } else {
+                // 신청 이력이 전혀 없는 사원인 경우 null 상태 유지 -> 화면단에서 '즉시 신청하기' 활성화
+                log.info("사원 신청 정보 없음 (미신청 신규 사원) - 강좌 ID: {}", courseId);
+            }
+        }
+
+        log.info("강의 대시보드 리치 데이터 모델 조립 최종 완료 - 타이틀: [{}], 챕터 수: {}건, 스킬 카테고리: {}",
+                courseDetail.getCourseTitle(), chapters.size(), skillNames);
 
         return courseDetail;
     }
