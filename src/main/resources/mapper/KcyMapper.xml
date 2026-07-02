@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.recommend.kcy.mapper.KcyMapper">
+
+    <select id="findActiveQuestions"
+            resultType="com.hlinks.domain.recommend.kcy.dto.KcyQuestionDto">
+        SELECT
+        KCY_QUESTION_ID AS kcyQuestionId,
+        QUESTION_TEXT AS questionText,
+        SORT_ORDER AS sortOrder
+        FROM KCY_QUESTION
+        WHERE USE_YN = 'Y'
+        ORDER BY SORT_ORDER, KCY_QUESTION_ID
+    </select>
+
+    <select id="findOptionsByQuestionIds"
+            resultType="com.hlinks.domain.recommend.kcy.dto.KcyOptionDto">
+        SELECT
+        KCY_OPTION_ID AS kcyOptionId,
+        KCY_QUESTION_ID AS kcyQuestionId,
+        OPTION_NO AS optionNo,
+        OPTION_TEXT AS optionText
+        FROM KCY_OPTION
+        WHERE KCY_QUESTION_ID IN
+        <foreach collection="questionIds" item="questionId" open="(" separator="," close=")">
+            #{questionId}
+        </foreach>
+        ORDER BY KCY_QUESTION_ID, OPTION_NO
+    </select>
+
+    <select id="sumScoresByOptionIds"
+            resultType="com.hlinks.domain.recommend.kcy.dto.KcyScoreDto">
+        SELECT
+        NVL(SUM(ACTION_SCORE), 0) AS actionScore,
+        NVL(SUM(OUTLINE_SCORE), 0) AS outlineScore,
+        NVL(SUM(WIDE_SCORE), 0) AS wideScore,
+        NVL(SUM(DEEP_SCORE), 0) AS deepScore,
+        NVL(SUM(INDEPENDENT_SCORE), 0) AS independentScore,
+        NVL(SUM(CORPORATE_SCORE), 0) AS corporateScore,
+        NVL(SUM(PROMPTER_SCORE), 0) AS prompterScore,
+        NVL(SUM(MANUAL_SCORE), 0) AS manualScore
+        FROM KCY_OPTION
+        WHERE KCY_OPTION_ID IN
+        <foreach collection="optionIds" item="optionId" open="(" separator="," close=")">
+            #{optionId}
+        </foreach>
+    </select>
+
+    <select id="countDistinctQuestionsByOptionIds"
+            resultType="int">
+        SELECT COUNT(DISTINCT KCY_QUESTION_ID)
+        FROM KCY_OPTION
+        WHERE KCY_OPTION_ID IN
+        <foreach collection="optionIds" item="optionId" open="(" separator="," close=")">
+            #{optionId}
+        </foreach>
+    </select>
+
+    <update id="updateUserKcyResult">
+        UPDATE USERS
+        SET
+        KCY_RESULT = #{kcyResult},
+        UPDATED_AT = SYSDATE
+        WHERE USER_ID = #{userId}
+    </update>
+
+</mapper>
