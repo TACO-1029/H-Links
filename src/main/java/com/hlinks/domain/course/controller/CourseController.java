@@ -14,7 +14,7 @@ import java.util.List;
 
 @Slf4j
 @Controller
-@RequestMapping("/course")
+@RequestMapping("/courses")
 @RequiredArgsConstructor
 public class CourseController {
 
