@@ -60,4 +60,33 @@
         ORDER BY c.course_id DESC
     </select>
 
+    <select id="findCourseDetailById" resultType="com.hlinks.domain.course.dto.CourseDetailResponseDto">
+        SELECT
+        C.COURSE_ID             AS courseId,
+        C.CATEGORY_TYPE         AS categoryType,
+        C.COURSE_TYPE           AS courseType,
+        C.COURSE_TITLE          AS courseTitle,
+        C.DESCRIPTION           AS description,
+        C.INSTRUCTOR_NAME       AS instructorName,
+        C.TOTAL_DURATION_TIME   AS totalDurationTime,
+        C.THUMBNAIL_URL         AS thumbnailUrl,
+
+        -- 온라인 강의 정보
+        ONL.COURSE_MATERIAL_URL AS courseMaterialUrl,
+        ONL.STATUS              AS onlineStatus,
+
+        -- 오프라인 강의 정보
+        OFF.CAPACITY            AS capacity,
+        OFF.LOCATION            AS location,
+        OFF.STATUS              AS offlineStatus,
+        OFF.APPLY_START_DATE    AS applyStartDate,
+        OFF.APPLY_END_DATE      AS applyEndDate,
+        OFF.COURSE_START_DATE   AS courseStartDate,
+        OFF.COURSE_END_DATE     AS courseEndDate
+        FROM COURSE C
+        LEFT JOIN ONLINE_COURSE ONL  ON C.COURSE_ID = ONL.COURSE_ID
+        LEFT JOIN OFFLINE_COURSE OFF ON C.COURSE_ID = OFF.COURSE_ID
+        WHERE C.COURSE_ID = #{courseId}
+    </select>
+
 </mapper>
