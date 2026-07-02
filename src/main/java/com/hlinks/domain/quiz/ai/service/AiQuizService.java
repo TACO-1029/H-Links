@@ -1,5 +1,6 @@
 package com.hlinks.domain.quiz.ai.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hlinks.domain.quiz.ai.AiQuizException;
@@ -105,6 +106,11 @@ public class AiQuizService {
             String content = extractMessageContent(rawResponse);
 
             return objectMapper.readValue(content, AiQuizGenerateResponse.class);
+        } catch (AiQuizException e) {
+            throw e;
+        } catch (JsonProcessingException e) {
+            log.warn("AI 퀴즈 생성 응답 JSON 파싱 실패. provider={}, model={}", properties.getProvider(), properties.getModel());
+            throw new AiQuizException("AI 퀴즈 생성 응답 JSON 형식이 올바르지 않습니다.", e);
         } catch (Exception e) {
             log.warn("AI 퀴즈 생성 요청 실패. provider={}, model={}", properties.getProvider(), properties.getModel());
             throw new AiQuizException("AI 퀴즈 생성 요청에 실패했습니다.", e);
@@ -187,6 +193,8 @@ public class AiQuizService {
     }
 
     private QuizCreateRequest toCreateRequest(QuizGenerateRequest request, AiGeneratedQuiz aiQuiz) {
+        validateAiQuiz(aiQuiz);
+
         QuizCreateRequest quizCreateRequest = new QuizCreateRequest();
         quizCreateRequest.setCourseId(request.getCourseId());
         quizCreateRequest.setChapterId(request.getChapterId());
@@ -202,10 +210,6 @@ public class AiQuizService {
     }
 
     private List<QuizOptionCreateRequest> toOptionCreateRequests(List<AiGeneratedQuizOption> aiOptions) {
-        if (aiOptions == null) {
-            return List.of();
-        }
-
         return aiOptions.stream()
                 .map(this::toOptionCreateRequest)
                 .toList();
@@ -217,5 +221,47 @@ public class AiQuizService {
         optionCreateRequest.setOptionText(aiOption.getOptionText());
         optionCreateRequest.setCorrectYn(aiOption.getCorrectYn());
         return optionCreateRequest;
+    }
+
+    private void validateAiQuiz(AiGeneratedQuiz aiQuiz) {
+        if (aiQuiz == null) {
+            throw new AiQuizException("AI 퀴즈 생성 결과에 빈 퀴즈가 포함되어 있습니다.");
+        }
+
+        List<AiGeneratedQuizOption> options = aiQuiz.getOptions();
+
+        if (options == null || options.size() != 4) {
+            throw new AiQuizException("AI 퀴즈 선택지는 정확히 4개여야 합니다.");
+        }
+
+        long correctCount = options.stream()
+                .filter(option -> option != null && "Y".equals(option.getCorrectYn()))
+                .count();
+
+        if (correctCount != 1) {
+            throw new AiQuizException("AI 퀴즈 정답 선택지는 정확히 1개여야 합니다.");
+        }
+
+        for (AiGeneratedQuizOption option : options) {
+            validateAiQuizOption(option);
+        }
+    }
+
+    private void validateAiQuizOption(AiGeneratedQuizOption option) {
+        if (option == null) {
+            throw new AiQuizException("AI 퀴즈 선택지가 비어 있습니다.");
+        }
+
+        if (option.getOptionNo() == null) {
+            throw new AiQuizException("AI 퀴즈 선택지 번호는 필수입니다.");
+        }
+
+        if (!StringUtils.hasText(option.getOptionText())) {
+            throw new AiQuizException("AI 퀴즈 선택지 내용은 필수입니다.");
+        }
+
+        if (!"Y".equals(option.getCorrectYn()) && !"N".equals(option.getCorrectYn())) {
+            throw new AiQuizException("AI 퀴즈 선택지 정답 여부는 Y 또는 N만 허용됩니다.");
+        }
     }
 }

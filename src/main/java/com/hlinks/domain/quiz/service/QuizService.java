@@ -14,7 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -155,12 +157,40 @@ public class QuizService {
             throw new BaseException(ErrorResponseCode.BAD_REQUEST, "객관식 보기는 정확히 4개여야 합니다.");
         }
 
+        Set<String> optionNumbers = new HashSet<>();
+
+        for (QuizOptionCreateRequest option : request.getOptions()) {
+            validateQuizOption(option, optionNumbers);
+        }
+
         long correctCount = request.getOptions().stream()
                 .filter(option -> "Y".equals(option.getCorrectYn()))
                 .count();
 
         if (correctCount != 1) {
             throw new BaseException(ErrorResponseCode.BAD_REQUEST, "정답 보기는 정확히 1개여야 합니다.");
+        }
+    }
+
+    private void validateQuizOption(QuizOptionCreateRequest option, Set<String> optionNumbers) {
+        if (option == null) {
+            throw new BaseException(ErrorResponseCode.BAD_REQUEST, "객관식 보기는 필수입니다.");
+        }
+
+        if (option.getOptionNo() == null || option.getOptionNo().isBlank()) {
+            throw new BaseException(ErrorResponseCode.BAD_REQUEST, "optionNo는 필수입니다.");
+        }
+
+        if (!optionNumbers.add(option.getOptionNo())) {
+            throw new BaseException(ErrorResponseCode.BAD_REQUEST, "optionNo는 중복될 수 없습니다.");
+        }
+
+        if (option.getOptionText() == null || option.getOptionText().isBlank()) {
+            throw new BaseException(ErrorResponseCode.BAD_REQUEST, "optionText는 필수입니다.");
+        }
+
+        if (!"Y".equals(option.getCorrectYn()) && !"N".equals(option.getCorrectYn())) {
+            throw new BaseException(ErrorResponseCode.BAD_REQUEST, "correctYn은 Y 또는 N만 허용됩니다.");
         }
     }
 
