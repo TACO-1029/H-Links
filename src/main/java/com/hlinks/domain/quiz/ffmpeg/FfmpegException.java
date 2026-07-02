@@ -1,4 +1,4 @@
-package com.hlinks.global.ffmpeg;
+package com.hlinks.domain.quiz.ffmpeg;
 
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.global.response.code.BaseResponseCode;

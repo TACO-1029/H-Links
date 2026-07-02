@@ -1,4 +1,4 @@
-package com.hlinks.global.ffmpeg;
+package com.hlinks.domain.quiz.ffmpeg;
 
 import lombok.Getter;
 import lombok.Setter;
