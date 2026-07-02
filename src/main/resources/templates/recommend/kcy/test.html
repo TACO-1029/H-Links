@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCY 테스트</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/kcy.css}">
+</head>
+<body class="kcy-page">
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="kcy-shell">
+    <section class="kcy-intro" data-kcy-intro aria-labelledby="kcy-intro-title">
+        <span class="kcy-pill">DEV-STRENGTH DIAGNOSIS</span>
+        <h1 id="kcy-intro-title">KCY TEST</h1>
+        <p>
+            나의 개발 스타일, 협업 패턴, 기술 탐구 방식을 분석해<br>
+            맞춤형 커리어 패스와 성장 방향을 도출합니다.
+        </p>
+
+        <div class="kcy-intro__visual" aria-hidden="true">
+            <img th:src="@{/images/kcy/main_logo.webp}" alt="">
+        </div>
+
+        <div class="kcy-intro__features" aria-label="KCY 테스트 구성">
+            <article class="kcy-feature">
+                <span>1</span>
+                <div>
+                    <strong>핵심 성향 분석</strong>
+                    <p>실행형, 설계 방식, 협업 성향, 도구 활용 방식을 종합적으로 확인합니다.</p>
+                </div>
+            </article>
+            <article class="kcy-feature">
+                <span>2</span>
+                <div>
+                    <strong>맞춤형 결과 카드</strong>
+                    <p>진단 결과를 바탕으로 개인의 강점과 보완 방향을 카드 형태로 제공합니다.</p>
+                </div>
+            </article>
+        </div>
+
+        <div class="kcy-intro__actions">
+            <button class="kcy-button kcy-button--primary" type="button" data-kcy-start>
+                성향 테스트 시작하기
+            </button>
+            <button class="kcy-button kcy-button--secondary" type="button" data-kcy-random>
+                랜덤 응답 테스트
+            </button>
+        </div>
+    </section>
+
+    <section class="kcy-test" data-kcy-test hidden>
+        <form th:action="@{/recommend/kcy}"
+              th:object="${kcySubmitRequest}"
+              method="post"
+              data-kcy-form
+              class="kcy-test-card">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <div class="kcy-progress">
+                <div class="kcy-progress__top">
+                    <span>성향 진단 진행 중</span>
+                    <strong>
+                        <span data-kcy-current>1</span>
+                        <span aria-hidden="true">/</span>
+                        <span th:text="${#lists.size(questions)}" data-kcy-total>11</span>
+                    </strong>
+                </div>
+                <div class="kcy-progress__track" aria-hidden="true">
+                    <span data-kcy-progress-bar></span>
+                </div>
+            </div>
+
+            <p class="kcy-form-error"
+               th:if="${#fields.hasErrors('selectedOptionIds')}"
+               th:errors="*{selectedOptionIds}">
+                모든 문항에 응답해주세요.
+            </p>
+
+            <article class="kcy-question"
+                     th:each="question, questionStat : ${questions}"
+                     th:attr="data-kcy-question=${questionStat.index}"
+                     th:hidden="${!questionStat.first}">
+                <span class="kcy-question__tag">설계 성향</span>
+                <h2 th:text="${question.questionText}">
+                    새로운 업무 이슈를 배정받았다. 요구사항을 대략 확인한 뒤 가장 먼저 할 행동은?
+                </h2>
+
+                <div class="kcy-options">
+                    <label class="kcy-option"
+                           th:each="option : ${question.options}">
+                        <input type="radio"
+                               th:name="${'selectedOptionIds[' + questionStat.index + ']'}"
+                               th:value="${option.kcyOptionId}">
+                        <span class="kcy-option__mark" th:text="${option.optionNo}">A</span>
+                        <span class="kcy-option__text" th:text="${option.optionText}">
+                            요구사항, 예외 케이스, 영향 범위를 먼저 정리한다.
+                        </span>
+                    </label>
+                </div>
+            </article>
+
+            <div class="kcy-test-card__footer">
+                <button class="kcy-button kcy-button--ghost" type="button" data-kcy-prev disabled>
+                    이전 문항
+                </button>
+                <button class="kcy-button kcy-button--primary" type="button" data-kcy-next>
+                    다음 문항
+                </button>
+                <button class="kcy-button kcy-button--primary" type="submit" data-kcy-submit disabled hidden>
+                    결과 보기
+                </button>
+            </div>
+        </form>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    (() => {
+        const intro = document.querySelector("[data-kcy-intro]");
+        const test = document.querySelector("[data-kcy-test]");
+        const startButton = document.querySelector("[data-kcy-start]");
+        const randomButton = document.querySelector("[data-kcy-random]");
+        const form = document.querySelector("[data-kcy-form]");
+        const questions = Array.from(document.querySelectorAll("[data-kcy-question]"));
+        const prevButton = document.querySelector("[data-kcy-prev]");
+        const nextButton = document.querySelector("[data-kcy-next]");
+        const submitButton = document.querySelector("[data-kcy-submit]");
+        const currentText = document.querySelector("[data-kcy-current]");
+        const progressBar = document.querySelector("[data-kcy-progress-bar]");
+        const hasServerError = Boolean(document.querySelector(".kcy-form-error"));
+        let currentIndex = 0;
+
+        if (!intro || !test || questions.length === 0) {
+            return;
+        }
+
+        const showTest = () => {
+            intro.hidden = true;
+            test.hidden = false;
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            updateQuestion();
+        };
+
+        const updateQuestion = () => {
+            questions.forEach((question, index) => {
+                question.hidden = index !== currentIndex;
+            });
+
+            currentText.textContent = String(currentIndex + 1);
+            progressBar.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+            prevButton.disabled = currentIndex === 0;
+            nextButton.hidden = currentIndex === questions.length - 1;
+            submitButton.hidden = currentIndex !== questions.length - 1 || !currentQuestionAnswered();
+            submitButton.disabled = submitButton.hidden;
+        };
+
+        const currentQuestionAnswered = () => {
+            const currentQuestion = questions[currentIndex];
+            return Boolean(currentQuestion.querySelector("input[type='radio']:checked"));
+        };
+
+        const firstUnansweredQuestionIndex = () => {
+            return questions.findIndex((question) => {
+                return !question.querySelector("input[type='radio']:checked");
+            });
+        };
+
+        const highlightCurrentQuestion = () => {
+            const currentQuestion = questions[currentIndex];
+            currentQuestion.classList.remove("is-shaking");
+            window.requestAnimationFrame(() => currentQuestion.classList.add("is-shaking"));
+        };
+
+        startButton.addEventListener("click", showTest);
+
+        randomButton.addEventListener("click", () => {
+            questions.forEach((question) => {
+                const options = Array.from(question.querySelectorAll("input[type='radio']"));
+                const selected = options[Math.floor(Math.random() * options.length)];
+                if (selected) {
+                    selected.checked = true;
+                }
+            });
+            showTest();
+        });
+
+        nextButton.addEventListener("click", () => {
+            if (!currentQuestionAnswered()) {
+                highlightCurrentQuestion();
+                return;
+            }
+
+            currentIndex = Math.min(currentIndex + 1, questions.length - 1);
+            updateQuestion();
+        });
+
+        prevButton.addEventListener("click", () => {
+            currentIndex = Math.max(currentIndex - 1, 0);
+            updateQuestion();
+        });
+
+        form.addEventListener("submit", (event) => {
+            const unansweredIndex = firstUnansweredQuestionIndex();
+
+            if (unansweredIndex !== -1) {
+                event.preventDefault();
+                currentIndex = unansweredIndex;
+                updateQuestion();
+                highlightCurrentQuestion();
+            }
+        });
+
+        questions.forEach((question) => {
+            question.addEventListener("change", (event) => {
+                if (event.target.matches("input[type='radio']")) {
+                    question.classList.remove("is-shaking");
+                    updateQuestion();
+                }
+            });
+        });
+
+        if (hasServerError) {
+            showTest();
+            return;
+        }
+
+        updateQuestion();
+    })();
+</script>
+</body>
+</html>
