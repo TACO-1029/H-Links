@@ -50,7 +50,7 @@ public class AiQuizService {
 
         String prompt = quizPromptBuilder.build(request.getSourceText(), quizCount, difficulty);
         AiQuizGenerateResponse aiResponse = requestAiQuizGeneration(prompt);
-        validateAiResponse(aiResponse);
+        validateAiResponse(aiResponse, quizCount);
 
         return aiResponse.getQuizzes().stream()
                 .map(aiQuiz -> toCreateRequest(request, aiQuiz))
@@ -186,9 +186,13 @@ public class AiQuizService {
                 .build();
     }
 
-    private void validateAiResponse(AiQuizGenerateResponse aiResponse) {
+    private void validateAiResponse(AiQuizGenerateResponse aiResponse, int expectedQuizCount) {
         if (aiResponse == null || aiResponse.getQuizzes() == null || aiResponse.getQuizzes().isEmpty()) {
             throw new AiQuizException("AI 퀴즈 생성 결과가 비어 있습니다.");
+        }
+
+        if (aiResponse.getQuizzes().size() != expectedQuizCount) {
+            throw new AiQuizException("AI 퀴즈 생성 개수가 요청과 일치하지 않습니다.");
         }
     }
 
@@ -226,6 +230,18 @@ public class AiQuizService {
     private void validateAiQuiz(AiGeneratedQuiz aiQuiz) {
         if (aiQuiz == null) {
             throw new AiQuizException("AI 퀴즈 생성 결과에 빈 퀴즈가 포함되어 있습니다.");
+        }
+
+        if (!StringUtils.hasText(aiQuiz.getQuestionText())) {
+            throw new AiQuizException("AI 퀴즈 질문은 필수입니다.");
+        }
+
+        if (!StringUtils.hasText(aiQuiz.getDifficulty())) {
+            throw new AiQuizException("AI 퀴즈 난이도는 필수입니다.");
+        }
+
+        if (!StringUtils.hasText(aiQuiz.getAnswerText())) {
+            throw new AiQuizException("AI 퀴즈 정답은 필수입니다.");
         }
 
         List<AiGeneratedQuizOption> options = aiQuiz.getOptions();
