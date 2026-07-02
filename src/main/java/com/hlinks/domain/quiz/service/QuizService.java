@@ -175,6 +175,7 @@ public class QuizService {
         response.setStatus(quiz.getStatus());
         response.setAiGeneratedYn(quiz.getAiGeneratedYn());
         response.setCreatedAt(quiz.getCreatedAt());
+        response.setUpdatedAt(quiz.getUpdatedAt());
         return response;
     }
 
@@ -191,6 +192,7 @@ public class QuizService {
         response.setStatus(quiz.getStatus());
         response.setAiGeneratedYn(quiz.getAiGeneratedYn());
         response.setCreatedAt(quiz.getCreatedAt());
+        response.setUpdatedAt(quiz.getUpdatedAt());
         response.setOptions(options);
         return response;
     }

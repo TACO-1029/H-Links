@@ -24,6 +24,7 @@ public class QuizResponse {
     private String aiGeneratedYn;
 
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     private List<QuizOptionResponse> options;
 }

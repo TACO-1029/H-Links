@@ -21,4 +21,5 @@ public class Quiz {
     private String status;
     private String aiGeneratedYn;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

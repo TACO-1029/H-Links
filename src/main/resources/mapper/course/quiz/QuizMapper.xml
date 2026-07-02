@@ -21,7 +21,8 @@
         DIFFICULTY,
         STATUS,
         AI_GENERATED_YN,
-        CREATED_AT
+        CREATED_AT,
+        UPDATED_AT
         )
         VALUES (
         #{quizId},
@@ -34,6 +35,7 @@
         #{difficulty},
         #{status},
         #{aiGeneratedYn},
+        SYSDATE,
         SYSDATE
         )
     </insert>
@@ -71,7 +73,8 @@
         DIFFICULTY AS difficulty,
         STATUS AS status,
         AI_GENERATED_YN AS aiGeneratedYn,
-        CREATED_AT AS createdAt
+        CREATED_AT AS createdAt,
+        UPDATED_AT AS updatedAt
         FROM QUIZ
         WHERE QUIZ_ID = #{quizId}
     </select>
@@ -88,7 +91,8 @@
         DIFFICULTY AS difficulty,
         STATUS AS status,
         AI_GENERATED_YN AS aiGeneratedYn,
-        CREATED_AT AS createdAt
+        CREATED_AT AS createdAt,
+        UPDATED_AT AS updatedAt
         FROM QUIZ
         WHERE CHAPTER_ID = #{chapterId}
         ORDER BY QUIZ_ID
@@ -106,7 +110,8 @@
         DIFFICULTY AS difficulty,
         STATUS AS status,
         AI_GENERATED_YN AS aiGeneratedYn,
-        CREATED_AT AS createdAt
+        CREATED_AT AS createdAt,
+        UPDATED_AT AS updatedAt
         FROM QUIZ
         WHERE COURSE_ID = #{courseId}
         ORDER BY QUIZ_ID
