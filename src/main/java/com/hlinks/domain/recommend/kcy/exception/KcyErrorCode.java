@@ -9,9 +9,14 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum KcyErrorCode implements BaseResponseCode {
 
-    KCY_OPTION_NOT_FOUND(
+    KCY_QUESTION_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "KCY_QUESTION_NOT_FOUND",
+            "테스트 질문을 찾을 수 없습니다"
+    ),
+    KCY_OPTION_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "KCY_OPTION_NOT_FOUND",
             "테스트 문항을 찾을 수 없습니다"
     ),
     KCY_ANSWER_REQUIRED(
