@@ -1,5 +1,7 @@
 package com.hlinks.domain.recommend.kcy.type;
 
+import com.hlinks.domain.recommend.kcy.exception.KcyErrorCode;
+import com.hlinks.global.exception.BaseException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -90,6 +92,6 @@ public enum KcyType {
         return Arrays.stream(values())
                 .filter(type -> type.name().equalsIgnoreCase(code))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unknown KCY type: " + code));
+                .orElseThrow(() -> new BaseException(KcyErrorCode.KCY_RESULT_TYPE_NOT_FOUND));
     }
 }
