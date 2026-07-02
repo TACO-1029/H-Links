@@ -19,6 +19,7 @@
             background-color: #F8FAFC; /* 쾌적한 옅은 회색 배경 */
             color: #0F172A;
             font-family: "Pretendard", sans-serif;
+            scroll-behavior: smooth; /* 기본 스크롤 메커니즘 최적화 */
         }
 
         .layout-container {
@@ -144,11 +145,12 @@
             overflow: hidden;
         }
 
-        /* 중상단 탭 선택 */
+        /* 중상단 탭 선택 - 스크롤 위치 고정을 위해 상단 고정 가능 처리 가능성 인프라 */
         .tab-nav {
             display: flex;
             border-bottom: 1px solid #E2E8F0;
             padding: 0 32px;
+            background: #FFFFFF;
         }
         .tab-item {
             padding: 16px 24px;
@@ -157,6 +159,7 @@
             color: #94A3B8;
             border-bottom: 3px solid transparent;
             cursor: pointer;
+            transition: all 0.2s;
         }
         .tab-item.active {
             color: #0F172A;
@@ -167,6 +170,7 @@
         .info-detail-area {
             padding: 32px;
             background-color: #FAFAF9;
+            scroll-margin-top: 100px; /* 🌟 핵심: 자동 안착 시 상단 헤더 거터 확보 */
         }
         .detail-title {
             font-size: 18px;
@@ -200,6 +204,7 @@
            ----------------------------------------- */
         .curriculum-box {
             padding: 32px;
+            scroll-margin-top: 100px; /* 🌟 핵심: 자동 안착 시 상단 헤더 거터 확보 */
         }
         .curr-header {
             display: flex;
@@ -403,9 +408,7 @@
                         <div class="label-group">
                             <span class="label label-status" th:if="${course.online}" th:text="${course.onlineStatus == 'OPEN' ? '수강가능' : '종료'}">상태</span>
                             <span class="label label-status" th:unless="${course.online}" th:text="${course.offlineStatus == 'OPEN' ? '접수중' : '마감'}">상태</span>
-
                             <span class="label label-type" th:text="${course.online ? '온라인' : '오프라인'}">유형</span>
-
                             <span class="label label-skill" th:each="skill : ${course.skillNames}" th:text="${skill}">분야</span>
                         </div>
                         <button class="btn-share" title="공유하기">
@@ -423,11 +426,11 @@
                     </div>
 
                     <div class="tab-nav">
-                        <div class="tab-item active">강좌정보</div>
-                        <div class="tab-item active">커리큘럼</div>
+                        <div class="tab-item active" data-target="courseInfoSection">강좌정보</div>
+                        <div class="tab-item" data-target="curriculumSection">커리큘럼</div>
                     </div>
 
-                    <div class="info-detail-area">
+                    <div class="info-detail-area" id="courseInfoSection">
                         <h3 class="detail-title">강좌정보</h3>
                         <div class="detail-list">
                             <div class="detail-row">
@@ -469,7 +472,7 @@
                     </div>
                 </article>
 
-                <article class="premium-box curriculum-box">
+                <article class="premium-box curriculum-box" id="curriculumSection">
                     <div class="curr-header">
                         <h3 class="curr-title">커리큘럼</h3>
                         <span class="curr-count" th:text="'총 ' + ${#lists.size(course.chapters)} + '강'">총 0강</span>
@@ -510,14 +513,11 @@
 
             <div class="right-column">
                 <aside class="premium-box status-card">
-
                     <div class="sc-top">
                         <span class="sc-label-small">수강 상태</span>
-
                         <th:block th:if="${course.online}">
                             <span class="sc-status-big" th:text="${isApplied ? '수강 중' : '신청 전'}">상태</span>
                         </th:block>
-
                         <th:block th:unless="${course.online}">
                             <span class="sc-status-big" th:text="${isApplied ? (course.applicationStatus == 'COMPLETED' ? '완료' : '미완료') : '신청 전'}">상태</span>
                         </th:block>
@@ -541,24 +541,20 @@
                     </div>
 
                     <div class="sc-actions">
-
                         <th:block th:if="${course.online}">
                             <button class="action-btn btn-apply" th:unless="${isApplied}">수강 신청하기</button>
                             <button class="action-btn btn-continue" th:if="${isApplied}">이어서 학습하기</button>
                         </th:block>
-
                         <th:block th:unless="${course.online}">
                             <div class="text-offline-only">오프라인 현장 강의입니다.</div>
                             <button class="action-btn btn-apply" th:unless="${isApplied}">오프라인 수강 신청</button>
                         </th:block>
-
                         <button class="action-btn btn-cancel" th:if="${isApplied}">수강 취소</button>
                     </div>
 
                     <div class="sc-notice">
                         접수기간 내 신청 및 취소가 가능하며, 오프라인 과정은 정원 마감 시 신청이 제한됩니다. 오프라인 강의의 완료 여부는 강의 종료일 기준으로 표시됩니다.
                     </div>
-
                 </aside>
             </div>
 
@@ -568,5 +564,48 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabs = document.querySelectorAll('.tab-nav .tab-item');
+        const sections = {
+            courseInfoSection: document.getElementById('courseInfoSection'),
+            curriculumSection: document.getElementById('curriculumSection')
+        };
+
+        // 1. 탭 클릭 시 정밀 스마트 자동 스크롤 처리
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                const targetId = this.getAttribute('data-target');
+                const targetElement = sections[targetId];
+
+                if (targetElement) {
+                    // CSS의 scroll-margin-top(100px) 규격에 맞춰 안전하고 깔끔하게 안착 렌더링
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // 2. 사용자가 스크롤 제어 시 실시간 탭 active 하이라이트 동기화 (UX 고도화)
+        window.addEventListener('scroll', function () {
+            let currentActive = 'courseInfoSection';
+            const scrollPosition = window.scrollY + 120; // 상단 헤더 오차 보정 오프셋
+
+            if (sections.curriculumSection && scrollPosition >= sections.curriculumSection.offsetTop) {
+                currentActive = 'curriculumSection';
+            }
+
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-target') === currentActive) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>
