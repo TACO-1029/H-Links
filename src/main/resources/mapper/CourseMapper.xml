@@ -9,55 +9,211 @@
             parameterType="string"
             resultType="com.hlinks.domain.course.dto.CourseListResponseDto">
         SELECT
-        c.course_id AS courseId,
-        c.category_type AS categoryType,
-        c.course_type AS courseType,
-        c.course_title AS courseTitle,
-        c.instructor_name AS instructorName,
-        c.thumbnail_url AS thumbnailUrl,
-
-        -- 실시간 가상 상태(Computed Status) 계산
-        CASE
-        WHEN c.course_type = 'ONLINE' THEN
-        CASE
-        WHEN onc.status = 'CANCELED' THEN '서비스 종료'
-        ELSE '상시 수강 가능'
-        END
-        WHEN c.course_type = 'OFFLINE' THEN
-        CASE
-        WHEN ofc.status = 'CANCELED' THEN '폐강'
-        -- MyBatis XML에서는 부등호를 &lt; 와 &gt; 로 치환해야 오류가 나지 않습니다.
-        WHEN SYSDATE &lt; ofc.apply_start_date THEN '모집 대기'
-        WHEN SYSDATE BETWEEN ofc.apply_start_date AND ofc.apply_end_date THEN '모집 중'
-        WHEN SYSDATE BETWEEN ofc.apply_end_date AND ofc.course_start_date THEN '모집 마감'
-        WHEN SYSDATE BETWEEN ofc.course_start_date AND ofc.course_end_date THEN '강의 진행 중'
-        WHEN SYSDATE &gt; ofc.course_end_date THEN '강의 종료'
-        ELSE '상태 불명'
-        END
-        ELSE '유형 오류'
-        END AS virtualStatus
-
+            c.course_id AS course_id,
+            c.category_type AS category_type,
+            c.course_type AS course_type,
+            c.course_title AS course_title,
+            c.instructor_name AS instructor_name,
+            c.thumbnail_url AS thumbnail_url,
+            CASE
+                WHEN c.course_type = 'ONLINE' THEN
+                    CASE
+                        WHEN onc.status = 'CANCELED' THEN 'CANCELED'
+                        ELSE 'ALWAYS_OPEN'
+                    END
+                WHEN c.course_type = 'OFFLINE' THEN
+                    CASE
+                        WHEN ofc.status = 'CANCELED' THEN 'CANCELED'
+                        WHEN SYSDATE &lt; ofc.apply_start_date THEN 'BEFORE_APPLY'
+                        WHEN SYSDATE BETWEEN ofc.apply_start_date AND ofc.apply_end_date THEN 'APPLYING'
+                        WHEN SYSDATE BETWEEN ofc.apply_end_date AND ofc.course_start_date THEN 'APPLY_CLOSED'
+                        WHEN SYSDATE BETWEEN ofc.course_start_date AND ofc.course_end_date THEN 'COURSE_IN_PROGRESS'
+                        WHEN SYSDATE &gt; ofc.course_end_date THEN 'COURSE_ENDED'
+                        ELSE 'UNKNOWN'
+                    END
+                ELSE 'UNKNOWN'
+            END AS virtual_status
         FROM COURSE c
         LEFT OUTER JOIN ONLINE_COURSE onc
-        ON c.course_id = onc.course_id
+            ON c.course_id = onc.course_id
         LEFT OUTER JOIN OFFLINE_COURSE ofc
-        ON c.course_id = ofc.course_id
-
+            ON c.course_id = ofc.course_id
         <where>
-            -- 1. 공통 조건: HIDDEN(임시 숨김/비활성화) 강의 원천 제외
             (
-            (c.course_type = 'ONLINE' AND NVL(onc.status, 'OPEN') != 'HIDDEN')
-            OR
-            (c.course_type = 'OFFLINE' AND NVL(ofc.status, 'OPEN') != 'HIDDEN')
+                (c.course_type = 'ONLINE' AND NVL(onc.status, 'OPEN') != 'HIDDEN')
+                OR
+                (c.course_type = 'OFFLINE' AND NVL(ofc.status, 'OPEN') != 'HIDDEN')
             )
-
-            -- 2. 동적 쿼리: 카테고리 값이 파라미터로 넘어올 경우에만 AND 조건 추가
             <if test="categoryType != null and categoryType != ''">
                 AND c.category_type = #{categoryType}
             </if>
         </where>
-
         ORDER BY c.course_id DESC
     </select>
+
+    <select id="findCourseApplyTarget"
+            resultType="com.hlinks.domain.course.dto.CourseApplyTargetDto">
+        SELECT
+            c.course_id AS course_id,
+            c.course_type AS course_type,
+            CASE
+                WHEN c.course_type = 'ONLINE' THEN onc.status
+                WHEN c.course_type = 'OFFLINE' THEN ofc.status
+                ELSE NULL
+            END AS course_status,
+            ofc.apply_start_date AS apply_start_date,
+            ofc.apply_end_date AS apply_end_date,
+            ofc.capacity AS capacity,
+            ofc.current_applicant_count AS current_applicant_count
+        FROM COURSE c
+        LEFT OUTER JOIN ONLINE_COURSE onc
+            ON c.course_id = onc.course_id
+        LEFT OUTER JOIN OFFLINE_COURSE ofc
+            ON c.course_id = ofc.course_id
+        WHERE c.course_id = #{courseId}
+    </select>
+
+    <select id="findOfflineCourseApplyTargetForUpdate"
+            resultType="com.hlinks.domain.course.dto.CourseApplyTargetDto">
+        SELECT
+            c.course_id AS course_id,
+            c.course_type AS course_type,
+            ofc.status AS course_status,
+            ofc.apply_start_date AS apply_start_date,
+            ofc.apply_end_date AS apply_end_date,
+            ofc.capacity AS capacity,
+            ofc.current_applicant_count AS current_applicant_count
+        FROM COURSE c
+        INNER JOIN OFFLINE_COURSE ofc
+            ON c.course_id = ofc.course_id
+        WHERE c.course_id = #{courseId}
+        FOR UPDATE OF ofc.current_applicant_count
+    </select>
+
+    <select id="countActiveApplications" resultType="int">
+        SELECT COUNT(1)
+        FROM COURSE_APPLICATION
+        WHERE user_id = #{userId}
+          AND course_id = #{courseId}
+          AND application_status IN ('WAITING', 'APPROVED')
+    </select>
+
+    <select id="nextCourseApplicationId" resultType="long">
+        SELECT COURSE_APPLICATION_SEQ.NEXTVAL
+        FROM DUAL
+    </select>
+
+    <insert id="insertCourseApplication">
+        INSERT INTO COURSE_APPLICATION (
+            application_id,
+            user_id,
+            course_id,
+            application_status,
+            application_type,
+            applied_at,
+            approved_at
+        ) VALUES (
+            #{applicationId},
+            #{userId},
+            #{courseId},
+            #{applicationStatus},
+            #{applicationType},
+            SYSDATE,
+            SYSDATE
+        )
+    </insert>
+
+    <select id="findCourseLearningId" resultType="long">
+        SELECT course_learning_id
+        FROM COURSE_LEARNING_STATUS
+        WHERE user_id = #{userId}
+          AND course_id = #{courseId}
+    </select>
+
+    <select id="nextCourseLearningStatusId" resultType="long">
+        SELECT COURSE_LEARNING_STATUS_SEQ.NEXTVAL
+        FROM DUAL
+    </select>
+
+    <insert id="insertCourseLearningStatus">
+        INSERT INTO COURSE_LEARNING_STATUS (
+            course_learning_id,
+            application_id,
+            user_id,
+            course_id,
+            progress_rate,
+            started_at,
+            completed_at,
+            status,
+            updated_at
+        ) VALUES (
+            #{courseLearningId},
+            #{applicationId},
+            #{userId},
+            #{courseId},
+            0,
+            NULL,
+            NULL,
+            #{status},
+            SYSDATE
+        )
+    </insert>
+
+    <update id="resetCourseLearningStatus">
+        UPDATE COURSE_LEARNING_STATUS
+        SET application_id = #{applicationId},
+            progress_rate = 0,
+            started_at = NULL,
+            completed_at = NULL,
+            status = #{status},
+            updated_at = SYSDATE
+        WHERE course_learning_id = #{courseLearningId}
+    </update>
+
+    <update id="increaseOfflineCurrentApplicantCount">
+        UPDATE OFFLINE_COURSE
+        SET current_applicant_count = current_applicant_count + 1
+        WHERE course_id = #{courseId}
+    </update>
+
+    <select id="findActiveCourseApplicationForUpdate"
+            resultType="com.hlinks.domain.course.dto.CourseApplicationCancelTargetDto">
+        SELECT
+            application_id AS application_id,
+            user_id AS user_id,
+            course_id AS course_id,
+            application_status AS application_status
+        FROM COURSE_APPLICATION
+        WHERE application_id = (
+            SELECT MAX(application_id)
+            FROM COURSE_APPLICATION
+            WHERE user_id = #{userId}
+              AND course_id = #{courseId}
+              AND application_status IN ('WAITING', 'APPROVED')
+        )
+        FOR UPDATE
+    </select>
+
+    <update id="cancelCourseApplication">
+        UPDATE COURSE_APPLICATION
+        SET application_status = #{applicationStatus},
+            canceled_at = SYSDATE
+        WHERE application_id = #{applicationId}
+          AND application_status IN ('WAITING', 'APPROVED')
+    </update>
+
+    <update id="cancelCourseLearningStatus">
+        UPDATE COURSE_LEARNING_STATUS
+        SET status = #{status},
+            updated_at = SYSDATE
+        WHERE application_id = #{applicationId}
+    </update>
+
+    <update id="decreaseOfflineCurrentApplicantCount">
+        UPDATE OFFLINE_COURSE
+        SET current_applicant_count = current_applicant_count - 1
+        WHERE course_id = #{courseId}
+          AND current_applicant_count &gt; 0
+    </update>
 
 </mapper>

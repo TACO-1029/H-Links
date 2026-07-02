@@ -1,14 +1,25 @@
 package com.hlinks.domain.course.controller;
 
+import com.hlinks.domain.course.dto.CourseApplyResponseDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.domain.course.service.CourseService;
+import com.hlinks.global.response.SuccessResponse;
+import com.hlinks.global.response.code.SuccessResponseCode;
+import com.hlinks.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
 
@@ -50,17 +61,30 @@ public class CourseController {
 
     /*
     강의 신청
-    - 강의 신청 가능여부 검증
-    - 강의 신청
-    - 학습 진행 데이터 초기화
+    */
+    @PostMapping("/{courseId}/applications")
+    @ResponseBody
+    public ResponseEntity<SuccessResponse<CourseApplyResponseDto>> applyCourse(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-     */
+        CourseApplyResponseDto result = courseService.applyCourse(courseId, userDetails.getUserId());
 
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(SuccessResponse.of(result, SuccessResponseCode.SUCCESS_CREATED));
+    }
 
-    /*
-    강의 신청 취소
-    - 강의 취소
-    - 학습 진행 데이터 초기화
+    @DeleteMapping("/{courseId}/applications")
+    @ResponseBody
+    public ResponseEntity<SuccessResponse<Void>> cancelCourse(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-     */
+        courseService.cancelCourse(courseId, userDetails.getUserId());
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.empty());
+    }
 }
