@@ -58,12 +58,12 @@ public class CourseController {
      * GET /courses/1, GET /courses/55 형태로 진입합니다.
      */
     @GetMapping("/{courseId}")
-    public String detail(@PathVariable("courseId") Long courseId, Model model) {
+    public String detail(@PathVariable("courseId") Long courseId, Long userId, Model model) {
         log.info("강의 상세 화면 진입 - 요청 강의 ID: {}", courseId);
 
         // 1. Service를 호출하여 검증이 완료된 온/오프라인 통합 상세 데이터 가져오기
         // (ID가 없거나 잘못된 경우 Service 내부에서 BaseException이 발생하여 전역 에러 핸들러로 빠집니다)
-        CourseDetailResponseDto courseDetail = courseService.getCourseDetail(courseId);
+        CourseDetailResponseDto courseDetail = courseService.getCourseDetail(courseId, userId);
 
         // 2. Thymeleaf가 구멍 뚫린 란에 채워 넣을 수 있도록 Model에 바인딩
         model.addAttribute("course", courseDetail);
