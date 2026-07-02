@@ -41,9 +41,9 @@
         <div class="site-header__actions" sec:authorize="isAuthenticated()">
             <div class="site-header__profile-menu">
                 <a class="site-header__profile"
+                   th:classappend="${activeMenu == 'mypage'} ? ' is-active'"
                    th:href="@{/mypage}"
                    aria-label="마이페이지로 이동">
-                    <!-- TODO: 하드코딩 된 부분 처리 (우진) -->
                     <div class="site-header__profile-text">
                         <span class="site-header__team"
                               th:text="${#authentication.principal.departmentName != null ? #authentication.principal.departmentName : '소속 미지정'}">
@@ -64,6 +64,31 @@
                 </a>
 
                 <div class="site-header__dropdown" role="menu">
+                    <a class="site-header__dropdown-link"
+                       th:classappend="${activeSubMenu == 'myInfo'} ? ' is-active'"
+                       th:href="@{/mypage}"
+                       role="menuitem">
+                        내 정보
+                    </a>
+                    <a class="site-header__dropdown-link"
+                       th:classappend="${activeSubMenu == 'myCourses'} ? ' is-active'"
+                       th:href="@{/mypage/courses}"
+                       role="menuitem">
+                        내 수강현황
+                    </a>
+                    <a class="site-header__dropdown-link"
+                       th:classappend="${activeSubMenu == 'myApplications'} ? ' is-active'"
+                       th:href="@{/mypage/applications}"
+                       role="menuitem">
+                        내 강의 신청 내역
+                    </a>
+                    <a class="site-header__dropdown-link"
+                       th:classappend="${activeSubMenu == 'myEvaluation'} ? ' is-active'"
+                       th:href="@{/mypage/evaluation}"
+                       role="menuitem">
+                        내 역량 평가
+                    </a>
+                    <div class="site-header__dropdown-divider" aria-hidden="true"></div>
                     <form class="site-header__logout-form" th:action="@{/logout}" method="post">
                         <input type="hidden"
                                th:name="${_csrf.parameterName}"
@@ -75,6 +100,31 @@
                         </button>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="site-header__submenu" aria-label="하위 메뉴">
+        <div class="site-header__mega-inner">
+            <div class="site-header__submenu-group site-header__submenu-group--courses">
+                <a class="site-header__submenu-item"
+                   th:classappend="${activeSubMenu == 'careerPath'} ? ' is-active'"
+                   th:href="@{/courses/career-path}">
+                    커리어패스
+                </a>
+                <a class="site-header__submenu-item"
+                   th:classappend="${activeSubMenu == 'careerHigh'} ? ' is-active'"
+                   th:href="@{/courses/career-high}">
+                    커리어하이
+                </a>
+            </div>
+
+            <div class="site-header__submenu-group site-header__submenu-group--recommend">
+                <a class="site-header__submenu-item"
+                   th:classappend="${activeSubMenu == 'kcy'} ? ' is-active'"
+                   th:href="@{/recommend/kcy}">
+                    KCY 테스트
+                </a>
             </div>
         </div>
     </div>
