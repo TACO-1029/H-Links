@@ -9,46 +9,122 @@
             parameterType="string"
             resultType="com.hlinks.domain.course.dto.CourseListResponseDto">
         SELECT
-            c.course_id AS course_id,
-            c.category_type AS category_type,
-            c.course_type AS course_type,
-            c.course_title AS course_title,
-            c.instructor_name AS instructor_name,
-            c.thumbnail_url AS thumbnail_url,
-            CASE
-                WHEN c.course_type = 'ONLINE' THEN
-                    CASE
-                        WHEN onc.status = 'CANCELED' THEN 'CANCELED'
-                        ELSE 'ALWAYS_OPEN'
-                    END
-                WHEN c.course_type = 'OFFLINE' THEN
-                    CASE
-                        WHEN ofc.status = 'CANCELED' THEN 'CANCELED'
-                        WHEN SYSDATE &lt; ofc.apply_start_date THEN 'BEFORE_APPLY'
-                        WHEN SYSDATE BETWEEN ofc.apply_start_date AND ofc.apply_end_date THEN 'APPLYING'
-                        WHEN SYSDATE BETWEEN ofc.apply_end_date AND ofc.course_start_date THEN 'APPLY_CLOSED'
-                        WHEN SYSDATE BETWEEN ofc.course_start_date AND ofc.course_end_date THEN 'COURSE_IN_PROGRESS'
-                        WHEN SYSDATE &gt; ofc.course_end_date THEN 'COURSE_ENDED'
-                        ELSE 'UNKNOWN'
-                    END
-                ELSE 'UNKNOWN'
-            END AS virtual_status
+        c.course_id AS courseId,
+        c.category_type AS categoryType,
+        c.course_type AS courseType,
+        c.course_title AS courseTitle,
+        c.instructor_name AS instructorName,
+        c.thumbnail_url AS thumbnailUrl,
+
+        -- 실시간 가상 상태(Computed Status) 계산
+        CASE
+        WHEN c.course_type = 'ONLINE' THEN
+        CASE
+        WHEN onc.status = 'CANCELED' THEN '서비스 종료'
+        ELSE '상시 수강 가능'
+        END
+        WHEN c.course_type = 'OFFLINE' THEN
+        CASE
+        WHEN ofc.status = 'CANCELED' THEN '폐강'
+        -- MyBatis XML에서는 부등호를 &lt; 와 &gt; 로 치환해야 오류가 나지 않습니다.
+        WHEN SYSDATE &lt; ofc.apply_start_date THEN '모집 대기'
+        WHEN SYSDATE BETWEEN ofc.apply_start_date AND ofc.apply_end_date THEN '모집 중'
+        WHEN SYSDATE BETWEEN ofc.apply_end_date AND ofc.course_start_date THEN '모집 마감'
+        WHEN SYSDATE BETWEEN ofc.course_start_date AND ofc.course_end_date THEN '강의 진행 중'
+        WHEN SYSDATE &gt; ofc.course_end_date THEN '강의 종료'
+        ELSE '상태 불명'
+        END
+        ELSE '유형 오류'
+        END AS virtualStatus
+
         FROM COURSE c
         LEFT OUTER JOIN ONLINE_COURSE onc
-            ON c.course_id = onc.course_id
+        ON c.course_id = onc.course_id
         LEFT OUTER JOIN OFFLINE_COURSE ofc
-            ON c.course_id = ofc.course_id
+        ON c.course_id = ofc.course_id
+
         <where>
+            -- 1. 공통 조건: HIDDEN(임시 숨김/비활성화) 강의 원천 제외
             (
-                (c.course_type = 'ONLINE' AND NVL(onc.status, 'OPEN') != 'HIDDEN')
-                OR
-                (c.course_type = 'OFFLINE' AND NVL(ofc.status, 'OPEN') != 'HIDDEN')
+            (c.course_type = 'ONLINE' AND NVL(onc.status, 'OPEN') != 'HIDDEN')
+            OR
+            (c.course_type = 'OFFLINE' AND NVL(ofc.status, 'OPEN') != 'HIDDEN')
             )
+
+            -- 2. 동적 쿼리: 카테고리 값이 파라미터로 넘어올 경우에만 AND 조건 추가
             <if test="categoryType != null and categoryType != ''">
                 AND c.category_type = #{categoryType}
             </if>
         </where>
+
         ORDER BY c.course_id DESC
+    </select>
+
+    <select id="findCourseDetailById" resultType="com.hlinks.domain.course.dto.CourseDetailResponseDto">
+        SELECT
+        C.COURSE_ID             AS courseId,
+        C.CATEGORY_TYPE         AS categoryType,
+        C.COURSE_TYPE           AS courseType,
+        C.COURSE_TITLE          AS courseTitle,
+        C.DESCRIPTION           AS description,
+        C.INSTRUCTOR_NAME       AS instructorName,
+        C.TOTAL_DURATION_TIME   AS totalDurationTime,
+        C.THUMBNAIL_URL         AS thumbnailUrl,
+
+        -- 온라인 강의 정보
+        ONL.COURSE_MATERIAL_URL AS courseMaterialUrl,
+        ONL.STATUS              AS onlineStatus,
+
+        -- 오프라인 강의 정보
+        OFF.CAPACITY            AS capacity,
+        OFF.LOCATION            AS location,
+        OFF.STATUS              AS offlineStatus,
+        OFF.APPLY_START_DATE    AS applyStartDate,
+        OFF.APPLY_END_DATE      AS applyEndDate,
+        OFF.COURSE_START_DATE   AS courseStartDate,
+        OFF.COURSE_END_DATE     AS courseEndDate
+        FROM COURSE C
+        LEFT JOIN ONLINE_COURSE ONL  ON C.COURSE_ID = ONL.COURSE_ID
+        LEFT JOIN OFFLINE_COURSE OFF ON C.COURSE_ID = OFF.COURSE_ID
+        WHERE C.COURSE_ID = #{courseId}
+    </select>
+
+    <select id="findChaptersByCourseId" resultType="com.hlinks.domain.course.dto.ChapterResponseDto">
+        SELECT
+        CHAPTER_ID         AS chapterId,
+        COURSE_ID          AS courseId,
+        CHAPTER_TITLE      AS chapterTitle,
+        CHAPTER_ORDER      AS chapterOrder,
+        VIDEO_URL          AS videoUrl,
+        DURATION_SECONDS   AS durationSeconds,
+        SUMMARY_TEXT       AS summaryText,
+        TRANSCRIPT_TEXT    AS transcriptText
+        FROM COURSE_CHAPTER
+        WHERE COURSE_ID = #{courseId}
+        AND USE_YN = 'Y'
+        ORDER BY CHAPTER_ORDER ASC
+    </select>
+
+    <!-- 강의의 COURSE_SKILL을 싹 다 모아서 PARENT_SKILL_ID에 따라 대분류 Skill(ex: 백엔드, 인프라)만 반환하는 쿼리 -->
+    <select id="findSkillNamesByCourseId" resultType="string">
+        SELECT PS.SKILL_NAME
+        FROM COURSE_SKILL CS
+        JOIN SKILL S ON CS.SKILL_ID = S.SKILL_ID
+        JOIN SKILL PS ON S.PARENT_SKILL_ID = PS.SKILL_ID
+        WHERE CS.COURSE_ID = #{courseId}
+        AND PS.SKILL_TYPE = 'CATEGORY'
+        AND S.USE_YN = 'Y'
+        GROUP BY PS.SKILL_NAME
+        ORDER BY COUNT(PS.SKILL_NAME) DESC
+    </select>
+
+    <select id="findApplicationInfo" resultType="com.hlinks.domain.course.dto.CourseDetailResponseDto">
+        SELECT
+        APPLICATION_STATUS AS applicationStatus,
+        REJECT_REASON      AS rejectReason
+        FROM COURSE_APPLICATION
+        WHERE COURSE_ID = #{courseId}
+        AND USER_ID = #{userId}
     </select>
 
     <select id="findCourseApplyTarget"

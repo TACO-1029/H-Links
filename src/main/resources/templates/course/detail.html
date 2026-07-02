@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${course.courseTitle} + ' - 강의 상세'">강의 상세 - H-Link</title>
+
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ==========================================================================
+           [이슈 #31] 100% 와이어프레임 매칭 - 프리미엄 LMS 구조체 CSS
+           ========================================================================== */
+        body {
+            background-color: #F8FAFC; /* 쾌적한 옅은 회색 배경 */
+            color: #0F172A;
+            font-family: "Pretendard", sans-serif;
+            scroll-behavior: smooth; /* 기본 스크롤 메커니즘 최적화 */
+        }
+
+        .layout-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 32px 24px 80px;
+        }
+
+        /* 1. 상단(좁음) 앵커 */
+        .back-anchor {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748B;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            margin-bottom: 24px;
+            transition: color 0.2s;
+        }
+        .back-anchor:hover {
+            color: #0F172A;
+        }
+
+        /* 중, 하단 그리드 (좌 7 : 우 3) */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 32px;
+            align-items: start;
+        }
+
+        /* 좌측 큰 박스 영역 (Vertically stacked) */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* 공통 박스 스타일 */
+        .premium-box {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.03);
+            overflow: hidden;
+        }
+
+        /* -----------------------------------------
+           [좌측 상단] 전체적인 정보 및 강좌정보 박스
+           ----------------------------------------- */
+        .course-info-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 최상단 라벨 영역 */
+        .info-box-header {
+            padding: 24px 32px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .label-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .label {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .label-status { background: #F1F5F9; color: #475569; }
+        .label-type { background: #EFF6FF; color: #2563EB; }
+        .label-skill { background: #ECFDF5; color: #10B981; border: 1px solid #D1FAE5; }
+        .btn-share {
+            background: none;
+            border: none;
+            color: #94A3B8;
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .btn-share:hover { color: #0F172A; }
+
+        /* 상단 (썸네일 + 타이틀 구조) */
+        .info-box-hero {
+            padding: 0 32px 32px;
+            display: flex;
+            gap: 32px;
+        }
+        .hero-thumb {
+            width: 280px;
+            height: 180px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid #F1F5F9;
+            flex-shrink: 0;
+        }
+        .hero-text-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            justify-content: center;
+        }
+        .hero-title {
+            font-size: 26px;
+            font-weight: 800;
+            line-height: 1.35;
+            margin: 0;
+            color: #0F172A;
+        }
+        .hero-desc {
+            font-size: 15px;
+            color: #64748B;
+            line-height: 1.6;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* 중상단 탭 선택 - 스크롤 위치 고정을 위해 상단 고정 가능 처리 가능성 인프라 */
+        .tab-nav {
+            display: flex;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 0 32px;
+            background: #FFFFFF;
+        }
+        .tab-item {
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #94A3B8;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-item.active {
+            color: #0F172A;
+            border-bottom-color: #0F172A;
+        }
+
+        /* 중하단 강좌정보 목록 */
+        .info-detail-area {
+            padding: 32px;
+            background-color: #FAFAF9;
+            scroll-margin-top: 100px; /* 🌟 핵심: 자동 안착 시 상단 헤더 거터 확보 */
+        }
+        .detail-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0 0 20px 0;
+            color: #1E293B;
+        }
+        .detail-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 24px;
+        }
+        .detail-row {
+            display: flex;
+            align-items: center;
+        }
+        .detail-dt {
+            width: 100px;
+            font-size: 14px;
+            color: #64748B;
+            font-weight: 600;
+        }
+        .detail-dd {
+            font-size: 14px;
+            color: #0F172A;
+            font-weight: 500;
+        }
+
+        /* -----------------------------------------
+           [하단] 커리큘럼 박스
+           ----------------------------------------- */
+        .curriculum-box {
+            padding: 32px;
+            scroll-margin-top: 100px; /* 🌟 핵심: 자동 안착 시 상단 헤더 거터 확보 */
+        }
+        .curr-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .curr-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin: 0;
+            color: #0F172A;
+        }
+        .curr-count {
+            background: #F1F5F9;
+            color: #475569;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* 챕터 목록 래퍼 */
+        .chapter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .chapter-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            background: #FFFFFF;
+            transition: border-color 0.2s;
+        }
+        .chapter-item:hover {
+            border-color: #CBD5E1;
+        }
+        .ch-left {
+            width: 48px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .play-icon {
+            width: 32px;
+            height: 32px;
+            background: #EFF6FF;
+            color: #3B82F6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .ch-mid {
+            flex: 1;
+            padding: 0 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .ch-name {
+            font-size: 15px;
+            font-weight: 700;
+            margin: 0;
+            color: #1E293B;
+        }
+        .ch-info {
+            font-size: 13px;
+            color: #64748B;
+        }
+        .ch-right {
+            flex-shrink: 0;
+        }
+        .ch-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-study-start { background: #10B981; color: #FFFFFF; } /* 초록색 */
+        .btn-study-locked { background: #F1F5F9; color: #94A3B8; cursor: not-allowed; } /* 회색 */
+        .btn-offline-spot { background: #FFFFFF; color: #0F172A; border: 1px solid #E2E8F0; cursor: default; } /* 흰색 */
+
+        /* -----------------------------------------
+           [우측] 끈끈이 작은 박스 (Sticky Sidebar)
+           ----------------------------------------- */
+        .right-column {
+            position: sticky;
+            top: 100px;
+        }
+        .status-card {
+            padding: 24px;
+        }
+
+        /* 상단: 수강 상태 */
+        .sc-top {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .sc-label-small {
+            font-size: 12px;
+            color: #64748B;
+            font-weight: 600;
+        }
+        .sc-status-big {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0F172A;
+        }
+
+        /* 중단: 옅은회색 통계 박스 */
+        .sc-mid-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .stat-box {
+            background: #F8FAFC;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .stat-val {
+            font-size: 16px;
+            font-weight: 800;
+            color: #1E293B;
+        }
+
+        /* 하단: 액션 버튼 묶음 */
+        .sc-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .action-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-apply { background: #10B981; color: #FFFFFF; } /* 초록색 */
+        .btn-apply:hover { background: #059669; }
+        .btn-continue { background: #0F172A; color: #FFFFFF; } /* 검은색 */
+        .btn-continue:hover { background: #1E293B; }
+        .text-offline-only { background: transparent; color: #475569; font-size: 14px; text-align: center; font-weight: 600; padding: 8px 0; }
+        .btn-cancel { background: #FFFFFF; color: #EF4444; border: 1px solid #FCA5A5; } /* 흰색(취소) */
+        .btn-cancel:hover { background: #FEF2F2; }
+
+        /* 맨 아래: 공지 텍스트 */
+        .sc-notice {
+            font-size: 12px;
+            color: #94A3B8;
+            line-height: 1.5;
+            background: #F1F5F9;
+            padding: 16px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="layout-container">
+
+    <a href="/courses" class="back-anchor">
+        <i class="fas fa-arrow-left"></i> 전체 강의 목록으로 돌아가기
+    </a>
+
+    <th:block th:with="isApplied=${course.applicationStatus != null}">
+
+        <div class="content-grid">
+
+            <div class="left-column">
+
+                <article class="premium-box course-info-box">
+
+                    <div class="info-box-header">
+                        <div class="label-group">
+                            <span class="label label-status" th:if="${course.online}" th:text="${course.onlineStatus == 'OPEN' ? '수강가능' : '종료'}">상태</span>
+                            <span class="label label-status" th:unless="${course.online}" th:text="${course.offlineStatus == 'OPEN' ? '접수중' : '마감'}">상태</span>
+                            <span class="label label-type" th:text="${course.online ? '온라인' : '오프라인'}">유형</span>
+                            <span class="label label-skill" th:each="skill : ${course.skillNames}" th:text="${skill}">분야</span>
+                        </div>
+                        <button class="btn-share" title="공유하기">
+                            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                        </button>
+                    </div>
+
+                    <div class="info-box-hero">
+                        <img th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/default_course.png'}"
+                             alt="강의 썸네일" class="hero-thumb">
+                        <div class="hero-text-area">
+                            <h1 class="hero-title" th:text="${course.courseTitle}">강의 타이틀</h1>
+                            <p class="hero-desc" th:text="${course.description}">강의 설명 요약</p>
+                        </div>
+                    </div>
+
+                    <div class="tab-nav">
+                        <div class="tab-item active" data-target="courseInfoSection">강좌정보</div>
+                        <div class="tab-item" data-target="curriculumSection">커리큘럼</div>
+                    </div>
+
+                    <div class="info-detail-area" id="courseInfoSection">
+                        <h3 class="detail-title">강좌정보</h3>
+                        <div class="detail-list">
+                            <div class="detail-row">
+                                <div class="detail-dt">지점</div>
+                                <div class="detail-dd" th:text="${course.online ? '온라인 캠퍼스' : (course.location != null ? course.location : '추후 안내')}"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-dt">강좌구분</div>
+                                <div class="detail-dd" th:text="${course.online ? '온라인' : '오프라인 현장강의'}"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-dt">강사명</div>
+                                <div class="detail-dd" th:text="${course.instructorName != null ? course.instructorName : '인재개발원'}"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-dt">강의시간</div>
+                                <div class="detail-dd" th:text="${course.totalDurationTime != null ? course.totalDurationTime + '시간' : '상시 수강'}"></div>
+                            </div>
+                            <div class="detail-row" th:unless="${course.online}">
+                                <div class="detail-dt">접수기간</div>
+                                <div class="detail-dd" th:if="${course.applyStartDate != null}"
+                                     th:text="${#temporals.format(course.applyStartDate, 'yyyy.MM.dd')} + ' ~ ' + ${#temporals.format(course.applyEndDate, 'yyyy.MM.dd')}"></div>
+                                <div class="detail-dd" th:unless="${course.applyStartDate != null}">상시 접수</div>
+                            </div>
+                            <div class="detail-row" th:unless="${course.online}">
+                                <div class="detail-dt">강의기간</div>
+                                <div class="detail-dd" th:if="${course.courseStartDate != null}"
+                                     th:text="${#temporals.format(course.courseStartDate, 'yyyy.MM.dd')} + ' ~ ' + ${#temporals.format(course.courseEndDate, 'yyyy.MM.dd')}"></div>
+                            </div>
+                            <div class="detail-row" th:if="${course.online}">
+                                <div class="detail-dt">강의/접수기간</div>
+                                <div class="detail-dd">상시 수강 및 접수 가능</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-dt">대상구분</div>
+                                <div class="detail-dd">전 임직원 대상</div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="premium-box curriculum-box" id="curriculumSection">
+                    <div class="curr-header">
+                        <h3 class="curr-title">커리큘럼</h3>
+                        <span class="curr-count" th:text="'총 ' + ${#lists.size(course.chapters)} + '강'">총 0강</span>
+                    </div>
+
+                    <div class="chapter-list">
+                        <div th:if="${#lists.isEmpty(course.chapters)}" style="color:#94A3B8; font-size:14px; text-align:center; padding:20px;">
+                            등록된 커리큘럼 내역이 없습니다.
+                        </div>
+
+                        <div class="chapter-item" th:each="chapter, iterStat : ${course.chapters}">
+                            <div class="ch-left" th:if="${course.online}">
+                                <div class="play-icon"><i class="fa-solid fa-play"></i></div>
+                            </div>
+
+                            <div class="ch-mid">
+                                <h4 class="ch-name" th:text="${iterStat.count} + '강. ' + ${chapter.chapterTitle}">1강. 제목</h4>
+                                <div class="ch-info">
+                                    <span th:if="${course.online}">권장 학습 시간: <span th:text="${chapter.durationSeconds != null ? (chapter.durationSeconds/60) + '분' : '약 30분'}"></span></span>
+                                    <span th:unless="${course.online}">수강 예정 (오프라인 커리큘럼)</span>
+                                </div>
+                            </div>
+
+                            <div class="ch-right">
+                                <th:block th:if="${course.online}">
+                                    <button class="ch-btn btn-study-start" th:if="${isApplied}">학습 시작</button>
+                                    <button class="ch-btn btn-study-locked" th:unless="${isApplied}" disabled>수강 불가</button>
+                                </th:block>
+                                <th:block th:unless="${course.online}">
+                                    <button class="ch-btn btn-offline-spot" disabled>현장 강의</button>
+                                </th:block>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+            </div>
+
+            <div class="right-column">
+                <aside class="premium-box status-card">
+                    <div class="sc-top">
+                        <span class="sc-label-small">수강 상태</span>
+                        <th:block th:if="${course.online}">
+                            <span class="sc-status-big" th:text="${isApplied ? '수강 중' : '신청 전'}">상태</span>
+                        </th:block>
+                        <th:block th:unless="${course.online}">
+                            <span class="sc-status-big" th:text="${isApplied ? (course.applicationStatus == 'COMPLETED' ? '완료' : '미완료') : '신청 전'}">상태</span>
+                        </th:block>
+                    </div>
+
+                    <div class="sc-mid-stats">
+                        <div class="stat-box">
+                            <span class="sc-label-small">신청 인원</span>
+                            <span class="stat-val" th:if="${course.online}">제한 없음</span>
+                            <span class="stat-val" th:unless="${course.online}" th:text="'- / ' + ${course.capacity != null ? course.capacity : 0} + '명'"></span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="sc-label-small">내 진도율</span>
+                            <th:block th:if="${course.online}">
+                                <span class="stat-val" th:text="${isApplied ? '0%' : '-'}"></span>
+                            </th:block>
+                            <th:block th:unless="${course.online}">
+                                <span class="stat-val" th:text="${isApplied ? '미완료' : '-'}"></span>
+                            </th:block>
+                        </div>
+                    </div>
+
+                    <div class="sc-actions">
+                        <th:block th:if="${course.online}">
+                            <button class="action-btn btn-apply" th:unless="${isApplied}">수강 신청하기</button>
+                            <button class="action-btn btn-continue" th:if="${isApplied}">이어서 학습하기</button>
+                        </th:block>
+                        <th:block th:unless="${course.online}">
+                            <div class="text-offline-only">오프라인 현장 강의입니다.</div>
+                            <button class="action-btn btn-apply" th:unless="${isApplied}">오프라인 수강 신청</button>
+                        </th:block>
+                        <button class="action-btn btn-cancel" th:if="${isApplied}">수강 취소</button>
+                    </div>
+
+                    <div class="sc-notice">
+                        접수기간 내 신청 및 취소가 가능하며, 오프라인 과정은 정원 마감 시 신청이 제한됩니다. 오프라인 강의의 완료 여부는 강의 종료일 기준으로 표시됩니다.
+                    </div>
+                </aside>
+            </div>
+
+        </div>
+    </th:block>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabs = document.querySelectorAll('.tab-nav .tab-item');
+        const sections = {
+            courseInfoSection: document.getElementById('courseInfoSection'),
+            curriculumSection: document.getElementById('curriculumSection')
+        };
+
+        // 1. 탭 클릭 시 정밀 스마트 자동 스크롤 처리
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                const targetId = this.getAttribute('data-target');
+                const targetElement = sections[targetId];
+
+                if (targetElement) {
+                    // CSS의 scroll-margin-top(100px) 규격에 맞춰 안전하고 깔끔하게 안착 렌더링
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // 2. 사용자가 스크롤 제어 시 실시간 탭 active 하이라이트 동기화 (UX 고도화)
+        window.addEventListener('scroll', function () {
+            let currentActive = 'courseInfoSection';
+            const scrollPosition = window.scrollY + 120; // 상단 헤더 오차 보정 오프셋
+
+            if (sections.curriculumSection && scrollPosition >= sections.curriculumSection.offsetTop) {
+                currentActive = 'curriculumSection';
+            }
+
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-target') === currentActive) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
