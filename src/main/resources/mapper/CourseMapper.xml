@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.course.mapper.CourseMapper">
+
+    <select id="findAllCourses"
+            parameterType="string"
+            resultType="com.hlinks.domain.course.dto.CourseListResponseDto">
+        SELECT
+        c.course_id AS courseId,
+        c.category_type AS categoryType,
+        c.course_type AS courseType,
+        c.course_title AS courseTitle,
+        c.instructor_name AS instructorName,
+        c.thumbnail_url AS thumbnailUrl,
+
+        -- 실시간 가상 상태(Computed Status) 계산
+        CASE
+        WHEN c.course_type = 'ONLINE' THEN
+        CASE
+        WHEN onc.status = 'CANCELED' THEN '서비스 종료'
+        ELSE '상시 수강 가능'
+        END
+        WHEN c.course_type = 'OFFLINE' THEN
+        CASE
+        WHEN ofc.status = 'CANCELED' THEN '폐강'
+        -- MyBatis XML에서는 부등호를 &lt; 와 &gt; 로 치환해야 오류가 나지 않습니다.
+        WHEN SYSDATE &lt; ofc.apply_start_date THEN '모집 대기'
+        WHEN SYSDATE BETWEEN ofc.apply_start_date AND ofc.apply_end_date THEN '모집 중'
+        WHEN SYSDATE BETWEEN ofc.course_start_date AND ofc.course_end_date THEN '강의 진행 중'
+        WHEN SYSDATE &gt; ofc.course_end_date THEN '강의 종료'
+        ELSE '상태 불명'
+        END
+        ELSE '유형 오류'
+        END AS virtualStatus
+
+        FROM COURSE c
+        LEFT OUTER JOIN ONLINE_COURSE onc
+        ON c.course_id = onc.course_id
+        LEFT OUTER JOIN OFFLINE_COURSE ofc
+        ON c.course_id = ofc.course_id
+
+        <where>
+            -- 1. 공통 조건: HIDDEN(임시 숨김/비활성화) 강의 원천 제외
+            (
+            (c.course_type = 'ONLINE' AND NVL(onc.status, 'OPEN') != 'HIDDEN')
+            OR
+            (c.course_type = 'OFFLINE' AND NVL(ofc.status, 'OPEN') != 'HIDDEN')
+            )
+
+            -- 2. 동적 쿼리: 카테고리 값이 파라미터로 넘어올 경우에만 AND 조건 추가
+            <if test="categoryType != null and categoryType != ''">
+                AND c.category_type = #{categoryType}
+            </if>
+        </where>
+
+        ORDER BY c.course_id DESC
+    </select>
+
+</mapper>
