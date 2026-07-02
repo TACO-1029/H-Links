@@ -47,4 +47,20 @@ public class CourseController {
         // 4. src/main/resources/templates/course/index.html 파일로 렌더링 포워딩
         return "course/index";
     }
+
+    /*
+    강의 신청
+    - 강의 신청 가능여부 검증
+    - 강의 신청
+    - 학습 진행 데이터 초기화
+
+     */
+
+
+    /*
+    강의 신청 취소
+    - 강의 취소
+    - 학습 진행 데이터 초기화
+
+     */
 }
