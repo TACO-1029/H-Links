@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.quiz.mapper.QuizMapper">
+
+    <insert id="insertQuiz" parameterType="com.hlinks.domain.quiz.entity.Quiz">
+        <selectKey keyProperty="quizId" resultType="long" order="BEFORE">
+            SELECT QUIZ_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO QUIZ (
+        QUIZ_ID,
+        COURSE_ID,
+        CHAPTER_ID,
+        QUESTION_TYPE,
+        QUESTION_TEXT,
+        ANSWER_TEXT,
+        EXPLANATION,
+        DIFFICULTY,
+        STATUS,
+        AI_GENERATED_YN,
+        CREATED_AT
+        )
+        VALUES (
+        #{quizId},
+        #{courseId},
+        #{chapterId},
+        #{questionType},
+        #{questionText},
+        #{answerText},
+        #{explanation},
+        #{difficulty},
+        #{status},
+        #{aiGeneratedYn},
+        SYSDATE
+        )
+    </insert>
+
+    <insert id="insertQuizOption" parameterType="com.hlinks.domain.quiz.entity.QuizOption">
+        <selectKey keyProperty="optionId" resultType="long" order="BEFORE">
+            SELECT QUIZ_OPTION_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO QUIZ_OPTION (
+        OPTION_ID,
+        QUIZ_ID,
+        OPTION_NO,
+        OPTION_TEXT,
+        CORRECT_YN
+        )
+        VALUES (
+        #{optionId},
+        #{quizId},
+        #{optionNo},
+        #{optionText},
+        #{correctYn}
+        )
+    </insert>
+
+    <select id="findByChapterId" resultType="com.hlinks.domain.quiz.entity.Quiz">
+        SELECT
+        QUIZ_ID AS quizId,
+        COURSE_ID AS courseId,
+        CHAPTER_ID AS chapterId,
+        QUESTION_TYPE AS questionType,
+        QUESTION_TEXT AS questionText,
+        ANSWER_TEXT AS answerText,
+        EXPLANATION AS explanation,
+        DIFFICULTY AS difficulty,
+        STATUS AS status,
+        AI_GENERATED_YN AS aiGeneratedYn
+        FROM QUIZ
+        WHERE CHAPTER_ID = #{chapterId}
+        ORDER BY QUIZ_ID
+    </select>
+
+    <select id="findOptionsByQuizId" resultType="com.hlinks.domain.quiz.entity.QuizOption">
+        SELECT
+        OPTION_ID AS optionId,
+        QUIZ_ID AS quizId,
+        OPTION_NO AS optionNo,
+        OPTION_TEXT AS optionText,
+        CORRECT_YN AS correctYn
+        FROM QUIZ_OPTION
+        WHERE QUIZ_ID = #{quizId}
+        ORDER BY OPTION_NO
+    </select>
+
+</mapper>
