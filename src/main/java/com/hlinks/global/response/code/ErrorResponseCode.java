@@ -24,7 +24,10 @@ public enum ErrorResponseCode implements BaseResponseCode {
     FFMPEG_IO_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "FFMPEG_500_6", "ffmpeg 실행 중 IO 오류가 발생했습니다."),
     FFMPEG_INTERRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "FFMPEG_500_7", "ffmpeg 실행이 중단되었습니다."),
     FFMPEG_TEMP_FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FFMPEG_500_8", "ffmpeg 임시 파일 삭제에 실패했습니다."),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "GLOBAL_500", "서버 내부 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "GLOBAL_500", "서버 내부 오류가 발생했습니다."),
+
+    // Course Domain
+    COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "GLOBAL_404_1", "존재하지 않는 강의입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
