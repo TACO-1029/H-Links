@@ -11,5 +11,5 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AiQuizGenerateResponse {
 
-    private List<AiGeneratedQuizDto> quizzes;
+    private List<AiGeneratedQuiz> quizzes;
 }

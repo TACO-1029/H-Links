@@ -9,12 +9,12 @@ import java.util.List;
 @Getter
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AiGeneratedQuizDto {
+public class AiGeneratedQuiz {
 
     private String questionType;
     private String questionText;
     private String difficulty;
     private String explanation;
     private String answerText;
-    private List<AiGeneratedQuizOptionDto> options;
+    private List<AiGeneratedQuizOption> options;
 }
