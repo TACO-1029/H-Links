@@ -14,6 +14,10 @@ public interface QuizMapper {
 
     int insertQuizOption(QuizOption option);
 
+    Quiz findById(@Param("quizId") Long quizId);
+
+    List<Quiz> findByCourseId(@Param("courseId") Long courseId);
+
     List<Quiz> findByChapterId(@Param("chapterId") Long chapterId);
 
     List<QuizOption> findOptionsByQuizId(@Param("quizId") Long quizId);

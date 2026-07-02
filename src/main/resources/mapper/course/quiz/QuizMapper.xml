@@ -59,6 +59,23 @@
         )
     </insert>
 
+    <select id="findById" resultType="com.hlinks.domain.quiz.entity.Quiz">
+        SELECT
+        QUIZ_ID AS quizId,
+        COURSE_ID AS courseId,
+        CHAPTER_ID AS chapterId,
+        QUESTION_TYPE AS questionType,
+        QUESTION_TEXT AS questionText,
+        ANSWER_TEXT AS answerText,
+        EXPLANATION AS explanation,
+        DIFFICULTY AS difficulty,
+        STATUS AS status,
+        AI_GENERATED_YN AS aiGeneratedYn,
+        CREATED_AT AS createdAt
+        FROM QUIZ
+        WHERE QUIZ_ID = #{quizId}
+    </select>
+
     <select id="findByChapterId" resultType="com.hlinks.domain.quiz.entity.Quiz">
         SELECT
         QUIZ_ID AS quizId,
@@ -70,9 +87,28 @@
         EXPLANATION AS explanation,
         DIFFICULTY AS difficulty,
         STATUS AS status,
-        AI_GENERATED_YN AS aiGeneratedYn
+        AI_GENERATED_YN AS aiGeneratedYn,
+        CREATED_AT AS createdAt
         FROM QUIZ
         WHERE CHAPTER_ID = #{chapterId}
+        ORDER BY QUIZ_ID
+    </select>
+
+    <select id="findByCourseId" resultType="com.hlinks.domain.quiz.entity.Quiz">
+        SELECT
+        QUIZ_ID AS quizId,
+        COURSE_ID AS courseId,
+        CHAPTER_ID AS chapterId,
+        QUESTION_TYPE AS questionType,
+        QUESTION_TEXT AS questionText,
+        ANSWER_TEXT AS answerText,
+        EXPLANATION AS explanation,
+        DIFFICULTY AS difficulty,
+        STATUS AS status,
+        AI_GENERATED_YN AS aiGeneratedYn,
+        CREATED_AT AS createdAt
+        FROM QUIZ
+        WHERE COURSE_ID = #{courseId}
         ORDER BY QUIZ_ID
     </select>
 

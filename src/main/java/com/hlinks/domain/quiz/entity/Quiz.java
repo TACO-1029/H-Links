@@ -3,6 +3,8 @@ package com.hlinks.domain.quiz.entity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 public class Quiz {
@@ -18,4 +20,5 @@ public class Quiz {
     private String difficulty;
     private String status;
     private String aiGeneratedYn;
+    private LocalDateTime createdAt;
 }
