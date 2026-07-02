@@ -20,14 +20,27 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
     // CSRF는 끄지 않습니다. Thymeleaf form에서 token 넣을 예정입니다.
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
+                        .requestMatchers(
+                                "/login",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/fonts/**"
+                        ).permitAll()
+
+                        // HR API
+                        .requestMatchers("/api/course-chapters/**").hasAuthority("ROLE_HR")
+                        .requestMatchers("/api/quizzes/**").hasAuthority("ROLE_HR")
+
+                        // Page routes
                         .requestMatchers("/team/**").hasAuthority("ROLE_LEADER")
                         .requestMatchers("/hr/**").hasAuthority("ROLE_HR")
+
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

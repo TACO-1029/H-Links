@@ -38,7 +38,7 @@ public class QuizController {
         return SuccessResponse.from(quizService.getQuizzesByChapterId(chapterId));
     }
 
-    @GetMapping("/{quizId}")
+    @GetMapping("/{quizId:\\d+}")
     public SuccessResponse<QuizResponse> getQuiz(@PathVariable Long quizId) {
         return SuccessResponse.from(quizService.getQuiz(quizId));
     }
