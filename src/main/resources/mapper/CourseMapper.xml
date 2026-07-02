@@ -60,4 +60,71 @@
         ORDER BY c.course_id DESC
     </select>
 
+    <select id="findCourseDetailById" resultType="com.hlinks.domain.course.dto.CourseDetailResponseDto">
+        SELECT
+        C.COURSE_ID             AS courseId,
+        C.CATEGORY_TYPE         AS categoryType,
+        C.COURSE_TYPE           AS courseType,
+        C.COURSE_TITLE          AS courseTitle,
+        C.DESCRIPTION           AS description,
+        C.INSTRUCTOR_NAME       AS instructorName,
+        C.TOTAL_DURATION_TIME   AS totalDurationTime,
+        C.THUMBNAIL_URL         AS thumbnailUrl,
+
+        -- 온라인 강의 정보
+        ONL.COURSE_MATERIAL_URL AS courseMaterialUrl,
+        ONL.STATUS              AS onlineStatus,
+
+        -- 오프라인 강의 정보
+        OFF.CAPACITY            AS capacity,
+        OFF.LOCATION            AS location,
+        OFF.STATUS              AS offlineStatus,
+        OFF.APPLY_START_DATE    AS applyStartDate,
+        OFF.APPLY_END_DATE      AS applyEndDate,
+        OFF.COURSE_START_DATE   AS courseStartDate,
+        OFF.COURSE_END_DATE     AS courseEndDate
+        FROM COURSE C
+        LEFT JOIN ONLINE_COURSE ONL  ON C.COURSE_ID = ONL.COURSE_ID
+        LEFT JOIN OFFLINE_COURSE OFF ON C.COURSE_ID = OFF.COURSE_ID
+        WHERE C.COURSE_ID = #{courseId}
+    </select>
+
+    <select id="findChaptersByCourseId" resultType="com.hlinks.domain.course.dto.ChapterResponseDto">
+        SELECT
+        CHAPTER_ID         AS chapterId,
+        COURSE_ID          AS courseId,
+        CHAPTER_TITLE      AS chapterTitle,
+        CHAPTER_ORDER      AS chapterOrder,
+        VIDEO_URL          AS videoUrl,
+        DURATION_SECONDS   AS durationSeconds,
+        SUMMARY_TEXT       AS summaryText,
+        TRANSCRIPT_TEXT    AS transcriptText
+        FROM COURSE_CHAPTER
+        WHERE COURSE_ID = #{courseId}
+        AND USE_YN = 'Y'
+        ORDER BY CHAPTER_ORDER ASC
+    </select>
+
+    <!-- 강의의 COURSE_SKILL을 싹 다 모아서 PARENT_SKILL_ID에 따라 대분류 Skill(ex: 백엔드, 인프라)만 반환하는 쿼리 -->
+    <select id="findSkillNamesByCourseId" resultType="string">
+        SELECT PS.SKILL_NAME
+        FROM COURSE_SKILL CS
+        JOIN SKILL S ON CS.SKILL_ID = S.SKILL_ID
+        JOIN SKILL PS ON S.PARENT_SKILL_ID = PS.SKILL_ID
+        WHERE CS.COURSE_ID = #{courseId}
+        AND PS.SKILL_TYPE = 'CATEGORY'
+        AND S.USE_YN = 'Y'
+        GROUP BY PS.SKILL_NAME
+        ORDER BY COUNT(PS.SKILL_NAME) DESC
+    </select>
+
+    <select id="findApplicationInfo" resultType="com.hlinks.domain.course.dto.CourseDetailResponseDto">
+        SELECT
+        APPLICATION_STATUS AS applicationStatus,
+        REJECT_REASON      AS rejectReason
+        FROM COURSE_APPLICATION
+        WHERE COURSE_ID = #{courseId}
+        AND USER_ID = #{userId}
+    </select>
+
 </mapper>
