@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCY 결과</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/kcy.css}">
+</head>
+<body class="kcy-page kcy-result-page">
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="kcy-result-shell" th:with="code=${kcyResult.code}">
+    <section class="kcy-result-layout" aria-labelledby="kcy-result-title">
+        <aside class="kcy-profile-wrap">
+            <div class="kcy-profile-glow" aria-hidden="true"></div>
+            <div class="kcy-profile-card">
+                <div class="kcy-profile-card__shine" aria-hidden="true"></div>
+                <header class="kcy-profile-card__header">
+                    <div>
+                        <p class="kcy-profile-card__eyebrow">ENGINEER PROFILE</p>
+                        <h1 th:text="${kcyResult.title}">심연 탐구자</h1>
+                    </div>
+                    <span class="kcy-profile-card__badge">KCY CHARACTER</span>
+                </header>
+
+                <div class="kcy-profile-card__image">
+                    <img th:src="@{${kcyResult.imagePath}}"
+                         th:alt="${kcyResult.title + ' 유형 이미지'}">
+                    <span>KCY CHARACTER</span>
+                </div>
+
+                <div class="kcy-profile-card__summary">
+                    <div class="kcy-profile-card__summary-title">
+                        <span>STRENGTH</span>
+                        <strong th:text="${kcyResult.title}">심연 탐구자</strong>
+                    </div>
+                    <p th:text="${kcyResult.description}">
+                        설계와 깊은 기술 탐구를 함께 중시하는 유형입니다.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <div class="kcy-result-content">
+            <section class="kcy-result-card kcy-result-card--headline">
+                <p class="kcy-result-card__eyebrow">진단 결과 대시보드</p>
+                <h2 id="kcy-result-title">
+                    사용자 님의 엔지니어 성향 프로파일
+                </h2>
+                <p>선정 기준 일자 : <time th:text="${#dates.format(#dates.createNow(), 'yyyy. MM. dd.')}">2026. 07. 02.</time></p>
+            </section>
+
+            <section class="kcy-result-card" aria-labelledby="kcy-axis-title">
+                <div class="kcy-result-card__header">
+                    <h2 id="kcy-axis-title">핵심 분석 축</h2>
+                    <p>응답 결과를 기준으로 개발 방식과 협업 성향을 종합 분석합니다.</p>
+                </div>
+
+                <div class="kcy-axis-grid">
+                    <article class="kcy-axis"
+                             th:style="${#strings.substring(code, 0, 1) == 'A'} ? '--axis-left: 65%' : '--axis-left: 35%'">
+                        <div class="kcy-axis__labels">
+                            <strong>실행 중심</strong>
+                            <strong>설계 중심</strong>
+                        </div>
+                        <div class="kcy-axis__bar"><span></span></div>
+                        <p>
+                            <strong th:text="${#strings.substring(code, 0, 1) == 'A' ? '실행 중심 65%' : '설계 중심 65%'}">실행 중심 65%</strong>
+                            <span th:text="${#strings.substring(code, 0, 1) == 'A' ? '설계 중심 35%' : '실행 중심 35%'}">설계 중심 35%</span>
+                        </p>
+                        <p>바로 구현하며 검증하는지, 구조를 먼저 설계하는지 확인합니다.</p>
+                    </article>
+
+                    <article class="kcy-axis"
+                             th:style="${#strings.substring(code, 1, 2) == 'W'} ? '--axis-left: 65%' : '--axis-left: 35%'">
+                        <div class="kcy-axis__labels">
+                            <strong>폭넓은 적응</strong>
+                            <strong>깊은 전문성</strong>
+                        </div>
+                        <div class="kcy-axis__bar"><span></span></div>
+                        <p>
+                            <strong th:text="${#strings.substring(code, 1, 2) == 'W' ? '폭넓은 적응 65%' : '폭넓은 적응 35%'}">폭넓은 적응 65%</strong>
+                            <span th:text="${#strings.substring(code, 1, 2) == 'W' ? '깊은 전문성 35%' : '깊은 전문성 65%'}">깊은 전문성 35%</span>
+                        </p>
+                        <p>여러 기술을 넓게 다루는지, 특정 영역을 깊게 파고드는지 확인합니다.</p>
+                    </article>
+
+                    <article class="kcy-axis"
+                             th:style="${#strings.substring(code, 2, 3) == 'I'} ? '--axis-left: 65%' : '--axis-left: 35%'">
+                        <div class="kcy-axis__labels">
+                            <strong>자율 몰입</strong>
+                            <strong>협업 조율</strong>
+                        </div>
+                        <div class="kcy-axis__bar"><span></span></div>
+                        <p>
+                            <strong th:text="${#strings.substring(code, 2, 3) == 'I' ? '자율 몰입 65%' : '협업 조율 65%'}">자율 몰입 65%</strong>
+                            <span th:text="${#strings.substring(code, 2, 3) == 'I' ? '협업 조율 35%' : '자율 몰입 35%'}">협업 조율 35%</span>
+                        </p>
+                        <p>개인 몰입형으로 일하는지, 팀 단위 조율을 선호하는지 확인합니다.</p>
+                    </article>
+
+                    <article class="kcy-axis"
+                             th:style="${#strings.substring(code, 3, 4) == 'P'} ? '--axis-left: 65%' : '--axis-left: 35%'">
+                        <div class="kcy-axis__labels">
+                            <strong>AI 보조 활용</strong>
+                            <strong>직접 구현 중심</strong>
+                        </div>
+                        <div class="kcy-axis__bar"><span></span></div>
+                        <p>
+                            <strong th:text="${#strings.substring(code, 3, 4) == 'P' ? 'AI 보조 활용 65%' : '직접 구현 중심 65%'}">AI 보조 활용 65%</strong>
+                            <span th:text="${#strings.substring(code, 3, 4) == 'P' ? '직접 구현 중심 35%' : 'AI 보조 활용 35%'}">직접 구현 중심 35%</span>
+                        </p>
+                        <p>AI 도구를 적극 활용하는지, 직접 원리를 파악해 구현하는지 확인합니다.</p>
+                    </article>
+                </div>
+            </section>
+
+            <!-- TODO: 성향 기반 추천 솔루션은 MVP 이후 추천 기능과 연동할 때 활성화합니다.
+            <section class="kcy-result-card kcy-solution" aria-labelledby="kcy-solution-title">
+                <div class="kcy-result-card__header">
+                    <h2 id="kcy-solution-title">성향 기반 추천 솔루션</h2>
+                    <p>현재 성향을 바탕으로 교육 과정과 협업 매칭 방향을 제안합니다.</p>
+                </div>
+
+                <article class="kcy-solution-item">
+                    <span>01</span>
+                    <div>
+                        <strong>추천 교육 과정</strong>
+                        <p>현재 성향의 강점을 극대화할 수 있도록 실무 중심의 교육 과정을 우선 추천합니다.</p>
+                    </div>
+                </article>
+
+                <article class="kcy-solution-item">
+                    <span>02</span>
+                    <div>
+                        <strong>보완 성향 페어 매칭</strong>
+                        <p>서로 다른 강점을 가진 동료와 커피챗을 진행하며 설계, 구현, 협업 관점의 피드백을 받을 수 있습니다.</p>
+                    </div>
+                </article>
+            </section>
+            -->
+
+            <a class="kcy-result-back" th:href="@{/mypage}">
+                마이페이지 대시보드로 돌아가기
+            </a>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
