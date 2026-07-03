@@ -11,10 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -95,26 +92,16 @@ public class MyPageController {
         return "mypage/applications";
     }
 
-    // ========================================================
-    // [APP-004] 신청 취소 기능 연동 (팀원 구현 로직 재활용)
-    // ========================================================
-    /**
-     * 대기 상태 혹은 신청 기간 내의 강의 신청 건을 취소 처리합니다.
-     * 비동기(Fetch API/Axios) 호출에 대응하여 JSON 공통 스펙으로 응답합니다.
-     */
-    @PostMapping("/mypage/applications/cancel")
+    // MyPageController 내부
+    @DeleteMapping("/mypage/applications/{courseId}") // URL을 RESTful하게 변경
     @ResponseBody
     public SuccessResponse<Void> cancelCourseApplication(
-            @RequestParam("courseId") Long courseId,
+            @PathVariable("courseId") Long courseId, // PathVariable로 획득
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         Long userId = userDetails.getUserId();
-        log.info("마이페이지 신청 취소 API 호출 - 강의 ID: {}, 유저 ID: {}", courseId, userId);
+        courseService.cancelCourse(courseId, userId); // 서비스 로직 호출
 
-        // 다른 팀원이 미리 구현해 둔 검증 및 차감 로직이 포함된 서비스 메서드 연동
-        courseService.cancelCourse(courseId, userId);
-
-        // 내부적으로 new SuccessResponse<>(null, SuccessResponseCode.SUCCESS_OK)를 수행해줍니다.
         return SuccessResponse.empty();
     }
 }

@@ -16,7 +16,7 @@
             border: 1px solid var(--color-border-default, #e5e7eb);
             border-radius: var(--radius-xl, 16px);
             padding: 32px;
-            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05));
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.05));
         }
 
         .app-table-container {
@@ -73,10 +73,26 @@
             border-radius: 50px;
             line-height: 1;
         }
-        .badge-status.waiting { background: #fff7ed; color: #ea580c; }
-        .badge-status.approved { background: #f0fdf4; color: #16a34a; }
-        .badge-status.rejected { background: #fef2f2; color: #dc2626; }
-        .badge-status.canceled { background: #f3f4f6; color: #4b5563; }
+
+        .badge-status.waiting {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
+        .badge-status.approved {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .badge-status.rejected {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .badge-status.canceled {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
 
         /* 공통 버튼 인터페이스 제어 */
         .btn-ui {
@@ -110,9 +126,13 @@
         .overlay-modal {
             display: none;
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0, 0, 0, 0.4);
-            align-items: center; justify-content: center;
+            align-items: center;
+            justify-content: center;
             z-index: 1200;
             backdrop-filter: blur(4px);
         }
@@ -122,7 +142,7 @@
             border-radius: var(--radius-xl, 16px);
             width: min(95%, 480px);
             padding: 28px;
-            box-shadow: var(--shadow-lg), 0 20px 25px -5px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-lg), 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
         .header-modal {
@@ -212,23 +232,28 @@
             </article>
         </div>
     </section>
-<!--
-    <nav class="mypage-tabs" aria-label="마이페이지 메뉴">
-        <a class="mypage-tab" th:href="@{/mypage}">내 정보</a>
-        <a class="mypage-tab" th:href="@{/mypage/courses}">수강현황</a>
-        <a class="mypage-tab is-active" th:href="@{/mypage/applications}">신청 내역</a>
-        <a class="mypage-tab" th:href="@{/mypage/evaluation}">역량 평가</a>
-    </nav>
--->
+    <!--
+        <nav class="mypage-tabs" aria-label="마이페이지 메뉴">
+            <a class="mypage-tab" th:href="@{/mypage}">내 정보</a>
+            <a class="mypage-tab" th:href="@{/mypage/courses}">수강현황</a>
+            <a class="mypage-tab is-active" th:href="@{/mypage/applications}">신청 내역</a>
+            <a class="mypage-tab" th:href="@{/mypage/evaluation}">역량 평가</a>
+        </nav>
+    -->
     <section class="mypage-content" aria-label="내 신청 내역 상세" style="grid-template-columns: 1fr;">
         <article class="mypage-table-card">
             <header class="mypage-card__header" style="margin-bottom: 24px;">
-                <p class="mypage-card__eyebrow" style="font-size: var(--text-lg, 18px); font-weight: 700;">강의 / 오프라인 특강 신청 내역</p>
+                <p class="mypage-card__eyebrow" style="font-size: var(--text-lg, 18px); font-weight: 700;">강의 / 오프라인 특강
+                    신청 내역</p>
             </header>
 
-            <div th:if="${#lists.isEmpty(applications)}" style="text-align:center; padding:70px 0; border: 1px dashed var(--color-border-default); border-radius: var(--radius-xl);">
-                <p style="font-size:15px; color:var(--color-text-secondary); margin-bottom:16px;">수강 신청 혹은 배정받은 강의 내역이 존재하지 않습니다.</p>
-                <a th:href="@{/course}" class="btn-ui" style="color:var(--color-brand); border-color:var(--color-brand); text-decoration:none;">교육 콘텐츠 신청하러 가기</a>
+            <div th:if="${#lists.isEmpty(applications)}"
+                 style="text-align:center; padding:70px 0; border: 1px dashed var(--color-border-default); border-radius: var(--radius-xl);">
+                <p style="font-size:15px; color:var(--color-text-secondary); margin-bottom:16px;">수강 신청 혹은 배정받은 강의 내역이
+                    존재하지 않습니다.</p>
+                <a th:href="@{/course}" class="btn-ui"
+                   style="color:var(--color-brand); border-color:var(--color-brand); text-decoration:none;">교육 콘텐츠 신청하러
+                    가기</a>
             </div>
 
             <div th:unless="${#lists.isEmpty(applications)}" class="app-table-container">
@@ -245,8 +270,12 @@
                     <tbody>
                     <tr th:each="app : ${applications}">
                         <td>
-                            <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: 4px;" th:text="${app.courseTitle}">Java 프로그래밍 핵심 가이드</div>
-                            <div style="font-size: 12px; color: var(--color-text-secondary);" th:text="'담당 강사: ' + ${app.instructorName}">김자바</div>
+                            <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: 4px;"
+                                 th:text="${app.courseTitle}">Java 프로그래밍 핵심 가이드
+                            </div>
+                            <div style="font-size: 12px; color: var(--color-text-secondary);"
+                                 th:text="'담당 강사: ' + ${app.instructorName}">김자바
+                            </div>
                         </td>
                         <td>
                                 <span class="course-tag"
@@ -301,13 +330,29 @@
         <div class="header-modal">신청 상세 내역</div>
         <div class="modal-body">
             <div class="grid-modal-info">
-                <div class="row-modal-info"><div class="label-modal">과정명</div><div id="mdlTitle" class="val-modal" style="font-weight:600; color:var(--color-text-primary);">-</div></div>
-                <div class="row-modal-info"><div class="label-modal">교육 형태</div><div id="mdlType" class="val-modal">-</div></div>
-                <div class="row-modal-info"><div class="label-modal">심사 상태</div><div id="mdlStatus" class="val-modal">-</div></div>
+                <div class="row-modal-info">
+                    <div class="label-modal">과정명</div>
+                    <div id="mdlTitle" class="val-modal" style="font-weight:600; color:var(--color-text-primary);">-
+                    </div>
+                </div>
+                <div class="row-modal-info">
+                    <div class="label-modal">교육 형태</div>
+                    <div id="mdlType" class="val-modal">-</div>
+                </div>
+                <div class="row-modal-info">
+                    <div class="label-modal">심사 상태</div>
+                    <div id="mdlStatus" class="val-modal">-</div>
+                </div>
 
                 <div id="mdlOfflinePanel" style="display: none;">
-                    <div class="row-modal-info"><div class="label-modal">강의 장소</div><div id="mdlLocation" class="val-modal" style="color: #7c3aed; font-weight: 500;">-</div></div>
-                    <div class="row-modal-info"><div class="label-modal">교육 일정</div><div id="mdlSchedule" class="val-modal">-</div></div>
+                    <div class="row-modal-info">
+                        <div class="label-modal">강의 장소</div>
+                        <div id="mdlLocation" class="val-modal" style="color: #7c3aed; font-weight: 500;">-</div>
+                    </div>
+                    <div class="row-modal-info">
+                        <div class="label-modal">교육 일정</div>
+                        <div id="mdlSchedule" class="val-modal">-</div>
+                    </div>
                 </div>
             </div>
 
@@ -337,11 +382,19 @@
         document.getElementById('mdlType').innerText = type;
 
         let statusText = '';
-        switch(status) {
-            case 'WAITING': statusText = '승인 대기 중'; break;
-            case 'APPROVED': statusText = '최종 승인 완료'; break;
-            case 'REJECTED': statusText = '심사 반려됨'; break;
-            case 'CANCELED': statusText = '신청 취소 완료'; break;
+        switch (status) {
+            case 'WAITING':
+                statusText = '승인 대기 중';
+                break;
+            case 'APPROVED':
+                statusText = '최종 승인 완료';
+                break;
+            case 'REJECTED':
+                statusText = '심사 반려됨';
+                break;
+            case 'CANCELED':
+                statusText = '신청 취소 완료';
+                break;
         }
         document.getElementById('mdlStatus').innerText = statusText;
 
@@ -387,14 +440,13 @@
         const csrfToken = [[${_csrf.token}]];
         const csrfHeader = [[${_csrf.headerName}]];
 
-        // 팀원의 API 주소 규격: DELETE /courses/{courseId}/applications
-        fetch(`/courses/${courseId}/applications`, {
-            method: 'DELETE',
+        // MyPageController의 DeleteMapping 주소인 /mypage/applications/{courseId} 로 호출
+        fetch(`/mypage/applications/${courseId}`, {
+            method: 'DELETE', // DeleteMapping과 일치
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Content-Type': 'application/json',
-                // [💥 핵심 수정 포인트] 헤더에 CSRF 인증 토큰 강제 주입
-                [csrfHeader]: csrfToken
+                [csrfHeader]: csrfToken // 403 방지용 CSRF 토큰
             }
         })
             .then(response => {
