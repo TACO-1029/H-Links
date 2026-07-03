@@ -338,6 +338,7 @@
         UPDATE OFFLINE_COURSE
         SET current_applicant_count = current_applicant_count + 1
         WHERE course_id = #{courseId}
+        AND current_applicant_count &lt; capacity
     </update>
 
     <select id="findActiveCourseApplicationForUpdate"

@@ -133,7 +133,7 @@ public class CourseService {
     public CourseDetailResponseDto getOnlineChapterPage(Long courseId, Long chapterId, Long userId) {
         CourseDetailResponseDto courseDetail = getCourseDetail(courseId, userId);
 
-        if (!courseDetail.isOnline() || courseDetail.isApplicationNotApplied()) {
+        if (!courseDetail.isOnline() || !ApplicationStatus.APPROVED.name().equals(courseDetail.getApplicationStatus())) {
             throw new BaseException(ErrorResponseCode.FORBIDDEN);
         }
 
@@ -183,7 +183,11 @@ public class CourseService {
         );
 
         if (CourseType.OFFLINE.name().equals(target.getCourseType())) {
-            courseMapper.increaseOfflineCurrentApplicantCount(courseId);
+            int updated = courseMapper.increaseOfflineCurrentApplicantCount(courseId);
+
+            if (updated == 0) {
+                throw new BaseException(CourseErrorCode.COURSE_CAPACITY_FULL);
+            }
         }
 
         log.info("강의 신청 완료 - courseId={}, userId={}, applicationId={}, courseLearningId={}",

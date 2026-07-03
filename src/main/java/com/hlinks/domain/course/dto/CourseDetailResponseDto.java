@@ -165,6 +165,9 @@ public class CourseDetailResponseDto {
         if (isLearningNotStarted()) {
             return "수강 예정";
         }
+        if (isLearningInProgress()) {
+            return "수강 중";
+        }
         return "미신청";
     }
 

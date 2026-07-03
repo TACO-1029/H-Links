@@ -75,7 +75,7 @@ public interface CourseMapper {
             @Param("status") String status
     );
 
-    void increaseOfflineCurrentApplicantCount(@Param("courseId") Long courseId);
+    int increaseOfflineCurrentApplicantCount(@Param("courseId") Long courseId);
 
     CourseApplicationCancelTargetDto findActiveCourseApplicationForUpdate(
             @Param("userId") Long userId,
