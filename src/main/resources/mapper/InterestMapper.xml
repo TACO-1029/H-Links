@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+1. MyBatis는 결과 컬럼 이름을 봅니다.
+    - skillId..skillName..
+2. resultType="InterestDto"로 지정된 클래스를 만든 다음, JavaBean 규칙으로 값을 넣습니다.
+    - InterestDto dto = new InterestDto();
+    - dto.setSkillId(rs.getLong("skillId"));
+    - dto.setSkillName(rs.getString("skillName"));
+    - dto.setSkillType(rs.getString("skillType"));
+3. MyBatis 내부 Reflection이 컬럼 alias와 필드명을 보고 setter를 찾아 호출합니다.
+-->
+<mapper namespace="com.hlinks.domain.interest.mapper.InterestMapper">
+
+    <select id="findAllActiveInterests"
+            resultType="com.hlinks.domain.interest.dto.InterestDto">
+        SELECT
+        SKILL_ID AS skillId,
+        SKILL_NAME AS skillName,
+        SKILL_TYPE AS skillType
+        FROM SKILL
+        WHERE USE_YN = 'Y'
+        ORDER BY SKILL_TYPE, SKILL_NAME
+    </select>
+
+    <select id="findInterestsByUserId"
+            resultType="com.hlinks.domain.interest.dto.InterestDto">
+        SELECT
+        s.SKILL_ID AS skillId,
+        s.SKILL_NAME AS skillName,
+        s.SKILL_TYPE AS skillType
+        FROM USER_INTEREST ui
+        JOIN SKILL s
+        ON ui.SKILL_ID = s.SKILL_ID
+        WHERE ui.USER_ID = #{userId}
+        AND s.USE_YN = 'Y'
+        ORDER BY s.SKILL_TYPE, s.SKILL_NAME
+    </select>
+
+    <select id="countInterestsByUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM USER_INTEREST
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <delete id="deleteInterestsByUserId">
+        DELETE FROM USER_INTEREST
+        WHERE USER_ID = #{userId}
+    </delete>
+
+    <insert id="insertUserInterest">
+        INSERT INTO USER_INTEREST (
+        USER_INTEREST_ID,
+        USER_ID,
+        SKILL_ID,
+        CREATED_AT
+        ) VALUES (
+        USER_INTEREST_SEQ.NEXTVAL,
+        #{userId},
+        #{skillId},
+        SYSDATE
+        )
+    </insert>
+
+</mapper>
