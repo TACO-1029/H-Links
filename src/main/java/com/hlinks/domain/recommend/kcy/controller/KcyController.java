@@ -1,5 +1,6 @@
 package com.hlinks.domain.recommend.kcy.controller;
 
+import com.hlinks.domain.recommend.kcy.dto.KcyScoreDto;
 import com.hlinks.domain.recommend.kcy.dto.KcySubmitRequest;
 import com.hlinks.domain.recommend.kcy.service.KcyService;
 import com.hlinks.domain.recommend.kcy.type.KcyType;
@@ -54,13 +55,15 @@ public class KcyController {
             return "recommend/kcy/test";
         }
         // 결과 가져옵니다. 이떄 공유된 userDetails에서 값을 꺼내옵니다.
-        KcyType result = kcyService.submit(
+        KcyScoreDto score = kcyService.submit(
                 userDetails.getUserId(),
                 request.getSelectedOptionIds()
         );
+        KcyType type = score.toKcyType();
 
         // PRG 패턴이라고 합니다. 새로고침 했을 때, POST가 반복 실행되는 것을 막아줍니다.
-        redirectAttributes.addFlashAttribute("kcyResult", result);
+        redirectAttributes.addFlashAttribute("kcyType", type);
+        redirectAttributes.addFlashAttribute("kcyScore", score);
 
         return "redirect:/recommend/kcy/result";
     }
@@ -74,7 +77,7 @@ public class KcyController {
         model.addAttribute("activeSubMenu", "kcy");
         model.addAttribute("userName", userDetails.getName());
 
-        if (!model.containsAttribute("kcyResult")) {
+        if (!model.containsAttribute("kcyType") || !model.containsAttribute("kcyScore")) {
             return "redirect:/recommend/kcy";
         }
 

@@ -128,7 +128,10 @@
 
         <aside class="mypage-side">
             <article class="mypage-card mypage-side-card">
-                <h2 class="mypage-side-card__title">권한과 관심 분야</h2>
+                <div class="mypage-side-card__header">
+                    <h2 class="mypage-side-card__title">권한과 관심 분야</h2>
+                    <a class="mypage-side-card__link" th:href="@{/interests/edit}">관심분야 수정</a>
+                </div>
 
                 <section class="mypage-chip-section">
                     <h3>서비스 권한</h3>
@@ -148,10 +151,11 @@
                     <div class="mypage-chip-group">
                         <span class="mypage-chip"
                               th:each="interest : ${interests}"
-                              th:text="${interest}">프론트엔드</span>
-                        <span class="mypage-chip" th:if="${interests == null}">프론트엔드</span>
-                        <span class="mypage-chip" th:if="${interests == null}">클라우드</span>
-                        <span class="mypage-chip" th:if="${interests == null}">AI 자동화</span>
+                              th:text="${interest.skillName}">프론트엔드</span>
+                        <span class="mypage-chip"
+                              th:if="${interests == null or #lists.isEmpty(interests)}">
+                            관심분야 없음
+                        </span>
                     </div>
                 </section>
             </article>
