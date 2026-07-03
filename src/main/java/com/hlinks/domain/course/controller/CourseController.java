@@ -1,16 +1,27 @@
 package com.hlinks.domain.course.controller;
 
+import com.hlinks.domain.course.dto.ChapterResponseDto;
+import com.hlinks.domain.course.dto.CourseApplyResponseDto;
 import com.hlinks.domain.course.dto.CourseDetailResponseDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.domain.course.service.CourseService;
+import com.hlinks.global.response.SuccessResponse;
+import com.hlinks.global.response.code.SuccessResponseCode;
+import com.hlinks.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
 
@@ -58,12 +69,12 @@ public class CourseController {
      * GET /courses/1, GET /courses/55 형태로 진입합니다.
      */
     @GetMapping("/{courseId}")
-    public String detail(@PathVariable("courseId") Long courseId, Long userId, Model model) {
+    public String detail(@PathVariable("courseId") Long courseId, @AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         log.info("강의 상세 화면 진입 - 요청 강의 ID: {}", courseId);
 
         // 1. Service를 호출하여 검증이 완료된 온/오프라인 통합 상세 데이터 가져오기
         // (ID가 없거나 잘못된 경우 Service 내부에서 BaseException이 발생하여 전역 에러 핸들러로 빠집니다)
-        CourseDetailResponseDto courseDetail = courseService.getCourseDetail(courseId, userId);
+        CourseDetailResponseDto courseDetail = courseService.getCourseDetail(courseId, userDetails.getUserId());
 
         // 2. Thymeleaf가 구멍 뚫린 란에 채워 넣을 수 있도록 Model에 바인딩
         model.addAttribute("course", courseDetail);
@@ -76,19 +87,68 @@ public class CourseController {
         return "course/detail";
     }
 
-    /*
-    강의 신청
-    - 강의 신청 가능여부 검증
-    - 강의 신청
-    - 학습 진행 데이터 초기화
+    @GetMapping("/{courseId}/chapters/{chapterId}")
+    public String chapter(
+            @PathVariable("courseId") Long courseId,
+            @PathVariable("chapterId") Long chapterId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model) {
 
-     */
+        log.info("온라인 강의 챕터 화면 진입 - courseId={}, chapterId={}", courseId, chapterId);
+
+        CourseDetailResponseDto courseDetail =
+                courseService.getOnlineChapterPage(courseId, chapterId, userDetails.getUserId());
+        ChapterResponseDto currentChapter = courseDetail.getChapters().stream()
+                .filter(chapter -> chapter.getChapterId().equals(chapterId))
+                .findFirst()
+                .orElseThrow();
+
+        model.addAttribute("course", courseDetail);
+        model.addAttribute("currentChapter", currentChapter);
+        model.addAttribute("activeMenu", "courses");
+
+        return "course/chapter";
+    }
+
+    @PostMapping("/{courseId}/chapters/{chapterId}/learning/start")
+    @ResponseBody
+    public ResponseEntity<SuccessResponse<Void>> startChapterLearning(
+            @PathVariable("courseId") Long courseId,
+            @PathVariable("chapterId") Long chapterId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        courseService.startOnlineChapterLearning(courseId, chapterId, userDetails.getUserId());
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.empty());
+    }
 
 
-    /*
-    강의 신청 취소
-    - 강의 취소
-    - 학습 진행 데이터 초기화
+    // 강의 신청
+    @PostMapping("/{courseId}/applications")
+    @ResponseBody
+    public ResponseEntity<SuccessResponse<CourseApplyResponseDto>> applyCourse(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-     */
+        CourseApplyResponseDto result = courseService.applyCourse(courseId, userDetails.getUserId());
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(SuccessResponse.of(result, SuccessResponseCode.SUCCESS_CREATED));
+    }
+
+    // 강의 취소
+    @DeleteMapping("/{courseId}/applications")
+    @ResponseBody
+    public ResponseEntity<SuccessResponse<Void>> cancelCourse(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        courseService.cancelCourse(courseId, userDetails.getUserId());
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.empty());
+    }
 }

@@ -1,0 +1,237 @@
+body {
+    background: #F8FAFC;
+    color: #0F172A;
+    font-family: "Pretendard", sans-serif;
+}
+
+.chapter-shell {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 28px 24px 72px;
+}
+
+.chapter-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    color: #64748B;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.chapter-back:hover {
+    color: #0F172A;
+}
+
+.chapter-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 24px;
+    align-items: start;
+}
+
+.chapter-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.learning-player {
+    background: #000000;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.16);
+}
+
+.learning-player__title {
+    position: absolute;
+    z-index: 2;
+    padding: 24px 28px;
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.learning-video {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    min-height: 360px;
+    background: #000000;
+}
+
+.learning-video video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    background: #000000;
+}
+
+.learning-video__placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.learning-video__play {
+    width: 78px;
+    height: 78px;
+    border: none;
+    border-radius: 999px;
+    background: #00A884;
+    color: #FFFFFF;
+    font-size: 26px;
+    cursor: default;
+}
+
+.learning-video__play i {
+    transform: translateX(2px);
+}
+
+.learning-guide {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 24px 28px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.learning-guide h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.learning-guide p {
+    margin: 0;
+    color: #64748B;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.learning-guide__progress {
+    min-width: 120px;
+    text-align: right;
+}
+
+.learning-guide__progress span {
+    display: block;
+    margin-bottom: 6px;
+    color: #94A3B8;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.learning-guide__progress strong {
+    color: #00A884;
+    font-size: 28px;
+    line-height: 1;
+}
+
+.chapter-sidebar {
+    min-height: 560px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+}
+
+.chapter-sidebar__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 20px;
+    border-bottom: 1px solid #F1F5F9;
+}
+
+.chapter-sidebar__header h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.chapter-sidebar__header span {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #F1F5F9;
+    color: #64748B;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.chapter-toc {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+}
+
+.chapter-toc__item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 16px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    color: #334155;
+    text-decoration: none;
+}
+
+.chapter-toc__item:hover {
+    background: #F8FAFC;
+}
+
+.chapter-toc__item.is-active {
+    background: #DFFCF2;
+    border-color: #34D399;
+}
+
+.chapter-toc__order {
+    color: #00A884;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.chapter-toc__item strong {
+    color: #0F172A;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.chapter-toc__bar {
+    width: 100%;
+    height: 5px;
+    border-radius: 999px;
+    background: #E2E8F0;
+}
+
+.chapter-toc__meta {
+    display: flex;
+    justify-content: space-between;
+    color: #94A3B8;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+@media (max-width: 900px) {
+    .chapter-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .learning-video {
+        min-height: 220px;
+    }
+
+    .chapter-sidebar {
+        min-height: auto;
+    }
+}

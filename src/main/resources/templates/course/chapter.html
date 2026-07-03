@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="${currentChapter.chapterTitle} + ' - 온라인 학습'">온라인 학습 - H-Link</title>
+
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/course-chapter.css}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="chapter-shell">
+    <a th:href="@{/courses/{courseId}(courseId=${course.courseId})}" class="chapter-back">
+        <i class="fa-solid fa-chevron-left"></i>
+        강의 상세로 돌아가기
+    </a>
+
+    <div class="chapter-layout">
+        <section class="chapter-main">
+            <article class="learning-player">
+                <div class="learning-player__title"
+                     th:text="${currentChapter.chapterOrder} + '강. ' + ${currentChapter.chapterTitle}">
+                    1강. App Router의 핵심 원리
+                </div>
+
+                <div class="learning-video">
+                    <video th:if="${currentChapter.videoUrl != null and currentChapter.videoUrl != ''}"
+                           th:src="${currentChapter.videoUrl}"
+                           controls
+                           preload="metadata"></video>
+                    <div class="learning-video__placeholder"
+                         th:unless="${currentChapter.videoUrl != null and currentChapter.videoUrl != ''}">
+                        <button class="learning-video__play" type="button" aria-label="재생">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="learning-guide">
+                <div>
+                    <h2>학습 가이드</h2>
+                    <p>진도율이 90% 이상 도달 시 자동으로 해당 챕터 수강 완료(이수) 처리됩니다.</p>
+                </div>
+                <div class="learning-guide__progress">
+                    <span>현재 챕터 달성률</span>
+                    <strong>0%</strong>
+                </div>
+            </article>
+        </section>
+
+        <aside class="chapter-sidebar">
+            <div class="chapter-sidebar__header">
+                <h2>학습 목차</h2>
+                <span>전체 진도 0%</span>
+            </div>
+
+            <div class="chapter-toc">
+                <a th:each="chapter : ${course.chapters}"
+                   th:href="@{/courses/{courseId}/chapters/{chapterId}(courseId=${course.courseId}, chapterId=${chapter.chapterId})}"
+                   class="chapter-toc__item"
+                   th:classappend="${chapter.chapterId == currentChapter.chapterId} ? ' is-active' : ''">
+                    <span class="chapter-toc__order" th:text="${chapter.chapterOrder} + '강'">1강</span>
+                    <strong th:text="${chapter.chapterOrder} + '강. ' + ${chapter.chapterTitle}">
+                        1강. App Router의 핵심 원리
+                    </strong>
+                    <span class="chapter-toc__bar" aria-hidden="true"></span>
+                    <span class="chapter-toc__meta">
+                        <span>진도 0%</span>
+                        <span th:text="'0:00 / ' + ${chapter.durationSeconds != null ? chapter.durationSeconds / 60 : 1} + ':00'">0:00 / 1:00</span>
+                    </span>
+                </a>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const courseId = /*[[${course.courseId}]]*/ null;
+        const chapterId = /*[[${currentChapter.chapterId}]]*/ null;
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const video = document.querySelector('.learning-video video');
+        const placeholderPlayButton = document.querySelector('.learning-video__play');
+        let startRequested = false;
+
+        async function startLearning() {
+            if (startRequested || !courseId || !chapterId) {
+                return;
+            }
+
+            startRequested = true;
+
+            const headers = {
+                'Accept': 'application/json'
+            };
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            try {
+                const response = await fetch(`/courses/${courseId}/chapters/${chapterId}/learning/start`, {
+                    method: 'POST',
+                    headers,
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    startRequested = false;
+                }
+            } catch (error) {
+                startRequested = false;
+            }
+        }
+
+        if (video) {
+            video.addEventListener('play', startLearning);
+        }
+
+        if (placeholderPlayButton) {
+            placeholderPlayButton.addEventListener('click', startLearning);
+        }
+    });
+</script>
+</body>
+</html>
