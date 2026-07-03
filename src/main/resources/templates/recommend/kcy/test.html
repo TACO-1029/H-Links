@@ -85,7 +85,7 @@
                      th:each="question, questionStat : ${questions}"
                      th:attr="data-kcy-question=${questionStat.index}"
                      th:hidden="${!questionStat.first}">
-                <span class="kcy-question__tag">설계 성향</span>
+                <span class="kcy-question__tag">성향 진단</span>
                 <h2 th:text="${question.questionText}">
                     새로운 업무 이슈를 배정받았다. 요구사항을 대략 확인한 뒤 가장 먼저 할 행동은?
                 </h2>

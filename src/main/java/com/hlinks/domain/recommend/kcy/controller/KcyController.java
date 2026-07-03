@@ -12,7 +12,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -67,9 +66,13 @@ public class KcyController {
     }
 
     @GetMapping("/recommend/kcy/result")
-    public String result(Model model) {
+    public String result(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model
+    ) {
         model.addAttribute("activeMenu", "recommend");
         model.addAttribute("activeSubMenu", "kcy");
+        model.addAttribute("userName", userDetails.getName());
 
         if (!model.containsAttribute("kcyResult")) {
             return "redirect:/recommend/kcy";
