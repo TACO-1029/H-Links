@@ -18,6 +18,7 @@
         <result property="summaryText" column="SUMMARY_TEXT"/>
         <result property="transcriptText" column="TRANSCRIPT_TEXT"/>
         <result property="aiGeneratedYn" column="AI_GENERATED_YN"/>
+        <result property="quizBuildStatus" column="QUIZ_BUILD_STATUS"/>
         <result property="useYn" column="USE_YN"/>
         <result property="createdAt" column="CREATED_AT"/>
         <result property="updatedAt" column="UPDATED_AT"/>
@@ -37,6 +38,7 @@
         SUMMARY_TEXT,
         TRANSCRIPT_TEXT,
         AI_GENERATED_YN,
+        QUIZ_BUILD_STATUS,
         USE_YN,
         CREATED_AT,
         UPDATED_AT
