@@ -22,6 +22,7 @@ public class HrController {
     @GetMapping("/hr")
     public String index(Model model) {
         model.addAttribute("activeMenu", "hr");
+        model.addAttribute("aiQuizCount", quizService.getAiGeneratedQuizzes().size());
         return "hr/index";
     }
 

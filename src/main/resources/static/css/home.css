@@ -14,6 +14,83 @@
     padding: 48px 48px 96px;
 }
 
+.hr-sidebar {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    padding: 20px;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.hr-sidebar__title {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 0 18px;
+    color: var(--color-text-primary);
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+    text-decoration: none;
+}
+
+.hr-sidebar__title:hover,
+.hr-sidebar__title.is-active {
+    color: var(--color-brand);
+}
+
+.hr-nav {
+    display: grid;
+    gap: 20px;
+}
+
+.hr-nav__group {
+    display: grid;
+    gap: 8px;
+}
+
+.hr-nav__divider {
+    height: 1px;
+    margin: 2px 0;
+    background: var(--color-border-default);
+    opacity: 0.7;
+}
+
+.hr-nav__heading {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    font-weight: var(--font-bold);
+}
+
+.hr-nav__heading .bi {
+    color: currentColor;
+    font-size: 1em;
+    line-height: 1;
+}
+
+.hr-nav__link {
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    text-decoration: none;
+}
+
+.hr-nav__link:hover,
+.hr-nav__link.is-active {
+    background: var(--color-bg-soft);
+    color: var(--color-brand);
+}
+
 .home-hero {
     margin-bottom: 32px;
 }
@@ -75,6 +152,10 @@
 
     .hr-shell {
         padding: 40px 28px 72px;
+    }
+
+    .hr-sidebar {
+        position: static;
     }
 
     .home-card-grid {
