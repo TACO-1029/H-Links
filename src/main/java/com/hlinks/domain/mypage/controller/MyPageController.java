@@ -1,5 +1,7 @@
 package com.hlinks.domain.mypage.controller;
 
+import com.hlinks.domain.interest.dto.InterestDto;
+import com.hlinks.domain.interest.service.InterestService;
 import com.hlinks.domain.recommend.kcy.service.KcyService;
 import com.hlinks.domain.recommend.kcy.type.KcyType;
 import com.hlinks.global.security.CustomUserDetails;
@@ -21,6 +23,7 @@ userDetails에서 가져올 수 있는 값은 이미 가져오고 다른 ㄱㅓ�
 public class MyPageController {
 
     private final KcyService kcyService;
+    private final InterestService interestService;
 
     @GetMapping("/mypage")
     public String myInfo(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
@@ -43,7 +46,8 @@ public class MyPageController {
         model.addAttribute("completedCount", 1);
 
         model.addAttribute("roles", List.of("임직원", "학습자"));
-        model.addAttribute("interests", List.of("프론트엔드", "클라우드", "AI 자동화"));
+        List<InterestDto> interests = interestService.getUserInterests(userDetails.getUserId());
+        model.addAttribute("interests", interests);
 
         // KCY 검사 하드코딩 되어있던 부분 수정
         KcyType kcyResult = kcyService.getResult(userDetails.getUserId());
