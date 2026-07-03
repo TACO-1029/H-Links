@@ -507,10 +507,10 @@
             <a th:each="course : ${courses}" th:href="@{/courses/{id}(id=${course.courseId})}" class="course-card-link">
                 <article class="course-card">
                     <div class="card-thumb-wrap">
-                        <img th:src="@{${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/default-thumbnail.png'}}"
+                        <img th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/kcy/main_logo.webp'}"
                              alt="강의 썸네일"
                              class="card-thumbnail"
-                             onerror="this.onerror=null; this.src='/images/default-thumbnail.png';">
+                             onerror="this.onerror=null; this.src='/images/kcy/main_logo.webp';">
                     </div>
                     <div class="card-body">
                         <div class="card-badges">
