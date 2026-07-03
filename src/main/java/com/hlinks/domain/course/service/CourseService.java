@@ -1,12 +1,8 @@
 package com.hlinks.domain.course.service;
 
-import com.hlinks.domain.course.dto.CourseApplicationCancelTargetDto;
-import com.hlinks.domain.course.dto.CourseApplyResponseDto;
-import com.hlinks.domain.course.dto.CourseApplyTargetDto;
-import com.hlinks.domain.course.dto.ChapterResponseDto;
-import com.hlinks.domain.course.dto.CourseDetailResponseDto;
-import com.hlinks.domain.course.dto.CourseListResponseDto;
+import com.hlinks.domain.course.dto.*;
 import com.hlinks.domain.course.exception.CourseErrorCode;
+import com.hlinks.domain.course.mapper.CourseApplicationMapper;
 import com.hlinks.domain.course.mapper.CourseMapper;
 import com.hlinks.domain.course.type.ApplicationType;
 import com.hlinks.domain.course.type.CourseStatus;
@@ -30,6 +26,11 @@ import java.util.List;
 public class CourseService {
 
     private final CourseMapper courseMapper;
+
+    // ========================================================
+    // [이슈 #44] 마이페이지 신청 내역 관리를 위한 Mapper 주입 추가
+    // ========================================================
+    private final CourseApplicationMapper courseApplicationMapper;
 
     public List<CourseListResponseDto> getCourseList(String categoryType) {
         log.info("강의 목록 조회 요청 - 카테고리 필터: {}", categoryType != null ? categoryType : "전체(ALL)");
@@ -324,5 +325,18 @@ public class CourseService {
                 LearningStatus.NOT_STARTED.name()
         );
         return courseLearningId;
+    }
+
+    /**
+     * [APP-001] 로그인한 유저의 신청 내역 목록을 최신순으로 조회합니다.
+     */
+    public List<CourseApplicationListResponseDto> getMyCourseApplicationList(Long userId) {
+        log.info("마이페이지 내 신청 내역 목록 조회 요청 - 유저 ID: {}", userId);
+
+        if (userId == null || userId <= 0) {
+            throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER);
+        }
+
+        return courseApplicationMapper.selectApplicationListByUserId(userId);
     }
 }
