@@ -5,13 +5,42 @@ import com.hlinks.domain.course.dto.CourseApplicationCancelTargetDto;
 import com.hlinks.domain.course.dto.ChapterResponseDto;
 import com.hlinks.domain.course.dto.CourseDetailResponseDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
+import com.hlinks.domain.course.entity.Course;
+import com.hlinks.domain.course.entity.CourseChapter;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Mapper
 public interface CourseMapper {
+
+    int insertCourse(Course course);
+
+    int updateCourseThumbnail(
+            @Param("courseId") Long courseId,
+            @Param("thumbnailUrl") String thumbnailUrl
+    );
+
+    int insertOnlineCourse(
+            @Param("courseId") Long courseId,
+            @Param("courseMaterialUrl") String courseMaterialUrl
+    );
+
+    int insertOfflineCourse(
+            @Param("courseId") Long courseId,
+            @Param("capacity") Integer capacity,
+            @Param("location") String location,
+            @Param("applyStartDate") LocalDate applyStartDate,
+            @Param("applyEndDate") LocalDate applyEndDate,
+            @Param("courseStartDate") LocalDate courseStartDate,
+            @Param("courseEndDate") LocalDate courseEndDate
+    );
+
+    int insertCourseChapter(CourseChapter chapter);
+
+    int updateCourseChapterVideo(CourseChapter chapter);
 
     /**
      * 전체 강의 목록 조회 (HIDDEN 제외 및 상태 가공)

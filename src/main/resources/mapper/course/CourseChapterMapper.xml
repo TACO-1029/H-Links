@@ -11,6 +11,9 @@
         <result property="chapterTitle" column="CHAPTER_TITLE"/>
         <result property="chapterOrder" column="CHAPTER_ORDER"/>
         <result property="videoUrl" column="VIDEO_URL"/>
+        <result property="videoPath" column="VIDEO_PATH"/>
+        <result property="originalFileName" column="ORIGINAL_FILE_NAME"/>
+        <result property="fileSize" column="FILE_SIZE"/>
         <result property="durationSeconds" column="DURATION_SECONDS"/>
         <result property="summaryText" column="SUMMARY_TEXT"/>
         <result property="transcriptText" column="TRANSCRIPT_TEXT"/>
@@ -27,6 +30,9 @@
         CHAPTER_TITLE,
         CHAPTER_ORDER,
         VIDEO_URL,
+        VIDEO_PATH,
+        ORIGINAL_FILE_NAME,
+        FILE_SIZE,
         DURATION_SECONDS,
         SUMMARY_TEXT,
         TRANSCRIPT_TEXT,
