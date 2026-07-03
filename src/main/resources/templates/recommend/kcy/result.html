@@ -24,13 +24,11 @@
                         <p class="kcy-profile-card__eyebrow">ENGINEER PROFILE</p>
                         <h1 th:text="${kcyResult.title}">심연 탐구자</h1>
                     </div>
-                    <span class="kcy-profile-card__badge">KCY CHARACTER</span>
                 </header>
 
                 <div class="kcy-profile-card__image">
                     <img th:src="@{${kcyResult.imagePath}}"
                          th:alt="${kcyResult.title + ' 유형 이미지'}">
-                    <span>KCY CHARACTER</span>
                 </div>
 
                 <div class="kcy-profile-card__summary">
@@ -49,7 +47,7 @@
             <section class="kcy-result-card kcy-result-card--headline">
                 <p class="kcy-result-card__eyebrow">진단 결과 대시보드</p>
                 <h2 id="kcy-result-title">
-                    사용자 님의 엔지니어 성향 프로파일
+                    <span th:text="${userName}">사용자</span> 님의 엔지니어 성향 프로파일
                 </h2>
                 <p>선정 기준 일자 : <time th:text="${#dates.format(#dates.createNow(), 'yyyy. MM. dd.')}">2026. 07. 02.</time></p>
             </section>
