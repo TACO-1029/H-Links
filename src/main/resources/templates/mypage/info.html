@@ -157,15 +157,45 @@
             </article>
 
             <article class="mypage-insight-card mypage-insight-card--kcy">
-                <p class="mypage-insight-card__eyebrow">KCY 결과</p>
-                <p class="mypage-insight-card__date"
-                   th:text="${kcyDate != null ? '최근 검사일: ' + kcyDate : '최근 검사일: 2026.06.12'}">
-                    최근 검사일: 2026.06.12
-                </p>
-                <h2 th:text="${kcyTitle != null ? kcyTitle : '실행형 문제 해결가'}">실행형 문제 해결가</h2>
-                <p th:text="${kcyDescription != null ? kcyDescription : '실험과 검증을 빠르게 반복하며, 팀의 목표를 실제 결과물로 연결하는 성향이 강합니다.'}">
-                    실험과 검증을 빠르게 반복하며, 팀의 목표를 실제 결과물로 연결하는 성향이 강합니다.
-                </p>
+                <div class="mypage-kcy-card__header">
+                    <div>
+                        <p class="mypage-insight-card__eyebrow">KCY 결과</p>
+                        <p class="mypage-insight-card__date"
+                           th:text="${hasKcyResult ? '최근 검사 완료' : '아직 검사 결과가 없습니다'}">
+                            최근 검사 완료
+                        </p>
+                    </div>
+                    <span class="mypage-kcy-card__code"
+                          th:if="${hasKcyResult}"
+                          th:text="${kcyCode}">
+                        ADIP
+                    </span>
+                </div>
+
+                <th:block th:if="${hasKcyResult}">
+                    <div class="mypage-kcy-card__result">
+                        <div class="mypage-kcy-card__image">
+                            <img th:src="@{${kcyImagePath}}"
+                                 th:alt="${kcyTitle + ' 유형 이미지'}">
+                        </div>
+                        <div class="mypage-kcy-card__text">
+                            <h2 th:text="${kcyTitle}">AI 부스터</h2>
+                            <p th:text="${kcyDescription}">
+                                깊이 있는 기술 이해를 바탕으로 빠르게 실행에 옮기는 유형입니다.
+                            </p>
+                        </div>
+                    </div>
+                </th:block>
+
+                <th:block th:unless="${hasKcyResult}">
+                    <h2>나의 개발 성향을 확인해보세요</h2>
+                    <p>
+                        KCY 테스트를 완료하면 나의 개발 스타일과 협업 성향을 마이페이지에서 확인할 수 있습니다.
+                    </p>
+                    <a class="mypage-insight-card__button" th:href="@{/recommend/kcy}">
+                        검사하러 가기
+                    </a>
+                </th:block>
             </article>
 
             <article class="mypage-insight-card mypage-insight-card--career">

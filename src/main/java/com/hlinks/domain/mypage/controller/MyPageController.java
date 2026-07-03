@@ -50,8 +50,10 @@ public class MyPageController {
         model.addAttribute("hasKcyResult", kcyResult != null);
 
         if (kcyResult != null) {
+            model.addAttribute("kcyCode", kcyResult.getCode());
             model.addAttribute("kcyTitle", kcyResult.getTitle());
             model.addAttribute("kcyDescription", kcyResult.getDescription());
+            model.addAttribute("kcyImagePath", kcyResult.getImagePath());
         }
 
         model.addAttribute("careerDate", "2026.06.18");
