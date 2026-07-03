@@ -73,6 +73,20 @@ public class FfmpegService {
         return outputPath;
     }
 
+    public Integer getVideoDurationSeconds(Path videoPath) {
+        validateInputFile(videoPath);
+
+        List<String> command = List.of(
+                properties.getProbeCommand(),
+                "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                videoPath.toAbsolutePath().normalize().toString()
+        );
+
+        return executeFfprobe(command);
+    }
+
     private void validateInputFile(Path videoPath) {
         if (videoPath == null) {
             throw new FfmpegException(ErrorResponseCode.FFMPEG_INVALID_INPUT);
@@ -160,6 +174,66 @@ public class FfmpegService {
             Thread.currentThread().interrupt();
             deleteIfExists(outputPath);
             throw new FfmpegException(ErrorResponseCode.FFMPEG_INTERRUPTED, e);
+        }
+    }
+
+    private Integer executeFfprobe(List<String> command) {
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        processBuilder.redirectErrorStream(true);
+
+        try {
+            Process process = processBuilder.start();
+
+            StringBuilder logs = new StringBuilder();
+            Thread logReader = new Thread(() -> {
+                try (var reader = process.inputReader(StandardCharsets.UTF_8)) {
+                    reader.lines().forEach(line -> logs.append(line).append(System.lineSeparator()));
+                } catch (IOException ignored) {
+                }
+            });
+            logReader.start();
+
+            boolean finished = process.waitFor(
+                    properties.getProbeTimeoutSeconds(),
+                    TimeUnit.SECONDS
+            );
+
+            logReader.join(TimeUnit.SECONDS.toMillis(5));
+
+            if (!finished) {
+                process.destroyForcibly();
+                throw new FfmpegException(ErrorResponseCode.FFMPEG_CONVERT_TIMEOUT);
+            }
+
+            if (process.exitValue() != 0) {
+                throw new FfmpegException(ErrorResponseCode.FFMPEG_CONVERT_FAILED);
+            }
+
+            return parseDurationSeconds(logs.toString());
+        } catch (IOException e) {
+            throw new FfmpegException(ErrorResponseCode.FFMPEG_IO_ERROR, e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new FfmpegException(ErrorResponseCode.FFMPEG_INTERRUPTED, e);
+        }
+    }
+
+    private Integer parseDurationSeconds(String output) {
+        String durationText = output.lines()
+                .filter(line -> line != null && !line.isBlank())
+                .findFirst()
+                .orElse("");
+
+        try {
+            double duration = Double.parseDouble(durationText);
+
+            if (duration <= 0 || duration > Integer.MAX_VALUE) {
+                throw new FfmpegException(ErrorResponseCode.FFMPEG_CONVERT_FAILED);
+            }
+
+            return (int) Math.ceil(duration);
+        } catch (NumberFormatException e) {
+            throw new FfmpegException(ErrorResponseCode.FFMPEG_CONVERT_FAILED, e);
         }
     }
 

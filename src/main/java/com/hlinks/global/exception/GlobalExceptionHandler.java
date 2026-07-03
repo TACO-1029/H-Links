@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,6 +26,16 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e) {
+        if (isClientDisconnected(e)) {
+            log.debug("Client disconnected while streaming response: {}", getRootMessage(e));
+            return;
+        }
+
+        log.warn("Async request is no longer usable: {}", e.getMessage());
+    }
 
     /*
     throw new BaseException.. 같은 애들이 예외핸들러 어노테이션이 붙어있는 곳으로 들어옵니다.
@@ -144,5 +155,40 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorResponseCode.INTERNAL_SERVER_ERROR.getHttpStatus())
                 .body(errorResponse);
+    }
+
+    private boolean isClientDisconnected(Throwable throwable) {
+        Throwable current = throwable;
+
+        while (current != null) {
+            String className = current.getClass().getName();
+            String message = current.getMessage();
+
+            if (className.contains("ClientAbortException") || containsClientDisconnectMessage(message)) {
+                return true;
+            }
+
+            current = current.getCause();
+        }
+
+        return false;
+    }
+
+    private boolean containsClientDisconnectMessage(String message) {
+        if (message == null) {
+            return false;
+        }
+
+        return message.contains("Broken pipe") || message.contains("Connection reset by peer");
+    }
+
+    private String getRootMessage(Throwable throwable) {
+        Throwable current = throwable;
+
+        while (current.getCause() != null) {
+            current = current.getCause();
+        }
+
+        return current.getMessage();
     }
 }

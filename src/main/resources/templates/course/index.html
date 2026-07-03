@@ -85,16 +85,18 @@
             <a th:each="course : ${courses}" th:href="@{/courses/{id}(id=${course.courseId})}" class="course-card-link">
                 <article class="course-card">
                     <div class="card-thumb-wrap">
-                        <img th:src="@{${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/default-thumbnail.png'}}"
+                        <img th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/common/hyundai_futurenet.webp'}"
                              alt="강의 썸네일"
                              class="card-thumbnail"
-                             onerror="this.onerror=null; this.src='/images/default-thumbnail.png';">
+                             onerror="this.onerror=null; this.src='/images/common/hyundai_futurenet.webp';">
                     </div>
                     <div class="card-body">
                         <div class="card-badges">
                             <span class="badge"
                                   th:classappend="${course.courseType == 'ONLINE' ? 'badge-online' : 'badge-offline'}"
-                                  th:text="${course.courseType}">ONLINE</span>
+                                  th:text="${course.courseType == 'ONLINE' ? '온라인' : (course.courseType == 'OFFLINE' ? '오프라인' : '유형 미정')}">
+                                    유형 미정
+                            </span>
                             <span class="badge badge-status" th:text="${course.virtualStatus}">상시 운영</span>
                         </div>
                         <h3 class="card-title" th:text="${course.courseTitle}">클라우드 네이티브 아키텍처</h3>
