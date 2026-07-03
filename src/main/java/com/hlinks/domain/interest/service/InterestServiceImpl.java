@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @Service
@@ -42,18 +43,27 @@ public class InterestServiceImpl implements InterestService {
     @Override
     @Transactional
     public void saveUserInterests(Long userId, List<Long> skillIds) {
-        // 여기서 이미 예외를 던지기 때문에 별도로 예외처리 부분은 없습니다!
-        validateSkillIds(skillIds);
+        List<Long> distinctSkillIds = normalizeSkillIds(skillIds);
+        validateSkillIds(distinctSkillIds);
 
         interestMapper.deleteInterestsByUserId(userId);
 
-        for (Long skillId : skillIds) {
+        for (Long skillId : distinctSkillIds) {
             interestMapper.insertUserInterest(userId, skillId);
         }
     }
 
+    private List<Long> normalizeSkillIds(List<Long> skillIds) {
+        if (skillIds == null) {
+            return List.of();
+        }
+
+        return new LinkedHashSet<>(skillIds).stream()
+                .toList();
+    }
+
     private void validateSkillIds(List<Long> skillIds) {
-        if (skillIds == null || skillIds.isEmpty()) {
+        if (skillIds.isEmpty()) {
             throw new BaseException(InterestErrorCode.INTEREST_REQUIRED);
         }
 

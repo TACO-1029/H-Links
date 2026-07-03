@@ -5,12 +5,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
@@ -25,9 +27,13 @@ public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse res, Authentication authentication) throws IOException, ServletException {
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        if (!interestService.hasInterests(customUserDetails.getUserId())) {
-            res.sendRedirect("/interests/setup");
-            return;
+        try {
+            if (!interestService.hasInterests(customUserDetails.getUserId())) {
+                res.sendRedirect("/interests/setup");
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("Failed to check user interests after login. userId={}", customUserDetails.getUserId(), e);
         }
 
         res.sendRedirect("/");

@@ -1,7 +1,6 @@
 package com.hlinks.domain.interest.controller;
 
 import com.hlinks.domain.interest.dto.InterestSubmitRequest;
-import com.hlinks.domain.interest.exception.InterestErrorCode;
 import com.hlinks.domain.interest.service.InterestService;
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.global.security.CustomUserDetails;
@@ -42,16 +41,6 @@ public class InterestController {
             InterestSubmitRequest request,
             Model model
     ) {
-        List<Long> skillIds = request.getSkillIds();
-
-        if (skillIds == null || skillIds.isEmpty()) {
-            return setupFormWithError(model, skillIds, InterestErrorCode.INTEREST_REQUIRED.getMessage(), true);
-        }
-
-        if (skillIds.size() > 5) {
-            return setupFormWithError(model, skillIds, InterestErrorCode.INTEREST_TOO_MANY_SELECTED.getMessage(), true);
-        }
-
         interestService.saveUserInterests(userDetails.getUserId(), request.getSkillIds());
 
         return "redirect:/";
