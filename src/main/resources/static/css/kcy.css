@@ -563,7 +563,7 @@
 }
 
 .kcy-axis {
-    --axis-left: 50%;
+    --axis-left: 65%;
     min-height: 190px;
     padding: 20px;
     border-radius: 22px;
@@ -590,7 +590,7 @@
 .kcy-axis__bar {
     position: relative;
     height: 16px;
-    margin: 16px 0 13px;
+    margin: 8px 0 14px;
     overflow: hidden;
     border-radius: var(--radius-full);
     background:
@@ -618,6 +618,9 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 12px;
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.25;
 }
 
 .kcy-axis p strong {
