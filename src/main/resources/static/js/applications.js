@@ -114,8 +114,18 @@
         .then(res => {
             closeModal(cancelConfirmModal);
             if (res.success) {
-                alert('강의 신청 취소 처리가 완료되었습니다.');
-                location.reload();
+                // 커스텀 토스트 알림 노출
+                const toast = document.getElementById('successToast');
+                if (toast) {
+                    toast.classList.add('is-show');
+                    setTimeout(() => {
+                        toast.classList.remove('is-show');
+                        location.reload();
+                    }, 1500);
+                } else {
+                    alert('강의 신청 취소 처리가 완료되었습니다.');
+                    location.reload();
+                }
             } else {
                 alert(`취소 처리 실패: ${res.message}`);
             }
