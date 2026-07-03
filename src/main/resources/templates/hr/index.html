@@ -1240,7 +1240,9 @@
       return;
     }
 
-    removeButton.closest('.hr-course-form__chapter').remove();
+    const chapterEl = removeButton.closest('.hr-course-form__chapter');
+    chapterEl.querySelectorAll('.file-upload-preview').forEach(clearFilePreview);
+    chapterEl.remove();
     updateRemoveButtons();
     updateSummary();
   });
