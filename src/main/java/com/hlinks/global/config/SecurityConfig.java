@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/quizzes/**").hasAuthority("ROLE_HR")
 
                         // Page routes
+                        .requestMatchers("/admin/**").hasAuthority("ROLE_HR")
                         .requestMatchers("/team/**").hasAuthority("ROLE_LEADER")
                         .requestMatchers("/hr/**").hasAuthority("ROLE_HR")
 

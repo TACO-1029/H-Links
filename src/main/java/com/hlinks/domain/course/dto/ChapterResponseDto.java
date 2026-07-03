@@ -15,6 +15,9 @@ public class ChapterResponseDto {
     private String chapterTitle;
     private Integer chapterOrder;
     private String videoUrl;
+    private String videoPath;
+    private String originalFileName;
+    private Long fileSize;
     private Integer durationSeconds;
     private String summaryText;
     private String transcriptText;

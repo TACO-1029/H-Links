@@ -144,6 +144,16 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+        .course-video-player {
+            padding: 0 32px 32px;
+        }
+        .course-video-player video {
+            width: 100%;
+            max-height: 520px;
+            border-radius: 12px;
+            background: #0F172A;
+            display: block;
+        }
 
         /* 중상단 탭 선택 - 스크롤 위치 고정을 위해 상단 고정 가능 처리 가능성 인프라 */
         .tab-nav {
@@ -417,12 +427,18 @@
                     </div>
 
                     <div class="info-box-hero">
-                        <img th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/default_course.png'}"
+                        <img th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/kcy/main_logo.webp'}"
                              alt="강의 썸네일" class="hero-thumb">
                         <div class="hero-text-area">
                             <h1 class="hero-title" th:text="${course.courseTitle}">강의 타이틀</h1>
                             <p class="hero-desc" th:text="${course.description}">강의 설명 요약</p>
                         </div>
+                    </div>
+                    <div class="course-video-player"
+                        th:if="${course.online and !#lists.isEmpty(course.chapters) and course.chapters[0].videoUrl != null}">
+                        <video controls preload="metadata">
+                            <source th:src="${course.chapters[0].videoUrl}" type="video/mp4">
+                        </video>
                     </div>
 
                     <div class="tab-nav">

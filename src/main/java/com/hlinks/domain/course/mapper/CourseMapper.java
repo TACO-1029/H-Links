@@ -3,6 +3,8 @@ package com.hlinks.domain.course.mapper;
 import com.hlinks.domain.course.dto.ChapterResponseDto;
 import com.hlinks.domain.course.dto.CourseDetailResponseDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
+import com.hlinks.domain.course.entity.Course;
+import com.hlinks.domain.course.entity.CourseChapter;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -10,6 +12,14 @@ import java.util.List;
 
 @Mapper
 public interface CourseMapper {
+
+    int insertCourse(Course course);
+
+    int insertOnlineCourse(@Param("courseId") Long courseId);
+
+    int insertCourseChapter(CourseChapter chapter);
+
+    int updateCourseChapterVideo(CourseChapter chapter);
 
     /**
      * 전체 강의 목록 조회 (HIDDEN 제외 및 상태 가공)

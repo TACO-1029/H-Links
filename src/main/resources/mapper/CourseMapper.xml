@@ -5,6 +5,85 @@
 
 <mapper namespace="com.hlinks.domain.course.mapper.CourseMapper">
 
+    <insert id="insertCourse" parameterType="com.hlinks.domain.course.entity.Course">
+        <selectKey keyProperty="courseId" resultType="long" order="BEFORE">
+            SELECT COURSE_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO COURSE (
+        COURSE_ID,
+        CREATED_BY,
+        CATEGORY_TYPE,
+        COURSE_TYPE,
+        COURSE_TITLE,
+        DESCRIPTION,
+        INSTRUCTOR_NAME,
+        CREATED_AT,
+        UPDATED_AT
+        )
+        VALUES (
+        #{courseId},
+        #{createdBy, jdbcType=NUMERIC},
+        #{categoryType},
+        #{courseType},
+        #{courseTitle},
+        #{description},
+        #{instructorName},
+        SYSDATE,
+        SYSDATE
+        )
+    </insert>
+
+    <insert id="insertOnlineCourse">
+        INSERT INTO ONLINE_COURSE (
+        COURSE_ID,
+        STATUS
+        )
+        VALUES (
+        #{courseId},
+        'OPEN'
+        )
+    </insert>
+
+    <insert id="insertCourseChapter" parameterType="com.hlinks.domain.course.entity.CourseChapter">
+        <selectKey keyProperty="chapterId" resultType="long" order="BEFORE">
+            SELECT COURSE_CHAPTER_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO COURSE_CHAPTER (
+        CHAPTER_ID,
+        COURSE_ID,
+        CHAPTER_TITLE,
+        CHAPTER_ORDER,
+        AI_GENERATED_YN,
+        USE_YN,
+        CREATED_AT,
+        UPDATED_AT
+        )
+        VALUES (
+        #{chapterId},
+        #{courseId},
+        #{chapterTitle},
+        #{chapterOrder},
+        'N',
+        'Y',
+        SYSDATE,
+        SYSDATE
+        )
+    </insert>
+
+    <update id="updateCourseChapterVideo" parameterType="com.hlinks.domain.course.entity.CourseChapter">
+        UPDATE COURSE_CHAPTER
+        SET
+        VIDEO_URL = #{videoUrl},
+        VIDEO_PATH = #{videoPath},
+        ORIGINAL_FILE_NAME = #{originalFileName},
+        FILE_SIZE = #{fileSize},
+        UPDATED_AT = SYSDATE
+        WHERE CHAPTER_ID = #{chapterId}
+        AND COURSE_ID = #{courseId}
+    </update>
+
     <select id="findAllCourses"
             parameterType="string"
             resultType="com.hlinks.domain.course.dto.CourseListResponseDto">
@@ -96,6 +175,9 @@
         CHAPTER_TITLE      AS chapterTitle,
         CHAPTER_ORDER      AS chapterOrder,
         VIDEO_URL          AS videoUrl,
+        VIDEO_PATH         AS videoPath,
+        ORIGINAL_FILE_NAME AS originalFileName,
+        FILE_SIZE          AS fileSize,
         DURATION_SECONDS   AS durationSeconds,
         SUMMARY_TEXT       AS summaryText,
         TRANSCRIPT_TEXT    AS transcriptText
