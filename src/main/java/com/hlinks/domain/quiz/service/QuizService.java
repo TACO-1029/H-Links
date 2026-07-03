@@ -47,6 +47,13 @@ public class QuizService {
     }
 
     @Transactional(readOnly = true)
+    public List<QuizListResponse> getAiGeneratedQuizzes() {
+        return quizMapper.findAiGeneratedQuizzes().stream()
+                .map(this::toListResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public QuizResponse getQuiz(Long quizId) {
         if (quizId == null) {
             throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "quizId는 필수입니다.");
@@ -199,13 +206,17 @@ public class QuizService {
         response.setQuizId(quiz.getQuizId());
         response.setCourseId(quiz.getCourseId());
         response.setChapterId(quiz.getChapterId());
+        response.setCourseTitle(quiz.getCourseTitle());
+        response.setChapterTitle(quiz.getChapterTitle());
         response.setQuestionType(quiz.getQuestionType());
         response.setQuestionText(quiz.getQuestionText());
         response.setDifficulty(quiz.getDifficulty());
         response.setStatus(quiz.getStatus());
         response.setAiGeneratedYn(quiz.getAiGeneratedYn());
+        response.setQuizBuildStatus(quiz.getQuizBuildStatus());
         response.setCreatedAt(quiz.getCreatedAt());
         response.setUpdatedAt(quiz.getUpdatedAt());
+        response.setSortAt(quiz.getSortAt());
         return response;
     }
 
