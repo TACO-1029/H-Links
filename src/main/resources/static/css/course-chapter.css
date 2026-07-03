@@ -208,10 +208,15 @@ body {
 }
 
 .chapter-toc__bar {
+    --progress: 0%;
     width: 100%;
     height: 5px;
     border-radius: 999px;
-    background: #E2E8F0;
+    background: linear-gradient(
+            90deg,
+            #10B981 0 var(--progress, 0%),
+            #E2E8F0 var(--progress, 0%) 100%
+    );
 }
 
 .chapter-toc__meta {

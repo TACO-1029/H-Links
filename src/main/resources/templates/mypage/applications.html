@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>H-Links | 내 신청 내역</title>
@@ -54,10 +54,11 @@
             font-size: 11px;
             font-weight: 600;
             border-radius: var(--radius-sm, 4px);
-            background: var(--color-brand-subtle, #eff6ff);
+            background: #eff6ff;
             color: var(--color-brand, #2563eb);
         }
 
+        /*noinspection CssUnusedSymbol*/
         .course-tag.offline {
             background: #faf5ff;
             color: #7c3aed;
@@ -198,7 +199,7 @@
 
 <main class="mypage-shell">
 
-    <section class="mypage-hero" aria-labelledby="mypage-title">
+    <section class="mypage-hero" aria-labelledby="mypage-title" th:replace="~{fragments/mypage :: hero}">
         <div class="mypage-hero__identity">
             <div class="mypage-avatar mypage-avatar--large" aria-hidden="true"
                  th:text="${#authentication.principal.name != null ? #strings.substring(#authentication.principal.name, 0, 1) : 'H'}">
@@ -227,7 +228,7 @@
                 <strong class="mypage-summary-card__value">1</strong>
             </article>
             <article class="mypage-summary-card">
-                <span class="mypage-summary-card__label">수료 완료</span>
+                <span class="mypage-summary-card__label">수강 완료</span>
                 <strong class="mypage-summary-card__value mypage-summary-card__value--blue">1</strong>
             </article>
         </div>
@@ -308,7 +309,9 @@
                                 <button th:if="${app.applicationStatus.name() == 'WAITING' or (app.applicationStatus.name() == 'APPROVED' and app.courseType == 'OFFLINE' and (app.applyEndDate == null or !T(java.time.LocalDate).now().isAfter(app.applyEndDate)))}"
                                         class="btn-ui btn-ui-danger"
                                         type="button"
-                                        th:onclick="cancelApplication([[${app.courseId}]], [[${app.courseTitle}]])">
+                                        th:data-course-id="${app.courseId}"
+                                        th:data-course-title="${app.courseTitle}"
+                                        onclick="cancelApplicationFromButton(this)">
                                     신청취소
                                 </button>
                             </div>
@@ -429,14 +432,18 @@
     }
 
     // [APP-004] Fetch API 비동기 바인딩 통신 제어 로직 (CSRF 토근 탑재 버전)
+    function cancelApplicationFromButton(button) {
+        cancelApplication(button.dataset.courseId, button.dataset.courseTitle);
+    }
+
     function cancelApplication(courseId, courseTitle) {
         if (!confirm(`[${courseTitle}]\n정말 수강 신청을 취소하시겠습니까?`)) {
             return;
         }
 
         // Thymeleaf 런타임 시점에 시큐리티가 제공하는 CSRF 토큰과 헤더명 추출
-        const csrfToken = [[${_csrf.token}]];
-        const csrfHeader = [[${_csrf.headerName}]];
+        const csrfToken = /*[[${_csrf.token}]]*/ '';
+        const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
 
         // MyPageController의 DeleteMapping 주소인 /mypage/applications/{courseId} 로 호출
         fetch(`/mypage/applications/${courseId}`, {

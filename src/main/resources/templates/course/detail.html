@@ -86,12 +86,14 @@
             justify-content: space-between;
             align-items: center;
         }
-        .label-group {
+        .label-group,
+        .card-badges {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
-        .label {
+        .label,
+        .badge {
             padding: 6px 12px;
             border-radius: 6px;
             font-size: 12px;
@@ -100,6 +102,18 @@
         .label-status { background: #F1F5F9; color: #475569; }
         .label-type { background: #EFF6FF; color: #2563EB; }
         .label-skill { background: #ECFDF5; color: #10B981; border: 1px solid #D1FAE5; }
+        .badge-online { background-color: #EFF6FF; color: #1E40AF; }
+        .badge-offline { background-color: #FEF2F2; color: #991B1B; }
+        .badge-status {
+            background-color: #F0FDF4;
+            color: #166534;
+            border: 1px solid rgba(22, 101, 52, 0.08);
+        }
+        .badge-skill {
+            background: #ECFDF5;
+            color: #10B981;
+            border: 1px solid #D1FAE5;
+        }
         .btn-share {
             background: none;
             border: none;
@@ -418,11 +432,12 @@
                 <article class="premium-box course-info-box">
 
                     <div class="info-box-header">
-                        <div class="label-group">
-                            <span class="label label-status" th:if="${course.online}" th:text="${course.onlineStatus == 'OPEN' ? '수강가능' : '종료'}">상태</span>
-                            <span class="label label-status" th:unless="${course.online}" th:text="${course.offlineStatus == 'OPEN' ? '접수중' : '마감'}">상태</span>
-                            <span class="label label-type" th:text="${course.online ? '온라인' : '오프라인'}">유형</span>
-                            <span class="label label-skill" th:each="skill : ${course.skillNames}" th:text="${skill}">분야</span>
+                        <div class="card-badges">
+                            <span class="badge"
+                                  th:classappend="${course.online ? 'badge-online' : 'badge-offline'}"
+                                  th:text="${course.courseTypeLabel}">유형</span>
+                            <span class="badge badge-status" th:text="${course.virtualStatus}">상태</span>
+                            <span class="badge badge-skill" th:each="skill : ${course.skillNames}" th:text="${skill}">분야</span>
                         </div>
                         <button class="btn-share" title="공유하기">
                             <i class="fa-solid fa-arrow-up-from-bracket"></i>
@@ -539,7 +554,8 @@
                     <div class="sc-top">
                         <span class="sc-label-small">수강 상태</span>
                         <th:block th:if="${course.online}">
-                            <span class="sc-status-big" th:text="${isApplied ? '수강 중' : '신청 전'}">상태</span>
+                            <span class="sc-status-big"
+                                  th:text="${course.learningCompleted ? '수강 완료' : (isApplied ? '수강 중' : '신청 전')}">상태</span>
                         </th:block>
                         <th:block th:unless="${course.online}">
                             <span class="sc-status-big" th:text="${course.learningCompletionLabel}">미완료</span>
@@ -556,7 +572,8 @@
                         <div class="stat-box">
                             <span class="sc-label-small" th:text="${course.online ? '내 진도율' : '완료 여부'}">내 진도율</span>
                             <th:block th:if="${course.online}">
-                                <span class="stat-val" th:text="${isApplied ? '0%' : '-'}"></span>
+                                <span class="stat-val"
+                                      th:text="${isApplied and course.progressRate != null and course.progressRate > 0 ? course.progressRate + '%' : '-'}"></span>
                             </th:block>
                             <th:block th:unless="${course.online}">
                                 <span class="stat-val" th:text="${course.learningCompletionLabel}">미완료</span>

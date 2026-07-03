@@ -20,7 +20,7 @@ import java.util.List;
 
 /*
 현재 하드코딩 되어있는 값은 후에 DB 조회 후 담도록 변경하겠습니다.
-userDetails에서 가져올 수 있는 값은 이미 가져오고 다른 ㄱㅓㅅ들은 임시로 둡니다.
+userDetails에서 가져올 수 있는 값은 이미 가져오고 다른 것들은 임시로 둡니다.
  */
 @Controller
 @RequiredArgsConstructor
@@ -36,20 +36,13 @@ public class MyPageController {
         model.addAttribute("activeMenu", "mypage");
         model.addAttribute("activeSubMenu", "myInfo");
 
-        model.addAttribute("loginId", userDetails.getUsername());
-        model.addAttribute("name", userDetails.getName());
-        model.addAttribute("departmentName", userDetails.getDepartmentName());
-        model.addAttribute("jobName", userDetails.getJobName());
-        model.addAttribute("positionName", userDetails.getPositionName());
+        addMyPageHeroModel(userDetails, model);
 
         // 아래로는 비동기 작업 처리하는 API 구현 예정입니다.
         model.addAttribute("email", "user@hlinks.co.kr");
         model.addAttribute("phone", "010-1234-5678");
         model.addAttribute("firstLoginChanged", "미완료");
         model.addAttribute("updatedAt", "2026.07.02");
-
-        model.addAttribute("inProgressCount", 1);
-        model.addAttribute("completedCount", 1);
 
         model.addAttribute("roles", List.of("임직원", "학습자"));
         List<InterestDto> interests = interestService.getUserInterests(userDetails.getUserId());
@@ -87,6 +80,7 @@ public class MyPageController {
         // 1. 사이드바 내 서브메뉴 활성화 상태값 설정
         model.addAttribute("activeMenu", "mypage");
         model.addAttribute("activeSubMenu", "myApplications");
+        addMyPageHeroModel(userDetails, model);
 
         // 2. 4단계에서 CourseService에 추가했던 목록 조회 메서드 호출
         List<CourseApplicationListResponseDto> applications = courseService.getMyCourseApplicationList(userId);
@@ -107,5 +101,15 @@ public class MyPageController {
         courseService.cancelCourse(courseId, userId); // 서비스 로직 호출
 
         return SuccessResponse.empty();
+    }
+
+    private void addMyPageHeroModel(CustomUserDetails userDetails, Model model) {
+        model.addAttribute("loginId", userDetails.getUsername());
+        model.addAttribute("name", userDetails.getName());
+        model.addAttribute("departmentName", userDetails.getDepartmentName());
+        model.addAttribute("jobName", userDetails.getJobName());
+        model.addAttribute("positionName", userDetails.getPositionName());
+        model.addAttribute("inProgressCount", courseService.getMyInProgressCourseCount(userDetails.getUserId()));
+        model.addAttribute("completedCount", courseService.getMyCompletedCourseCount(userDetails.getUserId()));
     }
 }

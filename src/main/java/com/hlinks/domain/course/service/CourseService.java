@@ -17,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -33,6 +36,14 @@ public class CourseService {
     private final CourseApplicationMapper courseApplicationMapper;
 
     public List<CourseListResponseDto> getCourseList(String categoryType) {
+        return getCourseList(categoryType, List.of(), List.of(), "latest");
+    }
+
+    public List<CourseListResponseDto> getCourseList(String categoryType, List<String> courseTypes, List<Long> skillIds) {
+        return getCourseList(categoryType, courseTypes, skillIds, "latest");
+    }
+
+    public List<CourseListResponseDto> getCourseList(String categoryType, List<String> courseTypes, List<Long> skillIds, String sort) {
         log.info("강의 목록 조회 요청 - 카테고리 필터: {}", categoryType != null ? categoryType : "전체(ALL)");
 
         // ==========================================
@@ -47,13 +58,36 @@ public class CourseService {
             }
         }
 
-        List<CourseListResponseDto> courses = courseMapper.findAllCourses(categoryType);
+        String normalizedSort = "popular".equals(sort) ? "popular" : "latest";
+        List<CourseListResponseDto> courses = courseMapper.findAllCourses(categoryType, courseTypes, skillIds, normalizedSort);
 
         // 목록 조회의 경우 데이터가 0건(Empty)인 것은 에러가 아니므로 정상 반환합니다.
         // 추후 '상세 조회(detail)' 시 조회된 결과가 null이면 여기서 BaseException(COURSE_NOT_FOUND)을 던지게 됩니다.
 
         log.info("강의 목록 조회 완료 - 조회된 강의 수: {}건", courses.size());
         return courses;
+    }
+
+    public List<SkillFilterGroupDto> getSkillFilterGroups() {
+        List<SkillFilterOptionDto> options = courseMapper.findSkillFilterOptions();
+        Map<Long, SkillFilterGroupDto.SkillFilterGroupDtoBuilder> builders = new LinkedHashMap<>();
+        Map<Long, List<SkillFilterOptionDto>> groupedOptions = new LinkedHashMap<>();
+
+        for (SkillFilterOptionDto option : options) {
+            builders.putIfAbsent(option.getParentSkillId(), SkillFilterGroupDto.builder()
+                    .skillId(option.getParentSkillId())
+                    .skillName(option.getParentSkillName()));
+            groupedOptions.computeIfAbsent(option.getParentSkillId(), key -> new ArrayList<>())
+                    .add(option);
+        }
+
+        List<SkillFilterGroupDto> groups = new ArrayList<>();
+        for (Map.Entry<Long, SkillFilterGroupDto.SkillFilterGroupDtoBuilder> entry : builders.entrySet()) {
+            groups.add(entry.getValue()
+                    .skills(groupedOptions.getOrDefault(entry.getKey(), List.of()))
+                    .build());
+        }
+        return groups;
     }
 
     // ========================================================
@@ -101,6 +135,10 @@ public class CourseService {
                 courseDetail.setLearningStatus(appInfo.getLearningStatus());
                 courseDetail.setProgressRate(appInfo.getProgressRate());
                 courseDetail.setNextLearningChapterId(resolveNextLearningChapterId(courseDetail, userId, courseId));
+                Long courseLearningId = courseMapper.findCourseLearningId(userId, courseId);
+                if (courseLearningId != null) {
+                    courseDetail.setChapters(courseMapper.findChaptersByCourseIdWithLearning(courseId, courseLearningId));
+                }
                 log.info("사원 신청 정보 연동 성공 - 강좌 ID: {}, 상태값: {}", courseId, appInfo.getApplicationStatus());
             } else {
                 // 신청 이력이 전혀 없는 사원인 경우 null 상태 유지 -> 화면단에서 '즉시 신청하기' 활성화
@@ -159,20 +197,11 @@ public class CourseService {
                 chapterId,
                 LearningStatus.NOT_STARTED.name()
         );
+        courseDetail.setChapters(courseMapper.findChaptersByCourseIdWithLearning(courseId, courseLearningId));
 
         return courseDetail;
     }
 
-    @Transactional
-    public void startOnlineChapterLearning(Long courseId, Long chapterId, Long userId) {
-        getOnlineChapterPage(courseId, chapterId, userId);
-        Long courseLearningId = courseMapper.findCourseLearningId(userId, courseId);
-        if (courseLearningId == null) {
-            throw new BaseException(ErrorResponseCode.FORBIDDEN);
-        }
-        courseMapper.startCourseLearning(courseLearningId, LearningStatus.IN_PROGRESS.name());
-        courseMapper.startChapterLearning(courseLearningId, chapterId, LearningStatus.IN_PROGRESS.name());
-    }
     @Transactional
     public CourseApplyResponseDto applyCourse(Long courseId, Long userId) {
         log.info("강의 신청 요청 - courseId={}, userId={}", courseId, userId);
@@ -333,10 +362,24 @@ public class CourseService {
     public List<CourseApplicationListResponseDto> getMyCourseApplicationList(Long userId) {
         log.info("마이페이지 내 신청 내역 목록 조회 요청 - 유저 ID: {}", userId);
 
+        validateUserId(userId);
+
+        return courseApplicationMapper.selectApplicationListByUserId(userId);
+    }
+
+    public int getMyInProgressCourseCount(Long userId) {
+        validateUserId(userId);
+        return courseMapper.countCourseLearningByStatus(userId, LearningStatus.IN_PROGRESS.name());
+    }
+
+    public int getMyCompletedCourseCount(Long userId) {
+        validateUserId(userId);
+        return courseMapper.countCourseLearningByStatus(userId, LearningStatus.COMPLETED.name());
+    }
+
+    private void validateUserId(Long userId) {
         if (userId == null || userId <= 0) {
             throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER);
         }
-
-        return courseApplicationMapper.selectApplicationListByUserId(userId);
     }
 }

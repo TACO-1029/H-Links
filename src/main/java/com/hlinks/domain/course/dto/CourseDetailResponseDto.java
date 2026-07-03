@@ -185,4 +185,39 @@ public class CourseDetailResponseDto {
         }
         return "수강 완료";
     }
+
+    public String getCourseTypeLabel() {
+        return isOnline() ? "온라인" : "오프라인";
+    }
+
+    public String getVirtualStatus() {
+        LocalDate today = LocalDate.now();
+
+        if (isOnline()) {
+            return "CANCELED".equals(onlineStatus) ? "서비스 종료" : "상시 수강 가능";
+        }
+
+        if ("CANCELED".equals(offlineStatus)) {
+            return "폐강";
+        }
+        if (applyStartDate != null && today.isBefore(applyStartDate)) {
+            return "모집 대기";
+        }
+        if (applyStartDate != null && applyEndDate != null
+                && !today.isBefore(applyStartDate) && !today.isAfter(applyEndDate)) {
+            return "모집 중";
+        }
+        if (applyEndDate != null && courseStartDate != null
+                && today.isAfter(applyEndDate) && today.isBefore(courseStartDate)) {
+            return "모집 마감";
+        }
+        if (courseStartDate != null && courseEndDate != null
+                && !today.isBefore(courseStartDate) && !today.isAfter(courseEndDate)) {
+            return "강의 진행 중";
+        }
+        if (courseEndDate != null && today.isAfter(courseEndDate)) {
+            return "강의 종료";
+        }
+        return "상태 불명";
+    }
 }
