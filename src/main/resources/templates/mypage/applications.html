@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>H-Links | 내 신청 내역</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+    <style>
+        /* 신청 내역 전용 테이블 및 모달 확장 컴포넌트 스타일 클래스 */
+        .mypage-table-card {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--color-border-default, #e5e7eb);
+            border-radius: var(--radius-xl, 16px);
+            padding: 32px;
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.05));
+        }
+
+        .app-table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+
+        .app-custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .app-custom-table th {
+            padding: 16px;
+            background-color: var(--color-bg-subtle, #f9fafb);
+            font-size: var(--text-sm, 14px);
+            font-weight: 600;
+            color: var(--color-text-secondary, #4b5563);
+            border-bottom: 1px solid var(--color-border-default, #e5e7eb);
+        }
+
+        .app-custom-table td {
+            padding: 20px 16px;
+            font-size: var(--text-sm, 14px);
+            color: var(--color-text-primary, #111827);
+            border-bottom: 1px solid var(--color-border-default, #e5e7eb);
+            vertical-align: middle;
+        }
+
+        .course-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: var(--radius-sm, 4px);
+            background: var(--color-brand-subtle, #eff6ff);
+            color: var(--color-brand, #2563eb);
+        }
+
+        .course-tag.offline {
+            background: #faf5ff;
+            color: #7c3aed;
+        }
+
+        /* [APP-002] 상태별 배지 피드백 */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 50px;
+            line-height: 1;
+        }
+
+        .badge-status.waiting {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
+        .badge-status.approved {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .badge-status.rejected {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .badge-status.canceled {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        /* 공통 버튼 인터페이스 제어 */
+        .btn-ui {
+            padding: 8px 14px;
+            font-size: var(--text-sm, 14px);
+            font-weight: var(--font-medium, 500);
+            border-radius: var(--radius-md, 8px);
+            cursor: pointer;
+            border: 1px solid var(--color-border-default, #d1d5db);
+            background: #ffffff;
+            color: var(--color-text-primary, #374151);
+            transition: all 0.15s ease-in-out;
+        }
+
+        .btn-ui:hover {
+            background: var(--color-bg-subtle, #f9fafb);
+        }
+
+        .btn-ui-danger {
+            border-color: #fca5a5;
+            color: #dc2626;
+            background: #fff5f5;
+        }
+
+        .btn-ui-danger:hover {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+
+        /* 공용 비동기 모달 레이어 팝업 셸 */
+        .overlay-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+            backdrop-filter: blur(4px);
+        }
+
+        .window-modal {
+            background: #ffffff;
+            border-radius: var(--radius-xl, 16px);
+            width: min(95%, 480px);
+            padding: 28px;
+            box-shadow: var(--shadow-lg), 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-modal {
+            font-size: var(--text-lg, 18px);
+            font-weight: var(--font-bold, 700);
+            color: var(--color-text-primary, #111827);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--color-border-default, #e5e7eb);
+        }
+
+        .grid-modal-info {
+            display: grid;
+            gap: 12px;
+        }
+
+        .row-modal-info {
+            display: flex;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--color-border-default, #f3f4f6);
+        }
+
+        .label-modal {
+            width: 100px;
+            font-weight: 600;
+            color: var(--color-text-primary, #374151);
+            flex-shrink: 0;
+        }
+
+        .val-modal {
+            color: var(--color-text-secondary, #6b7280);
+        }
+
+        .box-reject-reason {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: 14px;
+            border-radius: var(--radius-md, 8px);
+            margin-top: 16px;
+            font-size: 14px;
+        }
+
+        .footer-modal {
+            margin-top: 24px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body class="mypage-page">
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="mypage-shell">
+
+    <section class="mypage-hero" aria-labelledby="mypage-title">
+        <div class="mypage-hero__identity">
+            <div class="mypage-avatar mypage-avatar--large" aria-hidden="true"
+                 th:text="${#authentication.principal.name != null ? #strings.substring(#authentication.principal.name, 0, 1) : 'H'}">
+                H
+            </div>
+            <div class="mypage-hero__text">
+                <span class="mypage-badge"
+                      th:text="'사번 ' + ${#authentication.principal.username}">
+                    사번 EMP-0000
+                </span>
+                <h1 id="mypage-title" class="mypage-hero__title">
+                    <span th:text="${#authentication.principal.name}">사용자명</span>
+                    <span th:text="${#authentication.principal.positionName}">사원</span>
+                </h1>
+                <p class="mypage-hero__meta">
+                    <span th:text="${#authentication.principal.departmentName}">소속 본부/팀</span>
+                    <span aria-hidden="true">·</span>
+                    <span th:text="${#authentication.principal.jobName}">직무 엔지니어</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="mypage-summary" aria-label="학습 요약">
+            <article class="mypage-summary-card">
+                <span class="mypage-summary-card__label">수강 중</span>
+                <strong class="mypage-summary-card__value">1</strong>
+            </article>
+            <article class="mypage-summary-card">
+                <span class="mypage-summary-card__label">수료 완료</span>
+                <strong class="mypage-summary-card__value mypage-summary-card__value--blue">1</strong>
+            </article>
+        </div>
+    </section>
+    <!--
+        <nav class="mypage-tabs" aria-label="마이페이지 메뉴">
+            <a class="mypage-tab" th:href="@{/mypage}">내 정보</a>
+            <a class="mypage-tab" th:href="@{/mypage/courses}">수강현황</a>
+            <a class="mypage-tab is-active" th:href="@{/mypage/applications}">신청 내역</a>
+            <a class="mypage-tab" th:href="@{/mypage/evaluation}">역량 평가</a>
+        </nav>
+    -->
+    <section class="mypage-content" aria-label="내 신청 내역 상세" style="grid-template-columns: 1fr;">
+        <article class="mypage-table-card">
+            <header class="mypage-card__header" style="margin-bottom: 24px;">
+                <p class="mypage-card__eyebrow" style="font-size: var(--text-lg, 18px); font-weight: 700;">강의 / 오프라인 특강
+                    신청 내역</p>
+            </header>
+
+            <div th:if="${#lists.isEmpty(applications)}"
+                 style="text-align:center; padding:70px 0; border: 1px dashed var(--color-border-default); border-radius: var(--radius-xl);">
+                <p style="font-size:15px; color:var(--color-text-secondary); margin-bottom:16px;">수강 신청 혹은 배정받은 강의 내역이
+                    존재하지 않습니다.</p>
+                <a th:href="@{/course}" class="btn-ui"
+                   style="color:var(--color-brand); border-color:var(--color-brand); text-decoration:none;">교육 콘텐츠 신청하러
+                    가기</a>
+            </div>
+
+            <div th:unless="${#lists.isEmpty(applications)}" class="app-table-container">
+                <table class="app-custom-table">
+                    <thead>
+                    <tr>
+                        <th style="width: 44%;">강의 정보</th>
+                        <th style="width: 12%;">구분</th>
+                        <th style="width: 15%;">신청일</th>
+                        <th style="width: 14%;">상태</th>
+                        <th style="width: 15%;">관리</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="app : ${applications}">
+                        <td>
+                            <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: 4px;"
+                                 th:text="${app.courseTitle}">Java 프로그래밍 핵심 가이드
+                            </div>
+                            <div style="font-size: 12px; color: var(--color-text-secondary);"
+                                 th:text="'담당 강사: ' + ${app.instructorName}">김자바
+                            </div>
+                        </td>
+                        <td>
+                                <span class="course-tag"
+                                      th:classappend="${app.courseType == 'OFFLINE'} ? 'offline' : ''"
+                                      th:text="${app.courseType}">ONLINE</span>
+                        </td>
+                        <td th:text="${app.appliedAt}">2026-07-03</td>
+                        <td>
+                            <div th:switch="${app.applicationStatus.name()}">
+                                <span th:case="'WAITING'" class="badge-status waiting">대기</span>
+                                <span th:case="'APPROVED'" class="badge-status approved">승인</span>
+                                <span th:case="'REJECTED'" class="badge-status rejected">반려</span>
+                                <span th:case="'CANCELED'" class="badge-status canceled">취소</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="btn-ui" type="button"
+                                        th:data-title="${app.courseTitle}"
+                                        th:data-type="${app.courseType}"
+                                        th:data-status="${app.applicationStatus.name()}"
+                                        th:data-location="${app.location}"
+                                        th:data-start="${app.courseStartDate}"
+                                        th:data-end="${app.courseEndDate}"
+                                        th:data-reject="${app.rejectReason}"
+                                        onclick="openDetailModal(this)">
+                                    상세
+                                </button>
+
+                                <button th:if="${app.applicationStatus.name() == 'WAITING' or (app.applicationStatus.name() == 'APPROVED' and app.courseType == 'OFFLINE' and (app.applyEndDate == null or !T(java.time.LocalDate).now().isAfter(app.applyEndDate)))}"
+                                        class="btn-ui btn-ui-danger"
+                                        type="button"
+                                        th:onclick="cancelApplication([[${app.courseId}]], [[${app.courseTitle}]])">
+                                    신청취소
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<div id="detailModal" class="overlay-modal" onclick="closeModalOnOuterClick(event)">
+    <div class="window-modal">
+        <div class="header-modal">신청 상세 내역</div>
+        <div class="modal-body">
+            <div class="grid-modal-info">
+                <div class="row-modal-info">
+                    <div class="label-modal">과정명</div>
+                    <div id="mdlTitle" class="val-modal" style="font-weight:600; color:var(--color-text-primary);">-
+                    </div>
+                </div>
+                <div class="row-modal-info">
+                    <div class="label-modal">교육 형태</div>
+                    <div id="mdlType" class="val-modal">-</div>
+                </div>
+                <div class="row-modal-info">
+                    <div class="label-modal">심사 상태</div>
+                    <div id="mdlStatus" class="val-modal">-</div>
+                </div>
+
+                <div id="mdlOfflinePanel" style="display: none;">
+                    <div class="row-modal-info">
+                        <div class="label-modal">강의 장소</div>
+                        <div id="mdlLocation" class="val-modal" style="color: #7c3aed; font-weight: 500;">-</div>
+                    </div>
+                    <div class="row-modal-info">
+                        <div class="label-modal">교육 일정</div>
+                        <div id="mdlSchedule" class="val-modal">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mdlRejectPanel" class="box-reject-reason" style="display: none;">
+                <strong style="display: block; margin-bottom: 4px;">⚠️ 심사 반려 사유</strong>
+                <div id="mdlRejectReason">-</div>
+            </div>
+        </div>
+        <div class="footer-modal">
+            <button class="btn-ui" type="button" onclick="closeModal()" style="min-width: 80px;">닫기</button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // [APP-003] 모달 오픈 및 DOM ID 참조 제어 버그 전면 교정 완료
+    function openDetailModal(element) {
+        const title = element.getAttribute('data-title');
+        const type = element.getAttribute('data-type');
+        const status = element.getAttribute('data-status');
+        const location = element.getAttribute('data-location');
+        const start = element.getAttribute('data-start');
+        const end = element.getAttribute('data-end');
+        const reject = element.getAttribute('data-reject');
+
+        document.getElementById('mdlTitle').innerText = title;
+        document.getElementById('mdlType').innerText = type;
+
+        let statusText = '';
+        switch (status) {
+            case 'WAITING':
+                statusText = '승인 대기 중';
+                break;
+            case 'APPROVED':
+                statusText = '최종 승인 완료';
+                break;
+            case 'REJECTED':
+                statusText = '심사 반려됨';
+                break;
+            case 'CANCELED':
+                statusText = '신청 취소 완료';
+                break;
+        }
+        document.getElementById('mdlStatus').innerText = statusText;
+
+        // [버그 수정 포인트] 정밀하게 설계된 mdlOfflinePanel 컴포넌트 노출 제어
+        const offlinePanel = document.getElementById('mdlOfflinePanel');
+        if (type === 'OFFLINE') {
+            offlinePanel.style.display = 'block';
+            document.getElementById('mdlLocation').innerText = location || '장소 미지정';
+            document.getElementById('mdlSchedule').innerText = `${start} ~ ${end}`;
+        } else {
+            offlinePanel.style.display = 'none';
+        }
+
+        // [버그 수정 포인트] 정밀하게 설계된 mdlRejectPanel 컴포넌트 노출 제어
+        const rejectPanel = document.getElementById('mdlRejectPanel');
+        if (status === 'REJECTED') {
+            rejectPanel.style.display = 'block';
+            document.getElementById('mdlRejectReason').innerText = reject || '등록된 상세 사유가 존재하지 않습니다.';
+        } else {
+            rejectPanel.style.display = 'none';
+        }
+
+        document.getElementById('detailModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('detailModal').style.display = 'none';
+    }
+
+    function closeModalOnOuterClick(e) {
+        if (e.target.id === 'detailModal') {
+            closeModal();
+        }
+    }
+
+    // [APP-004] Fetch API 비동기 바인딩 통신 제어 로직 (CSRF 토근 탑재 버전)
+    function cancelApplication(courseId, courseTitle) {
+        if (!confirm(`[${courseTitle}]\n정말 수강 신청을 취소하시겠습니까?`)) {
+            return;
+        }
+
+        // Thymeleaf 런타임 시점에 시큐리티가 제공하는 CSRF 토큰과 헤더명 추출
+        const csrfToken = [[${_csrf.token}]];
+        const csrfHeader = [[${_csrf.headerName}]];
+
+        // MyPageController의 DeleteMapping 주소인 /mypage/applications/{courseId} 로 호출
+        fetch(`/mypage/applications/${courseId}`, {
+            method: 'DELETE', // DeleteMapping과 일치
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken // 403 방지용 CSRF 토큰
+            }
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('서버 통신 오류 장애');
+                return response.json();
+            })
+            .then(res => {
+                if (res.success) {
+                    alert('강의 신청 취소 처리가 완료되었습니다.');
+                    location.reload(); // 성공 시 새로고침하여 상태 변경 확인
+                } else {
+                    alert(`취소 처리 실패: ${res.message}`);
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                alert('일시적인 시스템 오류가 발생했습니다. 담당자에게 문의하세요.');
+            });
+    }
+
+    function cancelApplicationFromButton(button) {
+        const courseId = button.dataset.courseId;
+        const courseTitle = button.dataset.courseTitle;
+
+        cancelApplication(courseId, courseTitle);
+    }
+</script>
+</body>
+</html>
