@@ -59,59 +59,55 @@
                 </div>
 
                 <div class="kcy-axis-grid">
-                    <article class="kcy-axis"
-                             th:style="${#strings.substring(code, 0, 1) == 'A'} ? '--axis-left: 65%' : '--axis-left: 35%'">
+                    <article class="kcy-axis">
                         <div class="kcy-axis__labels">
-                            <strong>실행 중심</strong>
-                            <strong>설계 중심</strong>
+                            <strong th:text="${#strings.substring(code, 0, 1) == 'A' ? '실행 중심' : '설계 중심'}">실행 중심</strong>
+                            <strong th:text="${#strings.substring(code, 0, 1) == 'A' ? '설계 중심' : '실행 중심'}">설계 중심</strong>
                         </div>
-                        <div class="kcy-axis__bar"><span></span></div>
                         <p>
-                            <strong th:text="${#strings.substring(code, 0, 1) == 'A' ? '실행 중심 65%' : '설계 중심 65%'}">실행 중심 65%</strong>
-                            <span th:text="${#strings.substring(code, 0, 1) == 'A' ? '설계 중심 35%' : '실행 중심 35%'}">설계 중심 35%</span>
+                            <strong>65%</strong>
+                            <span>35%</span>
                         </p>
+                        <div class="kcy-axis__bar"><span></span></div>
                         <p>바로 구현하며 검증하는지, 구조를 먼저 설계하는지 확인합니다.</p>
                     </article>
 
-                    <article class="kcy-axis"
-                             th:style="${#strings.substring(code, 1, 2) == 'W'} ? '--axis-left: 65%' : '--axis-left: 35%'">
+                    <article class="kcy-axis">
                         <div class="kcy-axis__labels">
-                            <strong>폭넓은 적응</strong>
-                            <strong>깊은 전문성</strong>
+                            <strong th:text="${#strings.substring(code, 1, 2) == 'W' ? '폭넓은 적응' : '깊은 전문성'}">폭넓은 적응</strong>
+                            <strong th:text="${#strings.substring(code, 1, 2) == 'W' ? '깊은 전문성' : '폭넓은 적응'}">깊은 전문성</strong>
                         </div>
-                        <div class="kcy-axis__bar"><span></span></div>
                         <p>
-                            <strong th:text="${#strings.substring(code, 1, 2) == 'W' ? '폭넓은 적응 65%' : '폭넓은 적응 35%'}">폭넓은 적응 65%</strong>
-                            <span th:text="${#strings.substring(code, 1, 2) == 'W' ? '깊은 전문성 35%' : '깊은 전문성 65%'}">깊은 전문성 35%</span>
+                            <strong>65%</strong>
+                            <span>35%</span>
                         </p>
+                        <div class="kcy-axis__bar"><span></span></div>
                         <p>여러 기술을 넓게 다루는지, 특정 영역을 깊게 파고드는지 확인합니다.</p>
                     </article>
 
-                    <article class="kcy-axis"
-                             th:style="${#strings.substring(code, 2, 3) == 'I'} ? '--axis-left: 65%' : '--axis-left: 35%'">
+                    <article class="kcy-axis">
                         <div class="kcy-axis__labels">
-                            <strong>자율 몰입</strong>
-                            <strong>협업 조율</strong>
+                            <strong th:text="${#strings.substring(code, 2, 3) == 'I' ? '자율 몰입' : '협업 조율'}">자율 몰입</strong>
+                            <strong th:text="${#strings.substring(code, 2, 3) == 'I' ? '협업 조율' : '자율 몰입'}">협업 조율</strong>
                         </div>
-                        <div class="kcy-axis__bar"><span></span></div>
                         <p>
-                            <strong th:text="${#strings.substring(code, 2, 3) == 'I' ? '자율 몰입 65%' : '협업 조율 65%'}">자율 몰입 65%</strong>
-                            <span th:text="${#strings.substring(code, 2, 3) == 'I' ? '협업 조율 35%' : '자율 몰입 35%'}">협업 조율 35%</span>
+                            <strong>65%</strong>
+                            <span>35%</span>
                         </p>
+                        <div class="kcy-axis__bar"><span></span></div>
                         <p>개인 몰입형으로 일하는지, 팀 단위 조율을 선호하는지 확인합니다.</p>
                     </article>
 
-                    <article class="kcy-axis"
-                             th:style="${#strings.substring(code, 3, 4) == 'P'} ? '--axis-left: 65%' : '--axis-left: 35%'">
+                    <article class="kcy-axis">
                         <div class="kcy-axis__labels">
-                            <strong>AI 보조 활용</strong>
-                            <strong>직접 구현 중심</strong>
+                            <strong th:text="${#strings.substring(code, 3, 4) == 'P' ? 'AI 보조 활용' : '직접 구현 중심'}">AI 보조 활용</strong>
+                            <strong th:text="${#strings.substring(code, 3, 4) == 'P' ? '직접 구현 중심' : 'AI 보조 활용'}">직접 구현 중심</strong>
                         </div>
-                        <div class="kcy-axis__bar"><span></span></div>
                         <p>
-                            <strong th:text="${#strings.substring(code, 3, 4) == 'P' ? 'AI 보조 활용 65%' : '직접 구현 중심 65%'}">AI 보조 활용 65%</strong>
-                            <span th:text="${#strings.substring(code, 3, 4) == 'P' ? '직접 구현 중심 35%' : 'AI 보조 활용 35%'}">직접 구현 중심 35%</span>
+                            <strong>65%</strong>
+                            <span>35%</span>
                         </p>
+                        <div class="kcy-axis__bar"><span></span></div>
                         <p>AI 도구를 적극 활용하는지, 직접 원리를 파악해 구현하는지 확인합니다.</p>
                     </article>
                 </div>
