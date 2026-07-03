@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.course.mapper.CourseApplicationMapper">
+
+    <select id="selectApplicationListByUserId" resultType="com.hlinks.domain.course.dto.CourseApplicationListResponseDto">
+        SELECT
+        ca.APPLICATION_ID        AS applicationId,
+        ca.USER_ID               AS userId,
+        ca.APPLICATION_TYPE      AS applicationType,
+        ca.APPLICATION_STATUS    AS applicationStatus,
+        ca.REJECT_REASON         AS rejectReason,
+        ca.APPLIED_AT            AS appliedAt,
+        ca.CANCELED_AT           AS canceledAt,
+        ca.APPROVED_BY           AS approvedBy,
+        c.COURSE_ID              AS courseId,
+        c.COURSE_TITLE           AS courseTitle,
+        c.COURSE_TYPE            AS courseType,
+        c.CATEGORY_TYPE          AS categoryType,
+        c.INSTRUCTOR_NAME        AS instructorName,
+        oc.LOCATION              AS location,
+        oc.APPLY_START_DATE      AS applyStartDate,
+        oc.APPLY_END_DATE        AS applyEndDate,
+        oc.COURSE_START_DATE     AS courseStartDate,
+        oc.COURSE_END_DATE       AS courseEndDate
+        FROM COURSE_APPLICATION ca
+        JOIN COURSE c ON ca.COURSE_ID = c.COURSE_ID
+        LEFT JOIN OFFLINE_COURSE oc ON c.COURSE_ID = oc.COURSE_ID
+        WHERE ca.USER_ID = #{userId}
+        ORDER BY ca.APPLIED_AT DESC, ca.APPLICATION_ID DESC
+    </select>
+
+    <select id="selectApplicationById" resultType="com.hlinks.domain.course.dto.CourseApplicationListResponseDto">
+        SELECT
+        ca.APPLICATION_ID        AS applicationId,
+        ca.USER_ID               AS userId,
+        ca.APPLICATION_TYPE      AS applicationType,
+        ca.APPLICATION_STATUS    AS applicationStatus,
+        ca.REJECT_REASON         AS rejectReason,
+        ca.APPLIED_AT            AS appliedAt,
+        ca.CANCELED_AT           AS canceledAt,
+        ca.APPROVED_BY           AS approvedBy,
+        c.COURSE_ID              AS courseId,
+        c.COURSE_TITLE           AS courseTitle,
+        c.COURSE_TYPE            AS courseType,
+        c.CATEGORY_TYPE          AS categoryType,
+        c.INSTRUCTOR_NAME        AS instructorName,
+        oc.LOCATION              AS location,
+        oc.APPLY_START_DATE      AS applyStartDate,
+        oc.APPLY_END_DATE        AS applyEndDate,
+        oc.COURSE_START_DATE     AS courseStartDate,
+        oc.COURSE_END_DATE       AS courseEndDate
+        FROM COURSE_APPLICATION ca
+        JOIN COURSE c ON ca.COURSE_ID = c.COURSE_ID
+        LEFT JOIN OFFLINE_COURSE oc ON c.COURSE_ID = oc.COURSE_ID
+        WHERE ca.APPLICATION_ID = #{applicationId}
+    </select>
+
+    <update id="updateApplicationToCanceled">
+        UPDATE COURSE_APPLICATION
+        SET
+        APPLICATION_STATUS = 'CANCELED',
+        CANCELED_AT = TRUNC(SYSDATE)
+        WHERE APPLICATION_ID = #{applicationId}
+    </update>
+
+</mapper>
