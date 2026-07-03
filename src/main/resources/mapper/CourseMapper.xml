@@ -18,6 +18,7 @@
         COURSE_TITLE,
         DESCRIPTION,
         INSTRUCTOR_NAME,
+        THUMBNAIL_URL,
         CREATED_AT,
         UPDATED_AT
         )
@@ -25,23 +26,57 @@
         #{courseId},
         #{createdBy, jdbcType=NUMERIC},
         #{categoryType},
-        #{courseType},
+        #{courseTypeValue},
         #{courseTitle},
         #{description},
         #{instructorName},
+        #{thumbnailUrl, jdbcType=VARCHAR},
         SYSDATE,
         SYSDATE
         )
     </insert>
 
+    <update id="updateCourseThumbnail">
+        UPDATE COURSE
+        SET
+        THUMBNAIL_URL = #{thumbnailUrl, jdbcType=VARCHAR},
+        UPDATED_AT = SYSDATE
+        WHERE COURSE_ID = #{courseId}
+    </update>
+
     <insert id="insertOnlineCourse">
         INSERT INTO ONLINE_COURSE (
         COURSE_ID,
+        COURSE_MATERIAL_URL,
         STATUS
         )
         VALUES (
         #{courseId},
+        #{courseMaterialUrl, jdbcType=VARCHAR},
         'OPEN'
+        )
+    </insert>
+
+    <insert id="insertOfflineCourse">
+        INSERT INTO OFFLINE_COURSE (
+        COURSE_ID,
+        CAPACITY,
+        LOCATION,
+        STATUS,
+        APPLY_START_DATE,
+        APPLY_END_DATE,
+        COURSE_START_DATE,
+        COURSE_END_DATE
+        )
+        VALUES (
+        #{courseId},
+        #{capacity},
+        #{location},
+        'OPEN',
+        #{applyStartDate},
+        #{applyEndDate},
+        #{courseStartDate},
+        #{courseEndDate}
         )
     </insert>
 
@@ -79,6 +114,7 @@
         VIDEO_PATH = #{videoPath},
         ORIGINAL_FILE_NAME = #{originalFileName},
         FILE_SIZE = #{fileSize},
+        DURATION_SECONDS = #{durationSeconds},
         UPDATED_AT = SYSDATE
         WHERE CHAPTER_ID = #{chapterId}
         AND COURSE_ID = #{courseId}
@@ -161,8 +197,14 @@
         OFF.STATUS              AS offlineStatus,
         OFF.APPLY_START_DATE    AS applyStartDate,
         OFF.APPLY_END_DATE      AS applyEndDate,
-        OFF.COURSE_START_DATE   AS courseStartDate,
-        OFF.COURSE_END_DATE     AS courseEndDate
+        CASE
+            WHEN C.COURSE_TYPE = 'ONLINE' THEN TRUNC(C.CREATED_AT)
+            ELSE OFF.COURSE_START_DATE
+        END AS courseStartDate,
+        CASE
+            WHEN C.COURSE_TYPE = 'ONLINE' THEN ADD_MONTHS(TRUNC(C.CREATED_AT), 2)
+            ELSE OFF.COURSE_END_DATE
+        END AS courseEndDate
         FROM COURSE C
         LEFT JOIN ONLINE_COURSE ONL  ON C.COURSE_ID = ONL.COURSE_ID
         LEFT JOIN OFFLINE_COURSE OFF ON C.COURSE_ID = OFF.COURSE_ID

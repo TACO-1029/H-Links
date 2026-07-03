@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -41,6 +42,31 @@ public class CourseVideoController {
                     .body(resource);
         } catch (MalformedURLException e) {
             throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "강의 영상 경로가 올바르지 않습니다.", e);
+        }
+    }
+
+    @GetMapping("/images/courses/{courseId}/{fileName:.+}")
+    public ResponseEntity<Resource> showThumbnail(
+            @PathVariable Long courseId,
+            @PathVariable String fileName
+    ) {
+        Path thumbnailPath = adminCourseService.resolveThumbnailPath(courseId, fileName);
+
+        if (!Files.exists(thumbnailPath) || !Files.isReadable(thumbnailPath)) {
+            throw new BaseException(ErrorResponseCode.NOT_FOUND_ENDPOINT, "강의 썸네일을 찾을 수 없습니다.");
+        }
+
+        try {
+            Resource resource = new UrlResource(thumbnailPath.toUri());
+            MediaType mediaType = Optional.ofNullable(Files.probeContentType(thumbnailPath))
+                    .map(MediaType::parseMediaType)
+                    .orElse(MediaType.APPLICATION_OCTET_STREAM);
+
+            return ResponseEntity.ok()
+                    .contentType(mediaType)
+                    .body(resource);
+        } catch (Exception e) {
+            throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "강의 썸네일 경로가 올바르지 않습니다.", e);
         }
     }
 }

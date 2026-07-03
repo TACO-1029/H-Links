@@ -430,8 +430,10 @@
                     </div>
 
                     <div class="info-box-hero">
-                        <img th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/kcy/main_logo.webp'}"
-                             alt="강의 썸네일" class="hero-thumb">
+                        <img th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/common/hyundai_futurenet.webp'}"
+                             alt="강의 썸네일"
+                             class="hero-thumb"
+                             onerror="this.onerror=null; this.src='/images/common/hyundai_futurenet.webp';">
                         <div class="hero-text-area">
                             <h1 class="hero-title" th:text="${course.courseTitle}">강의 타이틀</h1>
                             <p class="hero-desc" th:text="${course.description}">강의 설명 요약</p>

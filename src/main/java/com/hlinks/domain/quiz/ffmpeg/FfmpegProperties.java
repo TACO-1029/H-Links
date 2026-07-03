@@ -10,7 +10,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class FfmpegProperties {
 
     private String command = "ffmpeg";
+    private String probeCommand = "ffprobe";
     private String tempDir = "./storage/temp/audio";
     private long timeoutSeconds = 120;
+    private long probeTimeoutSeconds = 10;
     private long cleanupRetentionHours = 24;
 }
