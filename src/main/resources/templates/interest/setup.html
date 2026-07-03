@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>관심분야 설정</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/interest.css}">
+</head>
+<body class="interest-setup-page">
+<div class="interest-backdrop" aria-hidden="true">
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="interest-preview-shell">
+        <section class="interest-preview-hero">
+            <p>H-LINKS DASHBOARD</p>
+            <h1>나에게 맞는 학습 경험을 준비하고 있어요</h1>
+            <span>관심분야 설정이 끝나면 맞춤 교육 콘텐츠와 추천 정보를 확인할 수 있습니다.</span>
+        </section>
+
+        <section class="interest-preview-grid">
+            <article></article>
+            <article></article>
+            <article></article>
+        </section>
+    </main>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+
+<section class="interest-modal-overlay" aria-labelledby="interest-modal-title">
+    <form class="interest-modal" th:action="@{/interests/setup}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+        <header class="interest-modal__header">
+            <div>
+                <p class="interest-modal__eyebrow">첫 설정</p>
+                <h1 id="interest-modal-title">관심분야를 선택해주세요</h1>
+                <p>
+                    선택한 관심분야는 앞으로 교육 콘텐츠, 커리어 추천, IT 뉴스 추천에 활용됩니다.
+                    최대 5개까지 선택할 수 있어요.
+                </p>
+            </div>
+            <span class="interest-modal__limit">최대 5개</span>
+        </header>
+
+        <div class="interest-category-grid" aria-label="관심분야 목록">
+            <section class="interest-category-card interest-category-card--frontend">
+                <header>
+                    <span>01</span>
+                    <h2>프론트엔드</h2>
+                    <p>화면, 사용자 경험, 웹 인터페이스 역량</p>
+                </header>
+                <div class="interest-chip-group">
+                    <label class="interest-chip" th:each="interest : ${interests}"
+                           th:if="${#strings.contains(#strings.toLowerCase(interest.skillName), 'frontend')
+                               or #strings.contains(interest.skillName, '프론트')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'react')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'vue')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'javascript')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'typescript')}">
+                        <input type="checkbox" name="skillIds" th:value="${interest.skillId}">
+                        <span th:text="${interest.skillName}">React</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="interest-category-card interest-category-card--backend">
+                <header>
+                    <span>02</span>
+                    <h2>백엔드</h2>
+                    <p>서버, API, 데이터 처리, 비즈니스 로직</p>
+                </header>
+                <div class="interest-chip-group">
+                    <label class="interest-chip" th:each="interest : ${interests}"
+                           th:if="${#strings.contains(#strings.toLowerCase(interest.skillName), 'backend')
+                               or #strings.contains(interest.skillName, '백엔드')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'spring')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'java')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'api')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'database')}">
+                        <input type="checkbox" name="skillIds" th:value="${interest.skillId}">
+                        <span th:text="${interest.skillName}">Spring Boot</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="interest-category-card interest-category-card--ai">
+                <header>
+                    <span>03</span>
+                    <h2>AI · 데이터</h2>
+                    <p>AI 활용, 데이터 분석, 자동화 역량</p>
+                </header>
+                <div class="interest-chip-group">
+                    <label class="interest-chip" th:each="interest : ${interests}"
+                           th:if="${#strings.contains(#strings.toLowerCase(interest.skillName), 'ai')
+                               or #strings.contains(interest.skillName, 'AI')
+                               or #strings.contains(interest.skillName, '데이터')
+                               or #strings.contains(interest.skillName, '자동화')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'python')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'llm')}">
+                        <input type="checkbox" name="skillIds" th:value="${interest.skillId}">
+                        <span th:text="${interest.skillName}">AI 자동화</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="interest-category-card interest-category-card--cloud">
+                <header>
+                    <span>04</span>
+                    <h2>클라우드 · 인프라</h2>
+                    <p>배포, 운영, 클라우드 네이티브 환경</p>
+                </header>
+                <div class="interest-chip-group">
+                    <label class="interest-chip" th:each="interest : ${interests}"
+                           th:if="${#strings.contains(interest.skillName, '클라우드')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'cloud')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'aws')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'docker')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'kubernetes')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'devops')}">
+                        <input type="checkbox" name="skillIds" th:value="${interest.skillId}">
+                        <span th:text="${interest.skillName}">Cloud</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="interest-category-card interest-category-card--security">
+                <header>
+                    <span>05</span>
+                    <h2>보안 · 품질</h2>
+                    <p>안정성, 테스트, 보안, 코드 품질</p>
+                </header>
+                <div class="interest-chip-group">
+                    <label class="interest-chip" th:each="interest : ${interests}"
+                           th:if="${#strings.contains(interest.skillName, '보안')
+                               or #strings.contains(interest.skillName, '품질')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'security')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'test')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'qa')}">
+                        <input type="checkbox" name="skillIds" th:value="${interest.skillId}">
+                        <span th:text="${interest.skillName}">Security</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="interest-category-card interest-category-card--business">
+                <header>
+                    <span>06</span>
+                    <h2>협업 · 도메인</h2>
+                    <p>기획, 커뮤니케이션, 업무 도메인 이해</p>
+                </header>
+                <div class="interest-chip-group">
+                    <label class="interest-chip" th:each="interest : ${interests}"
+                           th:if="${#strings.contains(interest.skillName, '협업')
+                               or #strings.contains(interest.skillName, '기획')
+                               or #strings.contains(interest.skillName, '도메인')
+                               or #strings.contains(interest.skillName, '커뮤니케이션')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'business')
+                               or #strings.contains(#strings.toLowerCase(interest.skillName), 'product')}">
+                        <input type="checkbox" name="skillIds" th:value="${interest.skillId}">
+                        <span th:text="${interest.skillName}">Product</span>
+                    </label>
+                </div>
+            </section>
+        </div>
+
+        <footer class="interest-modal__footer">
+            <p>관심분야는 최소 1개 이상 선택해야 합니다. 나중에 마이페이지에서 수정할 수 있도록 확장할 예정입니다.</p>
+            <button type="submit">관심분야 저장하기</button>
+        </footer>
+    </form>
+</section>
+</body>
+</html>
