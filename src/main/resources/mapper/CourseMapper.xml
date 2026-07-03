@@ -156,6 +156,7 @@
 
         -- 오프라인 강의 정보
         OFF.CAPACITY            AS capacity,
+        OFF.CURRENT_APPLICANT_COUNT AS currentApplicantCount,
         OFF.LOCATION            AS location,
         OFF.STATUS              AS offlineStatus,
         OFF.APPLY_START_DATE    AS applyStartDate,
@@ -187,6 +188,23 @@
         ORDER BY CHAPTER_ORDER ASC
     </select>
 
+    <select id="findLatestLearningChapterId" resultType="long">
+        SELECT chapter_id
+        FROM (
+            SELECT cls.chapter_id
+            FROM CHAPTER_LEARNING_STATUS cls
+            JOIN COURSE_CHAPTER cc
+              ON cls.chapter_id = cc.chapter_id
+            WHERE cls.course_learning_id = #{courseLearningId}
+              AND cls.status IN ('IN_PROGRESS', 'COMPLETED')
+              AND cc.use_yn = 'Y'
+            ORDER BY NVL(cls.updated_at, cls.started_at) DESC,
+                     cc.chapter_order DESC,
+                     cls.chapter_learning_id DESC
+        )
+        WHERE ROWNUM = 1
+    </select>
+
     <!-- 강의의 COURSE_SKILL을 싹 다 모아서 PARENT_SKILL_ID에 따라 대분류 Skill(ex: 백엔드, 인프라)만 반환하는 쿼리 -->
     <select id="findSkillNamesByCourseId" resultType="string">
         SELECT PS.SKILL_NAME
@@ -202,11 +220,242 @@
 
     <select id="findApplicationInfo" resultType="com.hlinks.domain.course.dto.CourseDetailResponseDto">
         SELECT
-        APPLICATION_STATUS AS applicationStatus,
-        REJECT_REASON      AS rejectReason
-        FROM COURSE_APPLICATION
-        WHERE COURSE_ID = #{courseId}
-        AND USER_ID = #{userId}
+        CA.APPLICATION_STATUS AS applicationStatus,
+        CA.REJECT_REASON      AS rejectReason,
+        CLS.STATUS            AS learningStatus,
+        CLS.PROGRESS_RATE     AS progressRate
+        FROM COURSE_APPLICATION CA
+        LEFT JOIN COURSE_LEARNING_STATUS CLS
+        ON CA.APPLICATION_ID = CLS.APPLICATION_ID
+        WHERE CA.APPLICATION_ID = (
+            SELECT MAX(APPLICATION_ID)
+            FROM COURSE_APPLICATION
+            WHERE COURSE_ID = #{courseId}
+              AND USER_ID = #{userId}
+              AND APPLICATION_STATUS IN ('WAITING', 'APPROVED', 'REJECTED')
+        )
     </select>
+
+    <select id="findCourseApplyTarget"
+            resultType="com.hlinks.domain.course.dto.CourseApplyTargetDto">
+        SELECT
+            c.course_id AS course_id,
+            c.course_type AS course_type,
+            CASE
+                WHEN c.course_type = 'ONLINE' THEN onc.status
+                WHEN c.course_type = 'OFFLINE' THEN ofc.status
+                ELSE NULL
+            END AS course_status,
+            ofc.apply_start_date AS apply_start_date,
+            ofc.apply_end_date AS apply_end_date,
+            ofc.capacity AS capacity,
+            ofc.current_applicant_count AS current_applicant_count
+        FROM COURSE c
+        LEFT OUTER JOIN ONLINE_COURSE onc
+            ON c.course_id = onc.course_id
+        LEFT OUTER JOIN OFFLINE_COURSE ofc
+            ON c.course_id = ofc.course_id
+        WHERE c.course_id = #{courseId}
+    </select>
+
+    <select id="findOfflineCourseApplyTargetForUpdate"
+            resultType="com.hlinks.domain.course.dto.CourseApplyTargetDto">
+        SELECT
+            c.course_id AS course_id,
+            c.course_type AS course_type,
+            ofc.status AS course_status,
+            ofc.apply_start_date AS apply_start_date,
+            ofc.apply_end_date AS apply_end_date,
+            ofc.capacity AS capacity,
+            ofc.current_applicant_count AS current_applicant_count
+        FROM COURSE c
+        INNER JOIN OFFLINE_COURSE ofc
+            ON c.course_id = ofc.course_id
+        WHERE c.course_id = #{courseId}
+        FOR UPDATE OF ofc.current_applicant_count
+    </select>
+
+    <select id="countActiveApplications" resultType="int">
+        SELECT COUNT(1)
+        FROM COURSE_APPLICATION
+        WHERE user_id = #{userId}
+          AND course_id = #{courseId}
+          AND application_status IN ('WAITING', 'APPROVED')
+    </select>
+
+    <select id="nextCourseApplicationId" resultType="long">
+        SELECT COURSE_APPLICATION_SEQ.NEXTVAL
+        FROM DUAL
+    </select>
+
+    <insert id="insertCourseApplication">
+        INSERT INTO COURSE_APPLICATION (
+            application_id,
+            user_id,
+            course_id,
+            application_status,
+            application_type,
+            applied_at,
+            approved_at
+        ) VALUES (
+            #{applicationId},
+            #{userId},
+            #{courseId},
+            #{applicationStatus},
+            #{applicationType},
+            SYSDATE,
+            SYSDATE
+        )
+    </insert>
+
+    <select id="findCourseLearningId" resultType="long">
+        SELECT course_learning_id
+        FROM (
+            SELECT cls.course_learning_id
+            FROM COURSE_LEARNING_STATUS cls
+            JOIN COURSE_APPLICATION ca
+              ON cls.application_id = ca.application_id
+            WHERE ca.user_id = #{userId}
+              AND ca.course_id = #{courseId}
+              AND ca.application_status = 'APPROVED'
+              AND cls.status != 'CANCELED'
+            ORDER BY ca.application_id DESC
+        )
+        WHERE ROWNUM = 1
+    </select>
+
+    <select id="nextCourseLearningStatusId" resultType="long">
+        SELECT COURSE_LEARNING_STATUS_SEQ.NEXTVAL
+        FROM DUAL
+    </select>
+
+    <insert id="insertCourseLearningStatus">
+        INSERT INTO COURSE_LEARNING_STATUS (
+            course_learning_id,
+            application_id,
+            user_id,
+            course_id,
+            progress_rate,
+            started_at,
+            completed_at,
+            status,
+            updated_at
+        ) VALUES (
+            #{courseLearningId},
+            #{applicationId},
+            #{userId},
+            #{courseId},
+            0,
+            NULL,
+            NULL,
+            #{status},
+            SYSDATE
+        )
+    </insert>
+
+    <insert id="insertChapterLearningStatus">
+        INSERT INTO CHAPTER_LEARNING_STATUS (
+            chapter_learning_id,
+            course_learning_id,
+            user_id,
+            course_id,
+            chapter_id,
+            progress_rate,
+            last_play_seconds,
+            max_play_seconds,
+            quiz_attempt_id,
+            status,
+            started_at,
+            completed_at,
+            updated_at
+        )
+        SELECT
+            CHAPTER_LEARNING_STATUS_SEQ.NEXTVAL,
+            #{courseLearningId},
+            #{userId},
+            #{courseId},
+            #{chapterId},
+            0,
+            0,
+            0,
+            NULL,
+            #{status},
+            NULL,
+            NULL,
+            SYSDATE
+        FROM DUAL
+        WHERE NOT EXISTS (
+              SELECT 1
+              FROM CHAPTER_LEARNING_STATUS cls
+              WHERE cls.course_learning_id = #{courseLearningId}
+                AND cls.chapter_id = #{chapterId}
+          )
+    </insert>
+
+    <update id="startCourseLearning">
+        UPDATE COURSE_LEARNING_STATUS
+        SET status = #{status},
+            started_at = NVL(started_at, SYSDATE),
+            updated_at = SYSDATE
+        WHERE course_learning_id = #{courseLearningId}
+          AND status = 'NOT_STARTED'
+    </update>
+
+    <update id="startChapterLearning">
+        UPDATE CHAPTER_LEARNING_STATUS
+        SET status = #{status},
+            started_at = NVL(started_at, SYSDATE),
+            updated_at = SYSDATE
+        WHERE course_learning_id = #{courseLearningId}
+          AND chapter_id = #{chapterId}
+          AND status = 'NOT_STARTED'
+    </update>
+
+    <update id="increaseOfflineCurrentApplicantCount">
+        UPDATE OFFLINE_COURSE
+        SET current_applicant_count = current_applicant_count + 1
+        WHERE course_id = #{courseId}
+        AND current_applicant_count &lt; capacity
+    </update>
+
+    <select id="findActiveCourseApplicationForUpdate"
+            resultType="com.hlinks.domain.course.dto.CourseApplicationCancelTargetDto">
+        SELECT
+            application_id AS application_id,
+            user_id AS user_id,
+            course_id AS course_id,
+            application_status AS application_status
+        FROM COURSE_APPLICATION
+        WHERE application_id = (
+            SELECT MAX(application_id)
+            FROM COURSE_APPLICATION
+            WHERE user_id = #{userId}
+              AND course_id = #{courseId}
+              AND application_status IN ('WAITING', 'APPROVED')
+        )
+        FOR UPDATE
+    </select>
+
+    <update id="cancelCourseApplication">
+        UPDATE COURSE_APPLICATION
+        SET application_status = #{applicationStatus},
+            canceled_at = SYSDATE
+        WHERE application_id = #{applicationId}
+          AND application_status IN ('WAITING', 'APPROVED')
+    </update>
+
+    <update id="cancelCourseLearningStatus">
+        UPDATE COURSE_LEARNING_STATUS
+        SET status = #{status},
+            updated_at = SYSDATE
+        WHERE application_id = #{applicationId}
+    </update>
+
+    <update id="decreaseOfflineCurrentApplicantCount">
+        UPDATE OFFLINE_COURSE
+        SET current_applicant_count = current_applicant_count - 1
+        WHERE course_id = #{courseId}
+          AND current_applicant_count &gt; 0
+    </update>
 
 </mapper>

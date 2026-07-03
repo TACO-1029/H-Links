@@ -2,12 +2,15 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${course.courseTitle} + ' - 강의 상세'">강의 상세 - H-Link</title>
 
     <link rel="stylesheet" th:href="@{/css/tokens.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/course-detail.css}">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -406,7 +409,7 @@
         <i class="fas fa-arrow-left"></i> 전체 강의 목록으로 돌아가기
     </a>
 
-    <th:block th:with="isApplied=${course.applicationStatus != null}">
+    <th:block th:with="isApplied=${!course.applicationNotApplied}">
 
         <div class="content-grid">
 
@@ -495,7 +498,7 @@
                     </div>
 
                     <div class="chapter-list">
-                        <div th:if="${#lists.isEmpty(course.chapters)}" style="color:#94A3B8; font-size:14px; text-align:center; padding:20px;">
+                        <div th:if="${#lists.isEmpty(course.chapters)}" class="chapter-empty">
                             등록된 커리큘럼 내역이 없습니다.
                         </div>
 
@@ -514,7 +517,9 @@
 
                             <div class="ch-right">
                                 <th:block th:if="${course.online}">
-                                    <button class="ch-btn btn-study-start" th:if="${isApplied}">학습 시작</button>
+                                    <a class="ch-btn btn-study-start"
+                                       th:if="${isApplied}"
+                                       th:href="@{/courses/{courseId}/chapters/{chapterId}(courseId=${course.courseId}, chapterId=${chapter.chapterId})}">학습 시작</a>
                                     <button class="ch-btn btn-study-locked" th:unless="${isApplied}" disabled>수강 불가</button>
                                 </th:block>
                                 <th:block th:unless="${course.online}">
@@ -535,7 +540,7 @@
                             <span class="sc-status-big" th:text="${isApplied ? '수강 중' : '신청 전'}">상태</span>
                         </th:block>
                         <th:block th:unless="${course.online}">
-                            <span class="sc-status-big" th:text="${isApplied ? (course.applicationStatus == 'COMPLETED' ? '완료' : '미완료') : '신청 전'}">상태</span>
+                            <span class="sc-status-big" th:text="${course.learningCompletionLabel}">미완료</span>
                         </th:block>
                     </div>
 
@@ -543,29 +548,65 @@
                         <div class="stat-box">
                             <span class="sc-label-small">신청 인원</span>
                             <span class="stat-val" th:if="${course.online}">제한 없음</span>
-                            <span class="stat-val" th:unless="${course.online}" th:text="'- / ' + ${course.capacity != null ? course.capacity : 0} + '명'"></span>
+                            <span class="stat-val" th:unless="${course.online}"
+                                  th:text="|${course.currentApplicantCount != null ? course.currentApplicantCount : 0}/${course.capacity != null ? course.capacity : 0}명|"></span>
                         </div>
                         <div class="stat-box">
-                            <span class="sc-label-small">내 진도율</span>
+                            <span class="sc-label-small" th:text="${course.online ? '내 진도율' : '완료 여부'}">내 진도율</span>
                             <th:block th:if="${course.online}">
                                 <span class="stat-val" th:text="${isApplied ? '0%' : '-'}"></span>
                             </th:block>
                             <th:block th:unless="${course.online}">
-                                <span class="stat-val" th:text="${isApplied ? '미완료' : '-'}"></span>
+                                <span class="stat-val" th:text="${course.learningCompletionLabel}">미완료</span>
                             </th:block>
                         </div>
                     </div>
 
                     <div class="sc-actions">
                         <th:block th:if="${course.online}">
-                            <button class="action-btn btn-apply" th:unless="${isApplied}">수강 신청하기</button>
-                            <button class="action-btn btn-continue" th:if="${isApplied}">이어서 학습하기</button>
+                            <button class="action-btn btn-apply"
+                                    type="button"
+                                    data-course-action="apply"
+                                    th:unless="${isApplied}">수강 신청하기</button>
+                            <th:block th:if="${isApplied}">
+                                <button class="action-btn btn-continue"
+                                        type="button"
+                                        th:if="${course.learningCompleted}"
+                                        disabled>수강 완료</button>
+                                <button class="action-btn btn-continue"
+                                        type="button"
+                                        th:if="${!course.learningCompleted and course.nextLearningChapterId != null}"
+                                        th:data-learning-url="@{/courses/{courseId}/chapters/{chapterId}(courseId=${course.courseId}, chapterId=${course.nextLearningChapterId})}"
+                                        th:text="${course.onlineLearningActionLabel}">학습하기</button>
+                                <button class="action-btn btn-continue"
+                                        type="button"
+                                        th:if="${!course.learningCompleted and course.nextLearningChapterId == null}"
+                                        disabled>학습할 챕터 없음</button>
+                            </th:block>
                         </th:block>
                         <th:block th:unless="${course.online}">
                             <div class="text-offline-only">오프라인 현장 강의입니다.</div>
-                            <button class="action-btn btn-apply" th:unless="${isApplied}">오프라인 수강 신청</button>
+                            <div class="offline-status-panel" th:if="${!course.applicationNotApplied}">
+                                <span class="offline-status-badge"
+                                      th:if="${course.offlineApplicationBadgeLabel != null}"
+                                      th:text="${course.offlineApplicationBadgeLabel}">신청 승인 완료</span>
+                                <div class="offline-course-state">
+                                    <span class="offline-course-state__label">기준 날짜 상태</span>
+                                    <span class="offline-course-state__value"
+                                          th:text="${course.offlineDateStatusLabel}">수강 예정</span>
+                                </div>
+                            </div>
+                            <button class="action-btn btn-apply"
+                                    type="button"
+                                    data-course-action="apply"
+                                    th:disabled="${!course.offlineApplyPeriodOpen}"
+                                    th:title="${course.offlineApplyPeriodOpen ? '오프라인 수강 신청' : '신청 기간에만 신청할 수 있습니다.'}"
+                                    th:if="${course.applicationNotApplied}">오프라인 수강 신청</button>
                         </th:block>
-                        <button class="action-btn btn-cancel" th:if="${isApplied}">수강 취소</button>
+                        <button class="action-btn btn-cancel"
+                                type="button"
+                                data-course-action="cancel"
+                                th:if="${course.cancelableApplication and !course.learningCompleted}">수강 취소</button>
                     </div>
 
                     <div class="sc-notice">
@@ -583,6 +624,9 @@
 <script th:inline="javascript">
     document.addEventListener('DOMContentLoaded', function () {
         const tabs = document.querySelectorAll('.tab-nav .tab-item');
+        const courseId = /*[[${course.courseId}]]*/ null;
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
         const sections = {
             courseInfoSection: document.getElementById('courseInfoSection'),
             curriculumSection: document.getElementById('curriculumSection')
@@ -621,6 +665,76 @@
                 }
             });
         });
+
+        const actionButtons = document.querySelectorAll('[data-course-action]');
+        actionButtons.forEach(button => {
+            button.addEventListener('click', async function () {
+                const action = this.dataset.courseAction;
+                const method = action === 'cancel' ? 'DELETE' : 'POST';
+                const fallbackMessage = action === 'cancel'
+                    ? '수강 취소에 실패했습니다.'
+                    : '수강 신청에 실패했습니다.';
+
+                await submitCourseApplication(method, this, fallbackMessage);
+            });
+        });
+
+        const learningButtons = document.querySelectorAll('[data-learning-url]');
+        learningButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                window.location.href = this.dataset.learningUrl;
+            });
+        });
+
+        async function submitCourseApplication(method, button, fallbackMessage) {
+            if (!courseId) {
+                alert('강의 정보를 확인할 수 없습니다.');
+                return;
+            }
+
+            button.disabled = true;
+
+            try {
+                const headers = {
+                    'Accept': 'application/json'
+                };
+
+                if (csrfHeader && csrfToken) {
+                    headers[csrfHeader] = csrfToken;
+                }
+
+                const response = await fetch(`/courses/${courseId}/applications`, {
+                    method,
+                    headers,
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok) {
+                    location.reload();
+                    return;
+                }
+
+                const errorBody = await readJsonSafely(response);
+                alert(errorBody?.message || fallbackMessage);
+            } catch (error) {
+                alert(fallbackMessage);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function readJsonSafely(response) {
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                return null;
+            }
+
+            try {
+                return await response.json();
+            } catch (error) {
+                return null;
+            }
+        }
     });
 </script>
 </body>

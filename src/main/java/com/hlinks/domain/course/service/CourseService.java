@@ -1,16 +1,26 @@
 package com.hlinks.domain.course.service;
 
+import com.hlinks.domain.course.dto.CourseApplicationCancelTargetDto;
+import com.hlinks.domain.course.dto.CourseApplyResponseDto;
+import com.hlinks.domain.course.dto.CourseApplyTargetDto;
 import com.hlinks.domain.course.dto.ChapterResponseDto;
 import com.hlinks.domain.course.dto.CourseDetailResponseDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
+import com.hlinks.domain.course.exception.CourseErrorCode;
 import com.hlinks.domain.course.mapper.CourseMapper;
-import com.hlinks.global.exception.BaseException; // H-Link 공통 예외
-import com.hlinks.global.response.code.ErrorResponseCode; // 에러 코드 ENUM (경로/이름은 실제에 맞게 조정)
+import com.hlinks.domain.course.type.ApplicationType;
+import com.hlinks.domain.course.type.CourseStatus;
+import com.hlinks.domain.course.type.CourseType;
+import com.hlinks.domain.course.type.LearningStatus;
+import com.hlinks.global.exception.BaseException;
+import com.hlinks.global.response.code.ErrorResponseCode;
+import com.hlinks.global.type.ApplicationStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -87,6 +97,9 @@ public class CourseService {
                 // 신청 이력이 존재하는 사원인 경우 데이터 덮어쓰기 주입 (WAITING, APPROVED, REJECTED 등)
                 courseDetail.setApplicationStatus(appInfo.getApplicationStatus());
                 courseDetail.setRejectReason(appInfo.getRejectReason());
+                courseDetail.setLearningStatus(appInfo.getLearningStatus());
+                courseDetail.setProgressRate(appInfo.getProgressRate());
+                courseDetail.setNextLearningChapterId(resolveNextLearningChapterId(courseDetail, userId, courseId));
                 log.info("사원 신청 정보 연동 성공 - 강좌 ID: {}, 상태값: {}", courseId, appInfo.getApplicationStatus());
             } else {
                 // 신청 이력이 전혀 없는 사원인 경우 null 상태 유지 -> 화면단에서 '즉시 신청하기' 활성화
@@ -98,5 +111,218 @@ public class CourseService {
                 courseDetail.getCourseTitle(), chapters.size(), skillNames);
 
         return courseDetail;
+    }
+
+    private Long resolveNextLearningChapterId(CourseDetailResponseDto courseDetail, Long userId, Long courseId) {
+        List<ChapterResponseDto> chapters = courseDetail.getChapters();
+        if (chapters == null || chapters.isEmpty()) {
+            return null;
+        }
+
+        if (courseDetail.isLearningInProgress()) {
+            Long courseLearningId = courseMapper.findCourseLearningId(userId, courseId);
+            Long latestChapterId = courseLearningId == null
+                    ? null
+                    : courseMapper.findLatestLearningChapterId(courseLearningId);
+            if (latestChapterId != null) {
+                return latestChapterId;
+            }
+        }
+
+        return chapters.get(0).getChapterId();
+    }
+
+    @Transactional
+    public CourseDetailResponseDto getOnlineChapterPage(Long courseId, Long chapterId, Long userId) {
+        CourseDetailResponseDto courseDetail = getCourseDetail(courseId, userId);
+
+        if (!courseDetail.isOnline() || !ApplicationStatus.APPROVED.name().equals(courseDetail.getApplicationStatus())) {
+            throw new BaseException(ErrorResponseCode.FORBIDDEN);
+        }
+
+        boolean chapterExists = courseDetail.getChapters().stream()
+                .anyMatch(chapter -> chapter.getChapterId().equals(chapterId));
+        if (!chapterExists) {
+            throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "강의에 포함되지 않은 챕터입니다.");
+        }
+
+        Long courseLearningId = courseMapper.findCourseLearningId(userId, courseId);
+        if (courseLearningId == null) {
+            throw new BaseException(ErrorResponseCode.FORBIDDEN);
+        }
+
+        courseMapper.insertChapterLearningStatus(
+                courseLearningId,
+                userId,
+                courseId,
+                chapterId,
+                LearningStatus.NOT_STARTED.name()
+        );
+
+        return courseDetail;
+    }
+
+    @Transactional
+    public void startOnlineChapterLearning(Long courseId, Long chapterId, Long userId) {
+        getOnlineChapterPage(courseId, chapterId, userId);
+        Long courseLearningId = courseMapper.findCourseLearningId(userId, courseId);
+        if (courseLearningId == null) {
+            throw new BaseException(ErrorResponseCode.FORBIDDEN);
+        }
+        courseMapper.startCourseLearning(courseLearningId, LearningStatus.IN_PROGRESS.name());
+        courseMapper.startChapterLearning(courseLearningId, chapterId, LearningStatus.IN_PROGRESS.name());
+    }
+    @Transactional
+    public CourseApplyResponseDto applyCourse(Long courseId, Long userId) {
+        log.info("강의 신청 요청 - courseId={}, userId={}", courseId, userId);
+
+        CourseApplyTargetDto target = getApplyTargetForUpdateIfNeeded(courseId);
+        validateCourseAvailability(target);
+        validateUserCanApply(userId, courseId);
+
+        ApplicationStatus applicationStatus = ApplicationStatus.APPROVED;
+        Long applicationId = createCourseApplication(courseId, userId, applicationStatus.name());
+        Long courseLearningId = initializeCourseLearningStatusIfApproved(
+                applicationId,
+                userId,
+                courseId,
+                applicationStatus
+        );
+
+        if (CourseType.OFFLINE.name().equals(target.getCourseType())) {
+            int updated = courseMapper.increaseOfflineCurrentApplicantCount(courseId);
+
+            if (updated == 0) {
+                throw new BaseException(CourseErrorCode.COURSE_CAPACITY_FULL);
+            }
+        }
+
+        log.info("강의 신청 완료 - courseId={}, userId={}, applicationId={}, courseLearningId={}",
+                courseId, userId, applicationId, courseLearningId);
+
+        return CourseApplyResponseDto.builder()
+                .applicationId(applicationId)
+                .courseLearningId(courseLearningId)
+                .courseId(courseId)
+                .applicationStatus(applicationStatus.name())
+                .learningStatus(LearningStatus.NOT_STARTED.name())
+                .build();
+    }
+
+    @Transactional
+    public void cancelCourse(Long courseId, Long userId) {
+        log.info("강의 신청 취소 요청 - courseId={}, userId={}", courseId, userId);
+
+        CourseApplyTargetDto target = getApplyTargetForUpdateIfNeeded(courseId);
+        CourseApplicationCancelTargetDto application =
+                courseMapper.findActiveCourseApplicationForUpdate(userId, courseId);
+        if (application == null) {
+            throw new BaseException(CourseErrorCode.COURSE_APPLICATION_NOT_FOUND);
+        }
+
+        int canceledApplicationCount = courseMapper.cancelCourseApplication(
+                application.getApplicationId(),
+                ApplicationStatus.CANCELED.name()
+        );
+        if (canceledApplicationCount == 0) {
+            throw new BaseException(CourseErrorCode.COURSE_APPLICATION_NOT_FOUND);
+        }
+
+        courseMapper.cancelCourseLearningStatus(
+                application.getApplicationId(),
+                LearningStatus.CANCELED.name()
+        );
+
+        if (CourseType.OFFLINE.name().equals(target.getCourseType())
+                && ApplicationStatus.APPROVED.name().equals(application.getApplicationStatus())) {
+            courseMapper.decreaseOfflineCurrentApplicantCount(courseId);
+        }
+
+        log.info("강의 신청 취소 완료 - courseId={}, userId={}, applicationId={}",
+                courseId, userId, application.getApplicationId());
+    }
+
+    private CourseApplyTargetDto getApplyTargetForUpdateIfNeeded(Long courseId) {
+        CourseApplyTargetDto target = courseMapper.findCourseApplyTarget(courseId);
+        if (target == null) {
+            throw new BaseException(CourseErrorCode.COURSE_NOT_FOUND);
+        }
+
+        if (!CourseType.OFFLINE.name().equals(target.getCourseType())) {
+            return target;
+        }
+
+        CourseApplyTargetDto lockedTarget = courseMapper.findOfflineCourseApplyTargetForUpdate(courseId);
+        if (lockedTarget == null) {
+            throw new BaseException(CourseErrorCode.COURSE_NOT_FOUND);
+        }
+        return lockedTarget;
+    }
+
+    private void validateCourseAvailability(CourseApplyTargetDto target) {
+        if (!CourseStatus.OPEN.name().equals(target.getCourseStatus())) {
+            throw new BaseException(CourseErrorCode.COURSE_NOT_OPEN);
+        }
+
+        if (!CourseType.OFFLINE.name().equals(target.getCourseType())) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (target.getApplyStartDate() == null
+                || target.getApplyEndDate() == null
+                || now.isBefore(target.getApplyStartDate())
+                || now.isAfter(target.getApplyEndDate())) {
+            throw new BaseException(CourseErrorCode.COURSE_APPLY_PERIOD_NOT_OPEN);
+        }
+
+        Integer capacity = target.getCapacity();
+        Integer currentApplicantCount = target.getCurrentApplicantCount();
+        if (capacity != null && currentApplicantCount != null && currentApplicantCount >= capacity) {
+            throw new BaseException(CourseErrorCode.COURSE_CAPACITY_FULL);
+        }
+    }
+
+    private void validateUserCanApply(Long userId, Long courseId) {
+        if (courseMapper.countActiveApplications(userId, courseId) > 0) {
+            throw new BaseException(CourseErrorCode.COURSE_ALREADY_APPLIED);
+        }
+    }
+
+    private Long createCourseApplication(Long courseId, Long userId, String applicationStatus) {
+        Long applicationId = courseMapper.nextCourseApplicationId();
+        courseMapper.insertCourseApplication(
+                applicationId,
+                userId,
+                courseId,
+                applicationStatus,
+                ApplicationType.USER.name()
+        );
+        return applicationId;
+    }
+
+    private Long initializeCourseLearningStatusIfApproved(
+            Long applicationId,
+            Long userId,
+            Long courseId,
+            ApplicationStatus applicationStatus) {
+
+        if (applicationStatus != ApplicationStatus.APPROVED) {
+            return null;
+        }
+
+        return initializeCourseLearningStatus(applicationId, userId, courseId);
+    }
+
+    private Long initializeCourseLearningStatus(Long applicationId, Long userId, Long courseId) {
+        Long courseLearningId = courseMapper.nextCourseLearningStatusId();
+        courseMapper.insertCourseLearningStatus(
+                courseLearningId,
+                applicationId,
+                userId,
+                courseId,
+                LearningStatus.NOT_STARTED.name()
+        );
+        return courseLearningId;
     }
 }
