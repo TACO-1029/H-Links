@@ -13,7 +13,7 @@
 <body class="kcy-page kcy-result-page">
 <div th:replace="~{fragments/header :: header}"></div>
 
-<main class="kcy-result-shell" th:with="code=${kcyResult.code}">
+<main class="kcy-result-shell" th:with="code=${kcyType.code}">
     <section class="kcy-result-layout" aria-labelledby="kcy-result-title">
         <aside class="kcy-profile-wrap">
             <div class="kcy-profile-glow" aria-hidden="true"></div>
@@ -22,21 +22,21 @@
                 <header class="kcy-profile-card__header">
                     <div>
                         <p class="kcy-profile-card__eyebrow">ENGINEER PROFILE</p>
-                        <h1 th:text="${kcyResult.title}">심연 탐구자</h1>
+                        <h1 th:text="${kcyType.title}">심연 탐구자</h1>
                     </div>
                 </header>
 
                 <div class="kcy-profile-card__image">
-                    <img th:src="@{${kcyResult.imagePath}}"
-                         th:alt="${kcyResult.title + ' 유형 이미지'}">
+                    <img th:src="@{${kcyType.imagePath}}"
+                         th:alt="${kcyType.title + ' 유형 이미지'}">
                 </div>
 
                 <div class="kcy-profile-card__summary">
                     <div class="kcy-profile-card__summary-title">
                         <span>STRENGTH</span>
-                        <strong th:text="${kcyResult.title}">심연 탐구자</strong>
+                        <strong th:text="${kcyType.title}">심연 탐구자</strong>
                     </div>
-                    <p th:text="${kcyResult.description}">
+                    <p th:text="${kcyType.description}">
                         설계와 깊은 기술 탐구를 함께 중시하는 유형입니다.
                     </p>
                 </div>
@@ -59,53 +59,57 @@
                 </div>
 
                 <div class="kcy-axis-grid">
-                    <article class="kcy-axis">
+                    <article class="kcy-axis"
+                             th:style="|--axis-left: ${kcyScore.actionOrOutlinePercent}%;|">
                         <div class="kcy-axis__labels">
                             <strong th:text="${#strings.substring(code, 0, 1) == 'A' ? '실행 중심' : '설계 중심'}">실행 중심</strong>
                             <strong th:text="${#strings.substring(code, 0, 1) == 'A' ? '설계 중심' : '실행 중심'}">설계 중심</strong>
                         </div>
                         <p>
-                            <strong>65%</strong>
-                            <span>35%</span>
+                            <strong th:text="${kcyScore.actionOrOutlinePercent + '%'}">65%</strong>
+                            <span th:text="${(100 - kcyScore.actionOrOutlinePercent) + '%'}">35%</span>
                         </p>
                         <div class="kcy-axis__bar"><span></span></div>
                         <p>바로 구현하며 검증하는지, 구조를 먼저 설계하는지 확인합니다.</p>
                     </article>
 
-                    <article class="kcy-axis">
+                    <article class="kcy-axis"
+                             th:style="|--axis-left: ${kcyScore.wideOrDeepPercent}%;|">
                         <div class="kcy-axis__labels">
                             <strong th:text="${#strings.substring(code, 1, 2) == 'W' ? '폭넓은 적응' : '깊은 전문성'}">폭넓은 적응</strong>
                             <strong th:text="${#strings.substring(code, 1, 2) == 'W' ? '깊은 전문성' : '폭넓은 적응'}">깊은 전문성</strong>
                         </div>
                         <p>
-                            <strong>65%</strong>
-                            <span>35%</span>
+                            <strong th:text="${kcyScore.wideOrDeepPercent + '%'}">65%</strong>
+                            <span th:text="${(100 - kcyScore.wideOrDeepPercent) + '%'}">35%</span>
                         </p>
                         <div class="kcy-axis__bar"><span></span></div>
                         <p>여러 기술을 넓게 다루는지, 특정 영역을 깊게 파고드는지 확인합니다.</p>
                     </article>
 
-                    <article class="kcy-axis">
+                    <article class="kcy-axis"
+                             th:style="|--axis-left: ${kcyScore.independentOrCorporatePercent}%;|">
                         <div class="kcy-axis__labels">
                             <strong th:text="${#strings.substring(code, 2, 3) == 'I' ? '자율 몰입' : '협업 조율'}">자율 몰입</strong>
                             <strong th:text="${#strings.substring(code, 2, 3) == 'I' ? '협업 조율' : '자율 몰입'}">협업 조율</strong>
                         </div>
                         <p>
-                            <strong>65%</strong>
-                            <span>35%</span>
+                            <strong th:text="${kcyScore.independentOrCorporatePercent + '%'}">65%</strong>
+                            <span th:text="${(100 - kcyScore.independentOrCorporatePercent) + '%'}">35%</span>
                         </p>
                         <div class="kcy-axis__bar"><span></span></div>
                         <p>개인 몰입형으로 일하는지, 팀 단위 조율을 선호하는지 확인합니다.</p>
                     </article>
 
-                    <article class="kcy-axis">
+                    <article class="kcy-axis"
+                             th:style="|--axis-left: ${kcyScore.prompterOrManualPercent}%;|">
                         <div class="kcy-axis__labels">
                             <strong th:text="${#strings.substring(code, 3, 4) == 'P' ? 'AI 보조 활용' : '직접 구현 중심'}">AI 보조 활용</strong>
                             <strong th:text="${#strings.substring(code, 3, 4) == 'P' ? '직접 구현 중심' : 'AI 보조 활용'}">직접 구현 중심</strong>
                         </div>
                         <p>
-                            <strong>65%</strong>
-                            <span>35%</span>
+                            <strong th:text="${kcyScore.prompterOrManualPercent + '%'}">65%</strong>
+                            <span th:text="${(100 - kcyScore.prompterOrManualPercent) + '%'}">35%</span>
                         </p>
                         <div class="kcy-axis__bar"><span></span></div>
                         <p>AI 도구를 적극 활용하는지, 직접 원리를 파악해 구현하는지 확인합니다.</p>
