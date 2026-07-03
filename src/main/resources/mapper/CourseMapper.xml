@@ -223,7 +223,9 @@
         FILE_SIZE          AS fileSize,
         DURATION_SECONDS   AS durationSeconds,
         SUMMARY_TEXT       AS summaryText,
-        TRANSCRIPT_TEXT    AS transcriptText
+        TRANSCRIPT_TEXT    AS transcriptText,
+        AI_GENERATED_YN    AS aiGeneratedYn,
+        QUIZ_BUILD_STATUS  AS quizBuildStatus
         FROM COURSE_CHAPTER
         WHERE COURSE_ID = #{courseId}
         AND USE_YN = 'Y'

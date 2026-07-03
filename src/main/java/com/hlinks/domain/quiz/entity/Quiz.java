@@ -13,6 +13,8 @@ public class Quiz {
     private Long courseId;
     private Long chapterId;
 
+    private String courseTitle;
+    private String chapterTitle;
     private String questionType;
     private String questionText;
     private String answerText;
@@ -20,6 +22,8 @@ public class Quiz {
     private String difficulty;
     private String status;
     private String aiGeneratedYn;
+    private String quizBuildStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime sortAt;
 }

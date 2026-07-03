@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <title>HR</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" th:href="@{/css/tokens.css}">
+  <link rel="stylesheet" th:href="@{/css/common.css}">
+  <link rel="stylesheet" th:href="@{/css/header.css}">
+  <link rel="stylesheet" th:href="@{/css/footer.css}">
+  <link rel="stylesheet" th:href="@{/css/home.css}">
+  <style>
+    .hr-dashboard {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1320px);
+      gap: 32px;
+      align-items: start;
+      width: 100%;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .hr-dashboard__content {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .hr-admin-panel {
+      padding: 32px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      background: var(--color-bg-surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .hr-admin-panel__header {
+      display: flex;
+      align-items: flex-start;
+      flex-direction: column;
+      justify-content: flex-start;
+      min-height: 86px;
+      margin-bottom: 24px;
+    }
+
+    .hr-admin-panel__title {
+      margin: 0;
+      color: var(--color-text-primary);
+      font-size: var(--text-2xl);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-admin-panel__description {
+      margin: 8px 0 0;
+      color: var(--color-text-secondary);
+      font-size: var(--text-sm);
+    }
+
+    .hr-wizard {
+      display: grid;
+      gap: 28px;
+    }
+
+    .hr-wizard__progress {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+      gap: 0;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .hr-wizard__progress-item {
+      position: relative;
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+      font-weight: var(--font-bold);
+      text-align: center;
+    }
+
+    .hr-wizard__progress-item[hidden] {
+      display: none;
+    }
+
+    .hr-wizard__progress-item::before {
+      content: "";
+      position: absolute;
+      top: 17px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--color-border-default);
+      z-index: 0;
+    }
+
+    .hr-wizard__progress-item:first-child::before {
+      left: 50%;
+      width: 50%;
+    }
+
+    .hr-wizard__progress-item:last-child::before {
+      width: 50%;
+    }
+
+    .hr-wizard__progress-index {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border: 2px solid var(--color-border-default);
+      border-radius: var(--radius-full);
+      background: var(--color-bg-surface);
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+    }
+
+    .hr-wizard__progress-item.is-active,
+    .hr-wizard__progress-item.is-complete {
+      color: var(--color-brand);
+    }
+
+    .hr-wizard__progress-item.is-active .hr-wizard__progress-index,
+    .hr-wizard__progress-item.is-complete .hr-wizard__progress-index {
+      border-color: var(--color-brand);
+      background: var(--color-brand);
+      color: var(--color-text-inverse);
+    }
+
+    .hr-course-form {
+      display: grid;
+      gap: 24px;
+    }
+
+    .hr-wizard__step {
+      min-width: 0;
+      padding: 24px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      background: var(--color-bg-surface);
+    }
+
+    .hr-wizard__step[hidden],
+    .hr-course-form__section[hidden] {
+      display: none;
+    }
+
+    .hr-wizard__step-header {
+      margin-bottom: 22px;
+    }
+
+    .hr-wizard__step-title {
+      margin: 0;
+      color: var(--color-text-primary);
+      font-size: var(--text-xl);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-wizard__step-description {
+      margin: 6px 0 0;
+      color: var(--color-text-secondary);
+      font-size: var(--text-sm);
+    }
+
+    .hr-course-form__grid,
+    .hr-course-form__section {
+      display: grid;
+      gap: 18px;
+    }
+
+    .hr-course-form__section + .hr-course-form__chapter-field,
+    .hr-course-form__chapter-field + .hr-course-form__section {
+      margin-top: 16px;
+    }
+
+    .hr-course-form__split {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .hr-course-form__field {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .hr-course-form__field[hidden] {
+      display: none;
+    }
+
+    .hr-course-form__label {
+      color: var(--color-text-primary);
+      font-size: var(--text-sm);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-course-form__label.is-required::after {
+      content: " *";
+      color: var(--danger-600);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-course-form__input,
+    .hr-course-form__select,
+    .hr-course-form__textarea {
+      width: 100%;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      background-color: var(--color-bg-surface);
+      color: var(--color-text-primary);
+      font: inherit;
+    }
+
+    .hr-course-form__select.form-select {
+      min-height: 50px;
+      padding-right: 2.25rem;
+      font-size: var(--text-sm);
+      font-weight: var(--font-semibold);
+    }
+
+    .hr-course-form__input.form-control[type="date"] {
+      min-height: 50px;
+      font-size: var(--text-sm);
+      font-weight: var(--font-semibold);
+    }
+
+    .hr-course-form__textarea {
+      min-height: 132px;
+      resize: vertical;
+    }
+
+    .hr-course-form__inline {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+    }
+
+    .hr-course-form__help {
+      color: var(--color-text-muted);
+      font-size: var(--text-xs);
+    }
+
+    .file-upload-box {
+      position: relative;
+      min-width: 0;
+    }
+
+    .file-upload-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .file-upload-trigger {
+      display: grid;
+      gap: 6px;
+      place-items: center;
+      min-height: 140px;
+      padding: 24px;
+      border: 1.5px dashed var(--color-border-default);
+      border-radius: var(--radius-lg);
+      background: var(--color-bg-soft);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: border-color 160ms ease, background 160ms ease;
+      text-align: center;
+    }
+
+    .file-upload-trigger:hover,
+    .file-upload-input:focus-visible + .file-upload-trigger {
+      border-color: var(--color-brand);
+      background: var(--color-bg-brand-soft, #ecfdf7);
+    }
+
+    .file-upload-icon {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      background: var(--color-brand);
+      color: var(--color-text-inverse);
+      font-size: 24px;
+      font-weight: var(--font-bold);
+      line-height: 1;
+    }
+
+    .file-upload-title {
+      color: var(--color-text-primary);
+      font-weight: var(--font-bold);
+    }
+
+    .file-upload-desc,
+    .file-upload-selected {
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+    }
+
+    .file-upload-selected {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border-default);
+      word-break: break-all;
+    }
+
+    .upload-progress {
+      overflow: hidden;
+      height: 8px;
+      margin-top: 12px;
+      border-radius: 999px;
+      background: var(--color-border-default);
+    }
+
+    .upload-progress-bar {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--color-brand);
+      transition: width 160ms ease;
+    }
+
+    .file-upload-box.has-preview .file-upload-trigger,
+    .file-upload-box.has-preview .file-upload-selected,
+    .file-upload-box.has-preview .upload-progress {
+      display: none;
+    }
+
+    .file-upload-preview {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      max-width: 640px;
+      aspect-ratio: 640 / 360;
+      margin-top: 12px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      background: var(--color-bg-surface);
+    }
+
+    .file-upload-preview img,
+    .file-upload-preview video {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .file-upload-preview video {
+      background: var(--black, #000000);
+    }
+
+    .file-upload-clear-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: var(--radius-full);
+      background: var(--danger-600);
+      color: var(--color-text-inverse);
+      font-size: var(--text-base);
+      font-weight: var(--font-bold);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .file-upload-clear-button:hover,
+    .file-upload-clear-button:focus-visible {
+      background: var(--danger-700, var(--danger-600));
+    }
+
+    .hr-course-form__chapter-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .hr-course-form__chapter {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      align-items: stretch;
+      padding: 16px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      background: var(--color-bg-soft);
+    }
+
+    .hr-course-form__add-button,
+    .hr-course-form__remove-button,
+    .hr-course-form__sub-button,
+    .hr-wizard__button {
+      min-height: 40px;
+      border-radius: var(--radius-md);
+      font-weight: var(--font-bold);
+      cursor: pointer;
+    }
+
+    .hr-course-form__add-button {
+      width: 100%;
+      height: 44px;
+      min-height: 44px;
+      padding: 0;
+      border: 1px solid var(--color-border-brand);
+      background: var(--color-bg-surface);
+      color: var(--color-brand);
+      font-size: var(--text-2xl);
+      line-height: 1;
+    }
+
+    .hr-course-form__add-button:hover {
+      background: var(--color-brand);
+      color: var(--color-text-inverse);
+    }
+
+    .hr-course-form__remove-button,
+    .hr-course-form__sub-button,
+    .hr-wizard__button--secondary {
+      padding: 0 14px;
+      border: 1px solid var(--color-border-default);
+      background: var(--color-bg-surface);
+      color: var(--color-text-secondary);
+    }
+
+    .hr-course-form__remove-button {
+      justify-self: end;
+    }
+
+    .hr-course-form__sub-button {
+      white-space: nowrap;
+    }
+
+    .hr-wizard__actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding-top: 4px;
+    }
+
+    .hr-wizard__actions-end {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .hr-wizard__button {
+      padding: 0 20px;
+      border: 0;
+      background: var(--color-brand);
+      color: var(--color-text-inverse);
+    }
+
+    .hr-wizard__button:hover {
+      background: var(--color-brand-hover);
+    }
+
+    .hr-wizard__button[hidden] {
+      display: none;
+    }
+
+    .hr-wizard__summary {
+      display: block;
+      padding: 0;
+      margin: 0;
+    }
+
+    .hr-wizard__review-card {
+      display: grid;
+      gap: 24px;
+      padding: 28px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      background: var(--color-bg-surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .hr-wizard__review-header {
+      display: grid;
+      gap: 6px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--color-border-default);
+    }
+
+    .hr-wizard__review-title {
+      margin: 0;
+      color: var(--color-text-primary);
+      font-size: var(--text-2xl);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-wizard__review-description {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: var(--text-sm);
+    }
+
+    .hr-wizard__review-main {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hr-wizard__review-course-title {
+      margin: 0;
+      color: var(--color-text-primary);
+      font-size: 28px;
+      font-weight: var(--font-bold);
+      line-height: 1.25;
+      word-break: keep-all;
+    }
+
+    .hr-wizard__review-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0;
+      margin: 0;
+    }
+
+    .hr-wizard__review-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-full);
+      background: var(--color-bg-soft);
+      color: var(--color-text-secondary);
+      font-size: var(--text-xs);
+      font-weight: var(--font-bold);
+      list-style: none;
+    }
+
+    .hr-wizard__review-sections {
+      display: grid;
+      gap: 18px;
+    }
+
+    .hr-wizard__review-section {
+      display: grid;
+      gap: 12px;
+      padding-top: 18px;
+      border-top: 1px solid var(--color-border-default);
+    }
+
+    .hr-wizard__review-section[hidden] {
+      display: none;
+    }
+
+    .hr-wizard__review-section-title {
+      margin: 0;
+      color: var(--color-text-primary);
+      font-size: var(--text-base);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-wizard__summary-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+    }
+
+    .hr-wizard__summary-row {
+      display: grid;
+      grid-template-columns: 140px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+      padding: 2px 0;
+    }
+
+    .hr-wizard__summary-label {
+      margin: 0;
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+      font-weight: var(--font-semibold);
+    }
+
+    .hr-wizard__summary-value {
+      margin: 0;
+      color: var(--color-text-primary);
+      font-size: var(--text-sm);
+      font-weight: var(--font-semibold);
+      word-break: keep-all;
+    }
+
+    @media (max-width: 1024px) {
+      .hr-dashboard {
+        grid-template-columns: 1fr;
+      }
+
+    }
+
+    @media (max-width: 768px) {
+      .hr-admin-panel,
+      .hr-wizard__step {
+        padding: 20px;
+      }
+
+      .hr-wizard__progress {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .hr-wizard__progress-item {
+        grid-template-columns: 36px minmax(0, 1fr);
+        justify-items: start;
+        text-align: left;
+      }
+
+      .hr-wizard__progress-item::before {
+        display: none;
+      }
+
+      .hr-course-form__chapter,
+      .hr-course-form__split,
+      .hr-course-form__inline,
+      .hr-wizard__summary {
+        grid-template-columns: 1fr;
+      }
+
+      .hr-wizard__actions {
+        flex-direction: column;
+      }
+
+      .hr-wizard__actions-end {
+        width: 100%;
+      }
+
+      .hr-wizard__button {
+        width: 100%;
+      }
+
+      .hr-wizard__review-card {
+        padding: 20px;
+      }
+
+      .hr-wizard__review-course-title {
+        font-size: var(--text-2xl);
+      }
+
+      .hr-wizard__summary-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+<body class="home-page">
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="home-shell hr-shell">
+<!--  <section class="home-hero">-->
+<!--    <p class="home-brand">THE HLINKs</p>-->
+<!--    <h1 class="home-title">HR</h1>-->
+<!--    <p class="home-description">HR 권한으로 접근 가능한 팀 현황 화면입니다.</p>-->
+<!--  </section>-->
+
+  <div class="hr-dashboard">
+    <div th:replace="~{fragments/hr-sidebar :: sidebar('course-create')}"></div>
+
+    <div class="hr-dashboard__content">
+      <section class="hr-admin-panel" aria-labelledby="courseCreateTitle">
+        <div class="hr-admin-panel__header">
+          <h2 class="hr-admin-panel__title" id="courseCreateTitle">강의 등록</h2>
+          <p class="hr-admin-panel__description">단계별로 강의 정보를 입력하고 마지막 단계에서 등록합니다.</p>
+        </div>
+
+        <div class="hr-wizard">
+          <ol class="hr-wizard__progress" aria-label="강의 등록 단계">
+            <li class="hr-wizard__progress-item is-active" data-progress-step="0">
+              <span class="hr-wizard__progress-index">1</span>
+              <span>기본 정보</span>
+            </li>
+            <li class="hr-wizard__progress-item" data-progress-step="1">
+              <span class="hr-wizard__progress-index">2</span>
+              <span>강의 구성</span>
+            </li>
+            <li class="hr-wizard__progress-item" data-progress-step="2">
+              <span class="hr-wizard__progress-index">3</span>
+              <span>운영 기간</span>
+            </li>
+            <li class="hr-wizard__progress-item" data-progress-step="3">
+              <span class="hr-wizard__progress-index">4</span>
+              <span>최종 확인</span>
+            </li>
+          </ol>
+
+          <form class="hr-course-form"
+                id="courseWizardForm"
+                th:action="@{/admin/courses}"
+                method="post"
+                enctype="multipart/form-data"
+                novalidate>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <fieldset class="hr-wizard__step" data-step="0">
+              <div class="hr-wizard__step-header">
+                <legend class="hr-wizard__step-title">기본 정보</legend>
+                <p class="hr-wizard__step-description">강의를 구분하고 목록에 노출될 기본 정보를 입력합니다.</p>
+              </div>
+
+              <div class="hr-course-form__grid">
+                <div class="hr-course-form__field">
+                  <span class="hr-course-form__label is-required">썸네일 이미지</span>
+                  <div class="file-upload-box" data-file-upload>
+                    <input
+                        class="file-upload-input"
+                        type="file"
+                        name="thumbnailFile"
+                        id="thumbnailFile"
+                        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                        required>
+
+                    <label class="file-upload-trigger" for="thumbnailFile">
+                      <span class="file-upload-icon">＋</span>
+                      <span class="file-upload-title">썸네일 이미지 선택</span>
+                      <span class="file-upload-desc">PNG, JPG, WEBP 파일을 업로드하세요</span>
+                    </label>
+
+                    <div class="file-upload-selected" hidden></div>
+
+                    <div class="upload-progress" hidden>
+                      <div class="upload-progress-bar"></div>
+                    </div>
+
+                    <div class="file-upload-preview" hidden></div>
+                  </div>
+                </div>
+
+                <label class="hr-course-form__field">
+                  <span class="hr-course-form__label is-required">강의명</span>
+                  <input class="hr-course-form__input" type="text" name="courseTitle" required>
+                </label>
+
+                <label class="hr-course-form__field">
+                  <span class="hr-course-form__label is-required">설명</span>
+                  <textarea class="hr-course-form__textarea" name="description" required></textarea>
+                </label>
+
+                <div class="hr-course-form__split">
+                  <label class="hr-course-form__field">
+                    <span class="hr-course-form__label is-required">카테고리</span>
+                    <select class="hr-course-form__select form-select" name="categoryType" id="categoryType" required>
+                      <option value="">선택</option>
+                      <option value="CAREER_HIGH">커리어하이</option>
+                      <option value="CAREER_PATH">커리어패스</option>
+                    </select>
+                  </label>
+
+                  <label class="hr-course-form__field">
+                    <span class="hr-course-form__label is-required">강의 유형</span>
+                    <select class="hr-course-form__select form-select" name="courseType" id="courseType" required>
+                      <option value="ONLINE" selected>온라인</option>
+                      <option value="OFFLINE">오프라인</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label class="hr-course-form__field">
+                  <span class="hr-course-form__label is-required">강사명</span>
+                  <input class="hr-course-form__input" type="text" name="instructorName" required>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="hr-wizard__step" data-step="1" hidden>
+              <div class="hr-wizard__step-header">
+                <legend class="hr-wizard__step-title">강의 구성</legend>
+                <p class="hr-wizard__step-description">강의 유형에 맞는 구성 정보를 입력합니다.</p>
+              </div>
+
+              <div class="hr-course-form__section" data-course-type-panel="ONLINE">
+                <label class="hr-course-form__field">
+                  <span class="hr-course-form__label">강의 자료 URL</span>
+                  <input class="hr-course-form__input" type="url" name="courseMaterialUrl" placeholder="https://">
+                </label>
+              </div>
+
+              <div class="hr-course-form__section" data-course-type-panel="OFFLINE" hidden>
+                <div class="hr-course-form__split">
+                  <label class="hr-course-form__field">
+                    <span class="hr-course-form__label is-required">장소</span>
+                    <span class="hr-course-form__inline">
+                      <input class="hr-course-form__input" type="text" name="location" data-offline-required disabled>
+                      <button class="hr-course-form__sub-button" type="button">주소 검색</button>
+                    </span>
+                  </label>
+
+                  <label class="hr-course-form__field">
+                    <span class="hr-course-form__label is-required">정원</span>
+                    <input class="hr-course-form__input" type="number" name="capacity" min="1" data-offline-required disabled>
+                  </label>
+                </div>
+              </div>
+
+              <div class="hr-course-form__field hr-course-form__chapter-field">
+                <span class="hr-course-form__label">강의 챕터</span>
+                <div class="hr-course-form__chapter-list" id="chapterFields">
+                  <div class="hr-course-form__chapter">
+                    <label class="hr-course-form__field">
+                      <span class="hr-course-form__label is-required">챕터명</span>
+                      <input class="hr-course-form__input" type="text" name="chapterTitles" required>
+                    </label>
+                    <div class="hr-course-form__field" data-online-video-field>
+                      <span class="hr-course-form__label is-required">mp4 영상 파일</span>
+                      <div class="file-upload-box" data-file-upload>
+                        <input
+                            class="file-upload-input"
+                            type="file"
+                            name="videoFiles"
+                            id="videoFile-0"
+                            accept="video/mp4,.mp4"
+                            data-online-required
+                            required>
+
+                        <label class="file-upload-trigger" for="videoFile-0">
+                          <span class="file-upload-icon">＋</span>
+                          <span class="file-upload-title">챕터 영상 선택</span>
+                          <span class="file-upload-desc">MP4 파일을 업로드하세요</span>
+                        </label>
+
+                        <div class="file-upload-selected" hidden></div>
+
+                        <div class="upload-progress" hidden>
+                          <div class="upload-progress-bar"></div>
+                        </div>
+
+                        <div class="file-upload-preview" hidden></div>
+                      </div>
+                    </div>
+                    <button class="hr-course-form__remove-button" type="button" data-remove-chapter>삭제</button>
+                  </div>
+                </div>
+                <button class="hr-course-form__add-button" type="button" id="addChapterButton" aria-label="챕터 추가">+</button>
+              </div>
+            </fieldset>
+
+            <fieldset class="hr-wizard__step" data-step="2" hidden>
+              <div class="hr-wizard__step-header">
+                <legend class="hr-wizard__step-title">운영 기간</legend>
+                <p class="hr-wizard__step-description">강의 운영에 필요한 기간 정보를 입력합니다.</p>
+              </div>
+
+              <div class="hr-course-form__section" data-course-type-panel="ONLINE">
+                <p class="hr-course-form__help">
+                  온라인 강의는 등록일 기준 2개월 동안 수강 가능합니다.
+                </p>
+              </div>
+
+              <div class="hr-course-form__section" data-course-type-panel="OFFLINE" hidden>
+                <div class="hr-course-form__split">
+                  <label class="hr-course-form__field">
+                    <span class="hr-course-form__label is-required">신청 시작일</span>
+                    <input class="hr-course-form__input form-control" type="date" name="applyStartDate" data-offline-required disabled>
+                  </label>
+                  <label class="hr-course-form__field">
+                    <span class="hr-course-form__label is-required">신청 종료일</span>
+                    <input class="hr-course-form__input form-control" type="date" name="applyEndDate" data-offline-required disabled>
+                  </label>
+                </div>
+
+                <div class="hr-course-form__split">
+                  <label class="hr-course-form__field">
+                    <span class="hr-course-form__label is-required">강의 시작일</span>
+                    <input class="hr-course-form__input form-control" type="date" name="courseStartDate" data-offline-required disabled>
+                  </label>
+                  <label class="hr-course-form__field">
+                    <span class="hr-course-form__label is-required">강의 종료일</span>
+                    <input class="hr-course-form__input form-control" type="date" name="courseEndDate" data-offline-required disabled>
+                  </label>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="hr-wizard__step" data-step="3" hidden>
+              <legend class="sr-only">최종 확인</legend>
+
+              <section class="hr-wizard__review-card" aria-labelledby="courseReviewTitle">
+                <div class="hr-wizard__review-header">
+                  <h3 class="hr-wizard__review-title" id="courseReviewTitle">등록 전 최종 확인</h3>
+                  <p class="hr-wizard__review-description">아래 정보를 확인한 뒤 강의를 등록하세요.</p>
+                </div>
+
+                <div class="hr-wizard__review-main">
+                  <p class="hr-wizard__review-course-title" data-summary="courseTitle">-</p>
+                  <ul class="hr-wizard__review-badges" aria-label="강의 분류">
+                    <li class="hr-wizard__review-badge" data-summary="categoryType">-</li>
+                    <li class="hr-wizard__review-badge" data-summary="courseType">-</li>
+                  </ul>
+                </div>
+
+                <div class="hr-wizard__review-sections">
+                  <section class="hr-wizard__review-section">
+                    <h4 class="hr-wizard__review-section-title">기본 정보</h4>
+                    <dl class="hr-wizard__summary-list">
+                      <div class="hr-wizard__summary-row">
+                        <dt class="hr-wizard__summary-label">강사명</dt>
+                        <dd class="hr-wizard__summary-value" data-summary="instructorName">-</dd>
+                      </div>
+                    </dl>
+                  </section>
+
+                  <section class="hr-wizard__review-section" data-review-section="ONLINE">
+                    <h4 class="hr-wizard__review-section-title">온라인 강의 구성</h4>
+                    <dl class="hr-wizard__summary-list">
+                      <div class="hr-wizard__summary-row">
+                        <dt class="hr-wizard__summary-label">챕터 수</dt>
+                        <dd class="hr-wizard__summary-value" data-summary="chapterCount">-</dd>
+                      </div>
+                      <div class="hr-wizard__summary-row">
+                        <dt class="hr-wizard__summary-label">영상 파일 수</dt>
+                        <dd class="hr-wizard__summary-value" data-summary="videoFileCount">-</dd>
+                      </div>
+                      <div class="hr-wizard__summary-row">
+                        <dt class="hr-wizard__summary-label">자료 URL</dt>
+                        <dd class="hr-wizard__summary-value" data-summary="courseMaterialUrl">-</dd>
+                      </div>
+                      <div class="hr-wizard__summary-row">
+                        <dt class="hr-wizard__summary-label">운영 기간</dt>
+                        <dd class="hr-wizard__summary-value" data-summary="period">-</dd>
+                      </div>
+                    </dl>
+                  </section>
+
+                  <section class="hr-wizard__review-section" data-review-section="OFFLINE" hidden>
+                    <h4 class="hr-wizard__review-section-title">오프라인 운영 정보</h4>
+                    <dl class="hr-wizard__summary-list">
+                      <div class="hr-wizard__summary-row">
+                        <dt class="hr-wizard__summary-label">장소</dt>
+                        <dd class="hr-wizard__summary-value" data-summary="location">-</dd>
+                      </div>
+                      <div class="hr-wizard__summary-row">
+                        <dt class="hr-wizard__summary-label">정원</dt>
+                        <dd class="hr-wizard__summary-value" data-summary="capacity">-</dd>
+                      </div>
+                      <div class="hr-wizard__summary-row">
+                        <dt class="hr-wizard__summary-label">신청 기간</dt>
+                        <dd class="hr-wizard__summary-value" data-summary="applyPeriod">-</dd>
+                      </div>
+                      <div class="hr-wizard__summary-row">
+                        <dt class="hr-wizard__summary-label">강의 기간</dt>
+                        <dd class="hr-wizard__summary-value" data-summary="coursePeriod">-</dd>
+                      </div>
+                    </dl>
+                  </section>
+                </div>
+              </section>
+            </fieldset>
+
+            <div class="hr-wizard__actions">
+              <button class="hr-wizard__button hr-wizard__button--secondary" type="button" id="prevStepButton" hidden>이전</button>
+              <div class="hr-wizard__actions-end">
+                <button class="hr-wizard__button" type="button" id="nextStepButton">다음</button>
+                <button class="hr-wizard__button" type="submit" id="submitCourseButton" hidden>강의 등록</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script>
+  async function generateChapterQuizzes(chapterId, quizCount = 3, difficulty = 'MEDIUM') {
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    const params = new URLSearchParams({quizCount, difficulty});
+
+    const response = await fetch(`/api/quizzes/chapters/${chapterId}/generate?${params}`, {
+      method: 'POST',
+      headers: {
+        [csrfHeader]: csrfToken
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('AI 퀴즈 생성 요청에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  const form = document.getElementById('courseWizardForm');
+  const steps = [...document.querySelectorAll('[data-step]')];
+  const progressItems = [...document.querySelectorAll('[data-progress-step]')];
+  const prevStepButton = document.getElementById('prevStepButton');
+  const nextStepButton = document.getElementById('nextStepButton');
+  const submitCourseButton = document.getElementById('submitCourseButton');
+  const chapterFields = document.getElementById('chapterFields');
+  const addChapterButton = document.getElementById('addChapterButton');
+  const categorySelect = document.getElementById('categoryType');
+  const courseTypeSelect = document.getElementById('courseType');
+
+  let currentStep = 0;
+  let chapterUploadIndex = 1;
+
+  function resetFileUploadBox(uploadBox, inputId) {
+    const input = uploadBox.querySelector('.file-upload-input');
+    const trigger = uploadBox.querySelector('.file-upload-trigger');
+    const selected = uploadBox.querySelector('.file-upload-selected');
+    const progress = uploadBox.querySelector('.upload-progress');
+    const progressBar = uploadBox.querySelector('.upload-progress-bar');
+    const preview = uploadBox.querySelector('.file-upload-preview');
+
+    input.value = '';
+
+    if (inputId) {
+      input.id = inputId;
+      trigger.setAttribute('for', inputId);
+    }
+
+    selected.textContent = '';
+    selected.hidden = true;
+    progress.hidden = true;
+    progressBar.style.width = '0';
+    uploadBox.classList.remove('has-preview');
+    clearFilePreview(preview);
+  }
+
+  function clearFilePreview(preview) {
+    if (!preview) {
+      return;
+    }
+
+    const previewUrl = preview.dataset.previewUrl;
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      delete preview.dataset.previewUrl;
+    }
+
+    preview.replaceChildren();
+    preview.hidden = true;
+  }
+
+  function renderFilePreview(input, preview) {
+    clearFilePreview(preview);
+
+    if (!preview || !input.files || !input.files[0]) {
+      return;
+    }
+
+    const file = input.files[0];
+    const previewUrl = URL.createObjectURL(file);
+    const fileName = file.name.toLowerCase();
+    const isImageFile = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/.test(fileName);
+    const isVideoFile = file.type.startsWith('video/') || /\.mp4$/.test(fileName);
+    let media;
+
+    if (isImageFile) {
+      media = document.createElement('img');
+      media.alt = file.name;
+    } else if (isVideoFile) {
+      media = document.createElement('video');
+      media.controls = true;
+      media.muted = true;
+      media.preload = 'metadata';
+    } else {
+      URL.revokeObjectURL(previewUrl);
+      return;
+    }
+
+    media.src = previewUrl;
+    const clearButton = document.createElement('button');
+    clearButton.type = 'button';
+    clearButton.className = 'file-upload-clear-button';
+    clearButton.setAttribute('aria-label', '파일 업로드 취소');
+    clearButton.dataset.clearUpload = 'true';
+    clearButton.textContent = '×';
+
+    preview.dataset.previewUrl = previewUrl;
+    preview.appendChild(media);
+    preview.appendChild(clearButton);
+    preview.hidden = false;
+  }
+
+  function updateFileUploadBox(input) {
+    const uploadBox = input.closest('[data-file-upload]');
+    if (!uploadBox) {
+      return;
+    }
+
+    const selected = uploadBox.querySelector('.file-upload-selected');
+    const progress = uploadBox.querySelector('.upload-progress');
+    const progressBar = uploadBox.querySelector('.upload-progress-bar');
+    const preview = uploadBox.querySelector('.file-upload-preview');
+    const fileName = input.files && input.files[0] ? input.files[0].name : '';
+
+    selected.textContent = fileName;
+    selected.hidden = true;
+    progress.hidden = true;
+    progressBar.style.width = fileName ? '100%' : '0';
+
+    if (fileName) {
+      uploadBox.classList.add('has-preview');
+      renderFilePreview(input, preview);
+    } else {
+      uploadBox.classList.remove('has-preview');
+      clearFilePreview(preview);
+    }
+  }
+
+  function clearUpload(input) {
+    const uploadBox = input.closest('[data-file-upload]');
+    const selected = uploadBox.querySelector('.file-upload-selected');
+    const progress = uploadBox.querySelector('.upload-progress');
+    const progressBar = uploadBox.querySelector('.upload-progress-bar');
+    const preview = uploadBox.querySelector('.file-upload-preview');
+
+    input.value = '';
+    selected.textContent = '';
+    selected.hidden = true;
+    progress.hidden = true;
+    progressBar.style.width = '0';
+    uploadBox.classList.remove('has-preview');
+    clearFilePreview(preview);
+  }
+
+  function updateRemoveButtons() {
+    const removeButtons = chapterFields.querySelectorAll('[data-remove-chapter]');
+    removeButtons.forEach((button) => {
+      button.disabled = removeButtons.length === 1;
+    });
+  }
+
+  addChapterButton.addEventListener('click', () => {
+    const firstChapter = chapterFields.querySelector('.hr-course-form__chapter');
+    const nextChapter = firstChapter.cloneNode(true);
+    const isOnline = courseTypeSelect.value === 'ONLINE';
+
+    nextChapter.querySelectorAll('input').forEach((input) => {
+      input.value = '';
+
+      if (input.name === 'chapterTitles') {
+        input.required = true;
+        input.disabled = false;
+        return;
+      }
+
+      if (input.name === 'videoFiles') {
+        input.required = isOnline;
+        input.disabled = !isOnline;
+      }
+    });
+
+    nextChapter.querySelectorAll('[data-file-upload]').forEach((uploadBox) => {
+      resetFileUploadBox(uploadBox, `videoFile-${chapterUploadIndex}`);
+      chapterUploadIndex += 1;
+    });
+
+    nextChapter.querySelectorAll('[data-online-video-field]').forEach((field) => {
+      field.hidden = !isOnline;
+    });
+
+    chapterFields.appendChild(nextChapter);
+    updateRemoveButtons();
+    updateSummary();
+  });
+
+  chapterFields.addEventListener('click', (event) => {
+    const removeButton = event.target.closest('[data-remove-chapter]');
+
+    if (!removeButton || chapterFields.children.length === 1) {
+      return;
+    }
+
+    const chapterEl = removeButton.closest('.hr-course-form__chapter');
+    chapterEl.querySelectorAll('.file-upload-preview').forEach(clearFilePreview);
+    chapterEl.remove();
+    updateRemoveButtons();
+    updateSummary();
+  });
+
+  function setInputsState(container, enabled, requiredSelector) {
+    container.querySelectorAll('input, select, textarea').forEach((input) => {
+      input.disabled = !enabled;
+      if (input.matches(requiredSelector)) {
+        input.required = enabled;
+      }
+    });
+  }
+
+  function updateCourseTypeFields() {
+    const careerPathOption = categorySelect.querySelector('option[value="CAREER_PATH"]');
+    const offlineOption = courseTypeSelect.querySelector('option[value="OFFLINE"]');
+
+    careerPathOption.disabled = courseTypeSelect.value === 'OFFLINE';
+
+    if (categorySelect.value === 'CAREER_PATH') {
+      offlineOption.disabled = true;
+      courseTypeSelect.value = 'ONLINE';
+    } else {
+      offlineOption.disabled = false;
+    }
+
+    if (courseTypeSelect.value === 'OFFLINE' && categorySelect.value === 'CAREER_PATH') {
+      categorySelect.value = 'CAREER_HIGH';
+    }
+
+    const isOnline = courseTypeSelect.value === 'ONLINE';
+
+    document.querySelectorAll('[data-course-type-panel="ONLINE"]').forEach((panel) => {
+      panel.hidden = !isOnline;
+      setInputsState(panel, isOnline, '[data-online-required]');
+    });
+
+    document.querySelectorAll('[data-course-type-panel="OFFLINE"]').forEach((panel) => {
+      panel.hidden = isOnline;
+      setInputsState(panel, !isOnline, '[data-offline-required]');
+    });
+
+    document.querySelectorAll('[data-online-video-field]').forEach((field) => {
+      field.hidden = !isOnline;
+      setInputsState(field, isOnline, '[data-online-required]');
+    });
+
+    updateRemoveButtons();
+    updateSummary();
+  }
+
+  function getAvailableStepIndexes() {
+    return [0, 1, 2, 3];
+  }
+
+  function getNextStepIndex() {
+    const availableStepIndexes = getAvailableStepIndexes();
+    const currentAvailableIndex = availableStepIndexes.indexOf(currentStep);
+    return availableStepIndexes[Math.min(currentAvailableIndex + 1, availableStepIndexes.length - 1)];
+  }
+
+  function getPreviousStepIndex() {
+    const availableStepIndexes = getAvailableStepIndexes();
+    const currentAvailableIndex = availableStepIndexes.indexOf(currentStep);
+    return availableStepIndexes[Math.max(currentAvailableIndex - 1, 0)];
+  }
+
+  function getFieldValue(name) {
+    const field = form.querySelector(`[name="${name}"]:not(:disabled)`);
+    return field ? field.value.trim() : '';
+  }
+
+  function getSelectedText(select) {
+    return select.selectedOptions[0] ? select.selectedOptions[0].textContent.trim() : '-';
+  }
+
+  function formatDateRange(startDate, endDate) {
+    return startDate && endDate ? `${startDate} ~ ${endDate}` : '-';
+  }
+
+  function getVideoFileCount() {
+    return [...chapterFields.querySelectorAll('input[name="videoFiles"]')]
+        .filter((input) => !input.disabled && input.files && input.files.length > 0)
+        .length;
+  }
+
+  function updateSummary() {
+    const isOnline = courseTypeSelect.value === 'ONLINE';
+    const chapterCount = chapterFields.querySelectorAll('.hr-course-form__chapter').length;
+    const applyPeriod = formatDateRange(getFieldValue('applyStartDate'), getFieldValue('applyEndDate'));
+    const coursePeriod = formatDateRange(getFieldValue('courseStartDate'), getFieldValue('courseEndDate'));
+    const summaryMap = {
+      courseTitle: getFieldValue('courseTitle') || '-',
+      categoryType: getSelectedText(categorySelect),
+      courseType: getSelectedText(courseTypeSelect),
+      instructorName: getFieldValue('instructorName') || '-',
+      chapterCount: `${chapterCount}개`,
+      videoFileCount: `${getVideoFileCount()}개`,
+      courseMaterialUrl: getFieldValue('courseMaterialUrl') || '-',
+      period: '등록일 기준 2개월',
+      location: getFieldValue('location') || '-',
+      capacity: getFieldValue('capacity') ? `${getFieldValue('capacity')}명` : '-',
+      applyPeriod,
+      coursePeriod
+    };
+
+    Object.entries(summaryMap).forEach(([key, value]) => {
+      const target = document.querySelector(`[data-summary="${key}"]`);
+      if (target) {
+        target.textContent = value;
+      }
+    });
+
+    document.querySelectorAll('[data-review-section="ONLINE"]').forEach((section) => {
+      section.hidden = !isOnline;
+    });
+
+    document.querySelectorAll('[data-review-section="OFFLINE"]').forEach((section) => {
+      section.hidden = isOnline;
+    });
+  }
+
+  function validateStep(stepIndex) {
+    const fields = [...steps[stepIndex].querySelectorAll('input, select, textarea')]
+        .filter((field) => !field.disabled);
+
+    for (const field of fields) {
+      if (!field.checkValidity()) {
+        field.reportValidity();
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function findInvalidStep() {
+    for (const stepIndex of getAvailableStepIndexes()) {
+      const fields = [...steps[stepIndex].querySelectorAll('input, select, textarea')]
+          .filter((field) => !field.disabled);
+
+      if (fields.some((field) => !field.checkValidity())) {
+        return stepIndex;
+      }
+    }
+
+    return -1;
+  }
+
+  function renderStep() {
+    const availableStepIndexes = getAvailableStepIndexes();
+
+    if (!availableStepIndexes.includes(currentStep)) {
+      currentStep = availableStepIndexes[availableStepIndexes.length - 1];
+    }
+
+    steps.forEach((step) => {
+      const stepIndex = Number(step.dataset.step);
+      step.hidden = stepIndex !== currentStep;
+    });
+
+    progressItems.forEach((item) => {
+      const stepIndex = Number(item.dataset.progressStep);
+      const isAvailable = availableStepIndexes.includes(stepIndex);
+      item.hidden = !isAvailable;
+      item.classList.toggle('is-active', stepIndex === currentStep);
+      item.classList.toggle('is-complete', isAvailable && stepIndex < currentStep);
+    });
+
+    prevStepButton.hidden = currentStep === availableStepIndexes[0];
+    nextStepButton.hidden = currentStep === availableStepIndexes[availableStepIndexes.length - 1];
+    submitCourseButton.hidden = currentStep !== availableStepIndexes[availableStepIndexes.length - 1];
+    updateCourseTypeFields();
+
+    if (currentStep === availableStepIndexes[availableStepIndexes.length - 1]) {
+      updateSummary();
+    }
+  }
+
+  nextStepButton.addEventListener('click', () => {
+    updateCourseTypeFields();
+
+    if (!validateStep(currentStep)) {
+      return;
+    }
+
+    currentStep = getNextStepIndex();
+    renderStep();
+  });
+
+  prevStepButton.addEventListener('click', () => {
+    currentStep = getPreviousStepIndex();
+    renderStep();
+  });
+
+  categorySelect.addEventListener('change', updateCourseTypeFields);
+  courseTypeSelect.addEventListener('change', updateCourseTypeFields);
+  form.addEventListener('input', updateSummary);
+  form.addEventListener('change', updateSummary);
+  form.addEventListener('change', (event) => {
+    if (event.target.matches('.file-upload-input')) {
+      updateFileUploadBox(event.target);
+    }
+  });
+  form.addEventListener('click', (event) => {
+    const clearButton = event.target.closest('[data-clear-upload]');
+    if (!clearButton) {
+      return;
+    }
+
+    const uploadBox = clearButton.closest('[data-file-upload]');
+    const input = uploadBox.querySelector('.file-upload-input');
+    clearUpload(input);
+  });
+  form.addEventListener('submit', (event) => {
+    updateCourseTypeFields();
+    updateSummary();
+
+    const invalidStep = findInvalidStep();
+    if (invalidStep !== -1) {
+      event.preventDefault();
+      currentStep = invalidStep;
+      renderStep();
+      validateStep(currentStep);
+    }
+  });
+
+  updateRemoveButtons();
+  renderStep();
+</script>
+</body>
+</html>
