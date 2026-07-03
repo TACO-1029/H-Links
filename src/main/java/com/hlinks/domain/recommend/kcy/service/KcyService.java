@@ -10,4 +10,6 @@ public interface KcyService {
     List<KcyQuestionDto> getQuestions();
 
     KcyType submit(Long userId, List<Long> selectedOptionIds);
+
+    KcyType getResult(Long userId);
 }
