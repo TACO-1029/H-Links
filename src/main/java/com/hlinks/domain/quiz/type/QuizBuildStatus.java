@@ -1,4 +1,4 @@
-package com.hlinks.domain.course.type;
+package com.hlinks.domain.quiz.type;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

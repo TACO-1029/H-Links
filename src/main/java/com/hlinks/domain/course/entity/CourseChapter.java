@@ -1,6 +1,6 @@
 package com.hlinks.domain.course.entity;
 
-import com.hlinks.domain.course.type.QuizBuildStatus;
+import com.hlinks.domain.quiz.type.QuizBuildStatus;
 import lombok.Getter;
 import lombok.Setter;
 
