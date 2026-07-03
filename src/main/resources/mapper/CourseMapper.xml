@@ -28,7 +28,7 @@
         #{categoryType},
         #{courseTypeValue},
         #{courseTitle},
-        #{description},
+        #{description, jdbcType=VARCHAR},
         #{instructorName},
         #{thumbnailUrl, jdbcType=VARCHAR},
         SYSDATE,
@@ -110,11 +110,11 @@
     <update id="updateCourseChapterVideo" parameterType="com.hlinks.domain.course.entity.CourseChapter">
         UPDATE COURSE_CHAPTER
         SET
-        VIDEO_URL = #{videoUrl},
-        VIDEO_PATH = #{videoPath},
-        ORIGINAL_FILE_NAME = #{originalFileName},
-        FILE_SIZE = #{fileSize},
-        DURATION_SECONDS = #{durationSeconds},
+        VIDEO_URL = #{videoUrl, jdbcType=VARCHAR},
+        VIDEO_PATH = #{videoPath, jdbcType=VARCHAR},
+        ORIGINAL_FILE_NAME = #{originalFileName, jdbcType=VARCHAR},
+        FILE_SIZE = #{fileSize, jdbcType=NUMERIC},
+        DURATION_SECONDS = #{durationSeconds, jdbcType=NUMERIC},
         UPDATED_AT = SYSDATE
         WHERE CHAPTER_ID = #{chapterId}
         AND COURSE_ID = #{courseId}
