@@ -19,6 +19,11 @@ public interface CourseChapterMapper {
             @Param("quizBuildStatus") QuizBuildStatus quizBuildStatus
     );
 
+    int updateQuizBuildStatusIfPending(
+            @Param("chapterId") Long chapterId,
+            @Param("quizBuildStatus") QuizBuildStatus quizBuildStatus
+    );
+
     int updateTranscriptText(
             @Param("chapterId") Long chapterId,
             @Param("transcriptText") String transcriptText

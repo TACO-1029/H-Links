@@ -30,18 +30,20 @@ public class QuizBuildService {
     private String uploadRoot;
 
     public void buildQuizForChapter(Long chapterId) {
-        CourseChapter chapter = courseChapterMapper.findById(chapterId);
+        int claimedCount = courseChapterMapper.updateQuizBuildStatusIfPending(
+                chapterId,
+                QuizBuildStatus.PROCESSING
+        );
 
-        if (chapter == null) {
+        if (claimedCount == 0) {
+            log.info("퀴즈 빌드 챕터 선점 생략. chapterId={}", chapterId);
             return;
         }
 
+        CourseChapter chapter = courseChapterMapper.findById(chapterId);
         Path audioPath = null;
 
         try {
-            // pending -> processing
-            courseChapterMapper.updateQuizBuildStatus(chapterId, QuizBuildStatus.PROCESSING);
-
             if (chapter.getVideoPath() == null || chapter.getVideoPath().isBlank()) {
                 throw new IllegalStateException("챕터 영상 경로가 없습니다. chapterId=" + chapterId);
             }
