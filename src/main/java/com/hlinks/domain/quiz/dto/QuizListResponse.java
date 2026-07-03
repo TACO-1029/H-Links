@@ -1,5 +1,6 @@
 package com.hlinks.domain.quiz.dto;
 
+import com.hlinks.domain.quiz.type.QuizBuildStatus;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -58,11 +59,7 @@ public class QuizListResponse {
         return "미지정";
     }
 
-    public String getStatusLabel() {
-        if (quizId == null) {
-            return getQuizBuildStatusLabel();
-        }
-
+    public String getReviewStatusLabel() {
         if ("DRAFT".equals(status)) {
             return "검토 대기";
         }
@@ -76,6 +73,10 @@ public class QuizListResponse {
         }
 
         return "미지정";
+    }
+
+    public String getStatusLabel() {
+        return getReviewStatusLabel();
     }
 
     public String getDisplayQuestionText() {
@@ -98,23 +99,19 @@ public class QuizListResponse {
         return "AI 퀴즈 생성 상태를 확인하고 있습니다.";
     }
 
+    public String getBuildStatusLabel() {
+        if (quizBuildStatus == null || quizBuildStatus.isBlank()) {
+            return "미지정";
+        }
+
+        try {
+            return QuizBuildStatus.valueOf(quizBuildStatus).getDescription();
+        } catch (IllegalArgumentException e) {
+            return "미지정";
+        }
+    }
+
     public String getQuizBuildStatusLabel() {
-        if ("PENDING".equals(quizBuildStatus)) {
-            return "생성 대기";
-        }
-
-        if ("PROCESSING".equals(quizBuildStatus)) {
-            return "생성 중";
-        }
-
-        if ("COMPLETED".equals(quizBuildStatus)) {
-            return "생성 완료";
-        }
-
-        if ("FAILED".equals(quizBuildStatus)) {
-            return "생성 실패";
-        }
-
-        return "미지정";
+        return getBuildStatusLabel();
     }
 }

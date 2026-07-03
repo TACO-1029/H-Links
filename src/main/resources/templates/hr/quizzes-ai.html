@@ -14,11 +14,10 @@
   <style>
     .hr-dashboard {
       display: grid;
-      grid-template-columns: 220px minmax(0, 1fr);
-      gap: 28px;
-      width: min(100%, 1440px);
-      margin: 0 auto;
-      padding: 40px 64px 80px;
+      grid-template-columns: 220px minmax(0, 1320px);
+      gap: 32px;
+      width: 100%;
+      align-items: start;
     }
 
     .hr-sidebar {
@@ -75,6 +74,7 @@
       display: grid;
       gap: 20px;
       min-width: 0;
+      width: 100%;
     }
 
     .hr-quiz-panel__header {
@@ -82,6 +82,7 @@
       align-items: flex-end;
       justify-content: space-between;
       gap: 20px;
+      min-height: 86px;
       padding-bottom: 4px;
     }
 
@@ -126,22 +127,104 @@
       box-shadow: var(--shadow-sm);
     }
 
+    .hr-quiz-filter {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.2fr) minmax(150px, 0.8fr) minmax(260px, 1.6fr) auto;
+      gap: 10px;
+      align-items: end;
+      padding: 18px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      background: var(--color-bg-surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .hr-quiz-filter__field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .hr-quiz-filter__label {
+      color: var(--color-text-secondary);
+      font-size: var(--text-xs);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-quiz-filter__select,
+    .hr-quiz-filter__input {
+      width: 100%;
+      min-height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      background: var(--color-bg-surface);
+      color: var(--color-text-primary);
+      font-size: var(--text-sm);
+      font-weight: var(--font-semibold);
+    }
+
+    .hr-quiz-filter__select:focus,
+    .hr-quiz-filter__input:focus {
+      border-color: var(--color-brand);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0, 158, 122, 0.14);
+    }
+
+    .hr-quiz-filter__button {
+      min-height: 40px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: var(--radius-md);
+      background: var(--color-brand);
+      color: var(--color-text-inverse);
+      font-size: var(--text-sm);
+      font-weight: var(--font-bold);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .hr-quiz-filter__button:hover {
+      background: var(--color-brand-hover);
+    }
+
     .hr-quiz-table-wrap {
-      overflow-x: auto;
+      overflow-x: visible;
     }
 
     .hr-quiz-table {
       width: 100%;
-      min-width: 920px;
       border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .hr-quiz-table__col-source {
+      width: 28%;
+    }
+
+    .hr-quiz-table__col-question {
+      width: 40%;
+    }
+
+    .hr-quiz-table__col-difficulty {
+      width: 10%;
+    }
+
+    .hr-quiz-table__col-status {
+      width: 11%;
+    }
+
+    .hr-quiz-table__col-date {
+      width: 9%;
     }
 
     .hr-quiz-table th,
     .hr-quiz-table td {
-      padding: 16px;
+      min-height: 64px;
+      padding: 20px 18px;
       border-bottom: 1px solid var(--color-border-default);
       text-align: left;
-      vertical-align: top;
+      vertical-align: middle;
     }
 
     .hr-quiz-table th {
@@ -149,23 +232,66 @@
       color: var(--color-text-secondary);
       font-size: var(--text-xs);
       font-weight: var(--font-bold);
+      white-space: nowrap;
     }
 
     .hr-quiz-table tr:last-child td {
       border-bottom: 0;
     }
 
+    .hr-quiz-table tbody tr.is-clickable {
+      cursor: pointer;
+      transition: background 160ms ease;
+    }
+
+    .hr-quiz-table tbody tr.is-clickable:hover {
+      background: var(--color-bg-soft);
+    }
+
     .hr-quiz-table__question {
       display: grid;
       gap: 8px;
-      max-width: 420px;
+      min-width: 0;
+    }
+
+    .hr-quiz-table__source {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .hr-quiz-table__source-title {
+      color: var(--color-text-primary);
+      font-size: var(--text-sm);
+      font-weight: var(--font-bold);
+      line-height: 1.45;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .hr-quiz-table__chapter-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      max-width: 100%;
+      min-height: 26px;
+      padding: 0 10px;
+      border-radius: var(--radius-full);
+      background: var(--color-bg-soft);
+      color: var(--color-brand);
+      font-size: var(--text-xs);
+      font-weight: var(--font-bold);
+      white-space: nowrap;
     }
 
     .hr-quiz-table__question strong {
       color: var(--color-text-primary);
       font-size: var(--text-sm);
       font-weight: var(--font-bold);
-      line-height: 1.5;
+      line-height: 1.55;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
     }
 
     .hr-quiz-table__meta {
@@ -178,19 +304,43 @@
       color: var(--color-text-primary);
       font-size: var(--text-sm);
       line-height: 1.5;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
     }
 
     .hr-quiz-badge {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       min-height: 28px;
-      padding: 0 10px;
+      min-width: 72px;
+      padding: 0 12px;
       border-radius: var(--radius-full);
       background: var(--color-bg-soft);
       color: var(--color-text-primary);
       font-size: var(--text-xs);
       font-weight: var(--font-bold);
       white-space: nowrap;
+    }
+
+    .hr-quiz-table td:nth-child(3),
+    .hr-quiz-table td:nth-child(4),
+    .hr-quiz-table th:nth-child(3),
+    .hr-quiz-table th:nth-child(4) {
+      text-align: center;
+    }
+
+    .hr-quiz-table td:nth-child(5),
+    .hr-quiz-table th:nth-child(5) {
+      text-align: right;
+    }
+
+    .hr-quiz-table td:nth-child(5) .hr-quiz-table__text {
+      display: inline-block;
+      min-width: 76px;
+      text-align: right;
+      word-break: normal;
+      overflow-wrap: normal;
     }
 
     .hr-quiz-badge--status {
@@ -221,14 +371,315 @@
       font-size: var(--text-sm);
     }
 
+    .hr-quiz-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      border-top: 1px solid var(--color-border-default);
+      background: var(--color-bg-surface);
+    }
+
+    .hr-quiz-pagination__summary {
+      color: var(--color-text-secondary);
+      font-size: var(--text-sm);
+      font-weight: var(--font-semibold);
+      white-space: nowrap;
+    }
+
+    .hr-quiz-pagination__nav {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .hr-quiz-pagination__link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-md);
+      background: var(--color-bg-surface);
+      color: var(--color-text-secondary);
+      font-size: var(--text-sm);
+      font-weight: var(--font-bold);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .hr-quiz-pagination__link:hover,
+    .hr-quiz-pagination__link.is-active {
+      border-color: var(--color-brand);
+      background: var(--color-bg-soft);
+      color: var(--color-brand);
+    }
+
+    .hr-quiz-pagination__link.is-disabled {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .hr-quiz-modal {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 32px;
+      background: rgba(17, 24, 39, 0.62);
+      backdrop-filter: blur(5px);
+      z-index: 100;
+    }
+
+    .hr-quiz-modal[hidden] {
+      display: none;
+    }
+
+    .hr-quiz-modal__dialog {
+      overflow: hidden;
+      width: min(100%, 860px);
+      max-height: min(88vh, 760px);
+      border-radius: 28px;
+      background: var(--color-bg-surface);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hr-quiz-modal__header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 24px 28px 18px;
+      border-bottom: 1px solid var(--color-border-default);
+    }
+
+    .hr-quiz-modal__eyebrow {
+      margin: 0 0 8px;
+      color: var(--color-brand);
+      font-size: var(--text-xs);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-quiz-modal__title {
+      margin: 0;
+      color: var(--color-text-primary);
+      font-size: var(--text-2xl);
+      font-weight: var(--font-bold);
+      line-height: 1.25;
+    }
+
+    .hr-quiz-modal__meta {
+      margin: 8px 0 0;
+      color: var(--color-text-muted);
+      font-size: var(--text-xs);
+      font-weight: var(--font-bold);
+      line-height: 1.5;
+    }
+
+    .hr-quiz-modal__close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-full);
+      background: var(--color-bg-surface);
+      color: var(--color-text-secondary);
+      font-size: var(--text-xl);
+      font-weight: var(--font-bold);
+      cursor: pointer;
+    }
+
+    .hr-quiz-modal__body {
+      overflow-y: auto;
+      display: grid;
+      gap: 18px;
+      padding: 28px;
+    }
+
+    .hr-quiz-modal__question-card {
+      padding: 24px;
+      border: 1px solid var(--color-border-default);
+      border-radius: 22px;
+      background: var(--color-bg-surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .hr-quiz-modal__question-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .hr-quiz-modal__q-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      min-width: 52px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      background: var(--color-brand);
+      color: var(--color-text-inverse);
+      font-size: var(--text-sm);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-quiz-modal__question {
+      margin: 4px 0 0;
+      color: var(--color-text-primary);
+      font-size: var(--text-lg);
+      font-weight: var(--font-bold);
+      line-height: 1.55;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .hr-quiz-modal__options {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .hr-quiz-modal__option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 58px;
+      padding: 0 18px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-lg);
+      background: var(--color-bg-surface);
+      color: var(--color-text-secondary);
+      font-size: var(--text-base);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-quiz-modal__option.is-correct {
+      border-color: var(--color-brand);
+      background: var(--color-bg-soft);
+      color: var(--color-brand);
+    }
+
+    .hr-quiz-modal__mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-full);
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-quiz-modal__option.is-correct .hr-quiz-modal__mark {
+      border-color: var(--color-brand);
+      background: var(--color-brand);
+      color: var(--color-text-inverse);
+    }
+
+    .hr-quiz-modal__explanation {
+      padding: 22px 24px;
+      border-radius: 22px;
+      background: #050816;
+      color: var(--color-text-inverse);
+    }
+
+    .hr-quiz-modal__explanation-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .hr-quiz-modal__explanation-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 10px;
+      border-radius: var(--radius-md);
+      background: var(--color-accent);
+      color: var(--color-text-primary);
+      font-size: var(--text-xs);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-quiz-modal__answer {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: var(--text-xs);
+      font-weight: var(--font-bold);
+    }
+
+    .hr-quiz-modal__explanation-text {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.86);
+      font-size: var(--text-sm);
+      line-height: 1.8;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .hr-quiz-modal__footer {
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 28px 28px;
+    }
+
+    .hr-quiz-modal__confirm {
+      min-height: 42px;
+      padding: 0 20px;
+      border: 0;
+      border-radius: var(--radius-lg);
+      background: var(--color-brand);
+      color: var(--color-text-inverse);
+      font-size: var(--text-sm);
+      font-weight: var(--font-bold);
+      cursor: pointer;
+    }
+
+    .hr-quiz-modal__confirm:hover {
+      background: var(--color-brand-hover);
+    }
+
     @media (max-width: 1024px) {
       .hr-dashboard {
         grid-template-columns: 1fr;
-        padding: 32px 24px 64px;
       }
 
       .hr-sidebar {
         position: static;
+      }
+
+      .hr-quiz-table-wrap {
+        overflow-x: auto;
+      }
+
+      .hr-quiz-table {
+        min-width: 1080px;
+      }
+
+      .hr-quiz-filter {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hr-quiz-filter__button {
+        width: 100%;
       }
     }
 
@@ -241,13 +692,41 @@
       .hr-quiz-panel__count {
         align-self: flex-start;
       }
+
+      .hr-quiz-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .hr-quiz-pagination__nav {
+        justify-content: flex-start;
+      }
+
+      .hr-quiz-filter {
+        grid-template-columns: 1fr;
+      }
+
+      .hr-quiz-modal {
+        padding: 16px;
+      }
+
+      .hr-quiz-modal__dialog {
+        border-radius: 20px;
+      }
+
+      .hr-quiz-modal__header,
+      .hr-quiz-modal__body,
+      .hr-quiz-modal__footer {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
     }
   </style>
 </head>
 <body class="home-page">
 <div th:replace="~{fragments/header :: header}"></div>
 
-<main class="home-shell">
+<main class="home-shell hr-shell">
   <div class="hr-dashboard">
     <aside class="hr-sidebar" aria-label="HR 관리 메뉴">
       <h2 class="hr-sidebar__title">Dashboard</h2>
@@ -260,7 +739,6 @@
         <div class="hr-nav__group">
           <p class="hr-nav__heading">퀴즈 관리</p>
           <a class="hr-nav__link is-active" th:href="@{/hr/quizzes/ai}">AI 생성 퀴즈</a>
-          <a class="hr-nav__link" href="#">승인된 퀴즈</a>
         </div>
         <div class="hr-nav__group">
           <p class="hr-nav__heading">신청 관리</p>
@@ -280,26 +758,76 @@
         <div>
           <p class="hr-quiz-panel__eyebrow">퀴즈 관리</p>
           <h1 class="hr-quiz-panel__title" id="aiQuizTitle">AI 생성 퀴즈</h1>
-          <p class="hr-quiz-panel__description">강의 transcript 기반으로 생성된 퀴즈 후보를 확인합니다.</p>
+          <p class="hr-quiz-panel__description">강의 자막을 기반으로 생성된 퀴즈와 생성 상태를 확인합니다.</p>
         </div>
-        <span class="hr-quiz-panel__count" th:text="|총 ${#lists.size(quizzes)}개|">총 0개</span>
+        <span class="hr-quiz-panel__count" th:text="|총 ${totalCount}개|">총 0개</span>
       </div>
+
+      <form class="hr-quiz-filter" th:action="@{/hr/quizzes/ai}" method="get">
+        <input type="hidden" name="size" th:value="${pageSize}">
+        <label class="hr-quiz-filter__field">
+          <span class="hr-quiz-filter__label">강의명</span>
+          <select class="hr-quiz-filter__select" name="course">
+            <option value="">전체 강의</option>
+            <option th:each="courseOption : ${courseOptions}"
+                    th:value="${courseOption}"
+                    th:text="${courseOption}"
+                    th:selected="${courseOption == courseFilter}">강의명</option>
+          </select>
+        </label>
+        <label class="hr-quiz-filter__field">
+          <span class="hr-quiz-filter__label">생성 상태</span>
+          <select class="hr-quiz-filter__select" name="status">
+            <option value="">전체 생성 상태</option>
+            <option th:each="statusOption : ${statusOptions}"
+                    th:value="${statusOption}"
+                    th:text="${statusOption}"
+                    th:selected="${statusOption == statusFilter}">상태</option>
+          </select>
+        </label>
+        <label class="hr-quiz-filter__field">
+          <span class="hr-quiz-filter__label">검색</span>
+          <input class="hr-quiz-filter__input"
+                 type="search"
+                 name="keyword"
+                 th:value="${keyword}"
+                 placeholder="퀴즈, 강의명, 챕터명 검색">
+        </label>
+        <button class="hr-quiz-filter__button" type="submit">조회</button>
+      </form>
 
       <div class="hr-quiz-table-card" th:if="${!#lists.isEmpty(quizzes)}">
         <div class="hr-quiz-table-wrap">
           <table class="hr-quiz-table">
+            <colgroup>
+              <col class="hr-quiz-table__col-source">
+              <col class="hr-quiz-table__col-question">
+              <col class="hr-quiz-table__col-difficulty">
+              <col class="hr-quiz-table__col-status">
+              <col class="hr-quiz-table__col-date">
+            </colgroup>
             <thead>
             <tr>
+              <th scope="col">출처</th>
               <th scope="col">퀴즈</th>
-              <th scope="col">강의</th>
-              <th scope="col">챕터</th>
               <th scope="col">난이도</th>
-              <th scope="col">상태</th>
+              <th scope="col">생성 상태</th>
               <th scope="col">생성일</th>
             </tr>
             </thead>
             <tbody>
-            <tr th:each="quiz : ${quizzes}">
+            <tr th:each="quiz : ${quizzes}"
+                th:classappend="${quiz.quizId != null} ? ' is-clickable'"
+                th:data-quiz-id="${quiz.quizId}"
+                th:tabindex="${quiz.quizId != null} ? '0'">
+              <td>
+                <div class="hr-quiz-table__source">
+                  <strong class="hr-quiz-table__source-title"
+                          th:text="${quiz.courseTitle != null ? quiz.courseTitle : '-'}">강의명</strong>
+                  <span class="hr-quiz-table__chapter-badge"
+                        th:text="${quiz.chapterTitle != null ? quiz.chapterTitle : '-'}">챕터명</span>
+                </div>
+              </td>
               <td>
                 <div class="hr-quiz-table__question">
                   <strong th:text="${quiz.displayQuestionText}">퀴즈 질문</strong>
@@ -307,18 +835,10 @@
                 </div>
               </td>
               <td>
-                <span class="hr-quiz-table__text"
-                      th:text="${quiz.courseTitle != null ? quiz.courseTitle : '-'}">강의명</span>
-              </td>
-              <td>
-                <span class="hr-quiz-table__text"
-                      th:text="${quiz.chapterTitle != null ? quiz.chapterTitle : '-'}">챕터명</span>
-              </td>
-              <td>
                 <span class="hr-quiz-badge" th:text="${quiz.difficultyLabel}">보통</span>
               </td>
               <td>
-                <span class="hr-quiz-badge hr-quiz-badge--status" th:text="${quiz.statusLabel}">검토 대기</span>
+                <span class="hr-quiz-badge hr-quiz-badge--status" th:text="${quiz.buildStatusLabel}">생성 완료</span>
               </td>
               <td>
                 <span class="hr-quiz-table__text"
@@ -329,6 +849,27 @@
             </tr>
             </tbody>
           </table>
+        </div>
+
+        <div class="hr-quiz-pagination" th:if="${totalPages > 1}">
+          <p class="hr-quiz-pagination__summary"
+             th:text="|${currentPage} / ${totalPages} 페이지|">1 / 1 페이지</p>
+
+          <nav class="hr-quiz-pagination__nav" aria-label="AI 생성 퀴즈 페이지">
+            <a class="hr-quiz-pagination__link"
+               th:classappend="${currentPage == 1} ? ' is-disabled'"
+               th:href="@{/hr/quizzes/ai(page=${currentPage - 1}, size=${pageSize}, course=${courseFilter}, status=${statusFilter}, keyword=${keyword})}"
+               aria-label="이전 페이지">이전</a>
+            <a class="hr-quiz-pagination__link"
+               th:each="pageNumber : ${pageNumbers}"
+               th:classappend="${pageNumber == currentPage} ? ' is-active'"
+               th:href="@{/hr/quizzes/ai(page=${pageNumber}, size=${pageSize}, course=${courseFilter}, status=${statusFilter}, keyword=${keyword})}"
+               th:text="${pageNumber}">1</a>
+            <a class="hr-quiz-pagination__link"
+               th:classappend="${currentPage == totalPages} ? ' is-disabled'"
+               th:href="@{/hr/quizzes/ai(page=${currentPage + 1}, size=${pageSize}, course=${courseFilter}, status=${statusFilter}, keyword=${keyword})}"
+               aria-label="다음 페이지">다음</a>
+          </nav>
         </div>
       </div>
 
@@ -342,6 +883,171 @@
   </div>
 </main>
 
+<div class="hr-quiz-modal" id="quizDetailModal" hidden>
+  <div class="hr-quiz-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="quizDetailTitle">
+    <div class="hr-quiz-modal__header">
+      <div>
+        <p class="hr-quiz-modal__eyebrow" id="quizDetailStatus">퀴즈 생성완료</p>
+        <h2 class="hr-quiz-modal__title" id="quizDetailTitle">퀴즈 상세</h2>
+        <p class="hr-quiz-modal__meta" id="quizDetailMeta">강의명 · 챕터명</p>
+      </div>
+      <button class="hr-quiz-modal__close" type="button" data-quiz-modal-close aria-label="닫기">×</button>
+    </div>
+
+    <div class="hr-quiz-modal__body">
+      <section class="hr-quiz-modal__question-card">
+        <div class="hr-quiz-modal__question-head">
+          <span class="hr-quiz-modal__q-number">Q1</span>
+          <p class="hr-quiz-modal__question" id="quizDetailQuestion">퀴즈 질문</p>
+        </div>
+        <ol class="hr-quiz-modal__options" id="quizDetailOptions"></ol>
+      </section>
+
+      <section class="hr-quiz-modal__explanation">
+        <div class="hr-quiz-modal__explanation-head">
+          <span class="hr-quiz-modal__explanation-badge">해설</span>
+          <span class="hr-quiz-modal__answer" id="quizDetailAnswer">정답</span>
+        </div>
+        <p class="hr-quiz-modal__explanation-text" id="quizDetailExplanation">해설 내용</p>
+      </section>
+    </div>
+
+    <div class="hr-quiz-modal__footer">
+      <button class="hr-quiz-modal__confirm" type="button" data-quiz-modal-close>확인하고 닫기</button>
+    </div>
+  </div>
+</div>
+
 <div th:replace="~{fragments/footer :: footer}"></div>
+<script>
+  const quizDetailModal = document.getElementById('quizDetailModal');
+  const quizDetailStatus = document.getElementById('quizDetailStatus');
+  const quizDetailTitle = document.getElementById('quizDetailTitle');
+  const quizDetailMeta = document.getElementById('quizDetailMeta');
+  const quizDetailQuestion = document.getElementById('quizDetailQuestion');
+  const quizDetailOptions = document.getElementById('quizDetailOptions');
+  const quizDetailAnswer = document.getElementById('quizDetailAnswer');
+  const quizDetailExplanation = document.getElementById('quizDetailExplanation');
+
+  function formatQuestionType(questionType) {
+    if (questionType === 'MULTIPLE_CHOICE') {
+      return '객관식';
+    }
+
+    return '퀴즈';
+  }
+
+  function formatDateTime(value) {
+    if (!value) {
+      return '-';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return '-';
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}.${month}.${day}`;
+  }
+
+  function renderQuizOptions(options = []) {
+    quizDetailOptions.replaceChildren();
+
+    options.forEach((option) => {
+      const item = document.createElement('li');
+      const isCorrect = option.correctYn === 'Y';
+      item.className = `hr-quiz-modal__option${isCorrect ? ' is-correct' : ''}`;
+
+      const text = document.createElement('span');
+      text.textContent = `${option.optionNo}. ${option.optionText}`;
+
+      const mark = document.createElement('span');
+      mark.className = 'hr-quiz-modal__mark';
+      mark.textContent = isCorrect ? '✓' : '';
+      mark.setAttribute('aria-hidden', 'true');
+
+      item.appendChild(text);
+      item.appendChild(mark);
+      quizDetailOptions.appendChild(item);
+    });
+  }
+
+  function openQuizModal(quiz) {
+    quizDetailStatus.textContent = '퀴즈 생성완료';
+    quizDetailTitle.textContent = quiz.questionText || '퀴즈 상세';
+    quizDetailMeta.textContent = `${formatQuestionType(quiz.questionType)} · 제출일 ${formatDateTime(quiz.createdAt)}`;
+    quizDetailQuestion.textContent = quiz.questionText || '-';
+    quizDetailAnswer.textContent = quiz.answerText ? `정답 ${quiz.answerText}` : '정답';
+    quizDetailExplanation.textContent = quiz.explanation || '등록된 해설이 없습니다.';
+    renderQuizOptions(quiz.options || []);
+    quizDetailModal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    quizDetailModal.querySelector('[data-quiz-modal-close]').focus();
+  }
+
+  function closeQuizModal() {
+    quizDetailModal.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  async function fetchQuizDetail(quizId) {
+    const response = await fetch(`/api/quizzes/${quizId}`, {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('퀴즈 상세를 불러오지 못했습니다.');
+    }
+
+    const payload = await response.json();
+    return payload.data;
+  }
+
+  async function handleQuizRowClick(row) {
+    const quizId = row.dataset.quizId;
+
+    if (!quizId) {
+      return;
+    }
+
+    try {
+      const quiz = await fetchQuizDetail(quizId);
+      openQuizModal(quiz);
+    } catch (error) {
+      window.alert(error.message);
+    }
+  }
+
+  document.querySelectorAll('.hr-quiz-table tbody tr[data-quiz-id]').forEach((row) => {
+    row.addEventListener('click', () => handleQuizRowClick(row));
+    row.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleQuizRowClick(row);
+      }
+    });
+  });
+
+  quizDetailModal.addEventListener('click', (event) => {
+    if (event.target === quizDetailModal || event.target.closest('[data-quiz-modal-close]')) {
+      closeQuizModal();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !quizDetailModal.hidden) {
+      closeQuizModal();
+    }
+  });
+</script>
 </body>
 </html>

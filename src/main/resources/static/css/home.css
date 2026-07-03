@@ -9,6 +9,11 @@
     padding: 64px 24px;
 }
 
+.hr-shell {
+    width: min(100%, 1840px);
+    padding: 48px 48px 96px;
+}
+
 .home-hero {
     margin-bottom: 32px;
 }
@@ -66,6 +71,10 @@
 @media (max-width: 768px) {
     .home-shell {
         padding: 40px 20px;
+    }
+
+    .hr-shell {
+        padding: 40px 28px 72px;
     }
 
     .home-card-grid {
