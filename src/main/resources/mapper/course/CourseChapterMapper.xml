@@ -85,4 +85,13 @@
         AND USE_YN = 'Y'
     </update>
 
+    <update id="updateQuizBuildStatus">
+        UPDATE COURSE_CHAPTER
+        SET
+        QUIZ_BUILD_STATUS = #{quizBuildStatus},
+        UPDATED_AT = SYSDATE
+        WHERE CHAPTER_ID = #{chapterId}
+        AND USE_YN = 'Y'
+    </update>
+
 </mapper>

@@ -1,6 +1,7 @@
 package com.hlinks.domain.course.mapper;
 
 import com.hlinks.domain.course.entity.CourseChapter;
+import com.hlinks.domain.quiz.type.QuizBuildStatus;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -12,6 +13,11 @@ public interface CourseChapterMapper {
     CourseChapter findById(@Param("chapterId") Long chapterId);
 
     List<CourseChapter> findPendingQuizBuildChapters(@Param("limit") int limit);
+
+    int updateQuizBuildStatus(
+            @Param("chapterId") Long chapterId,
+            @Param("quizBuildStatus") QuizBuildStatus quizBuildStatus
+    );
 
     int updateTranscriptText(
             @Param("chapterId") Long chapterId,
