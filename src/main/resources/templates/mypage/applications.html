@@ -305,13 +305,11 @@
                                     상세
                                 </button>
 
-                                <button th:if="${app.applicationStatus.name() == 'WAITING'}"
+                                <button th:if="${app.applicationStatus.name() == 'WAITING' or (app.applicationStatus.name() == 'APPROVED' and app.courseType == 'OFFLINE' and (app.applyEndDate == null or !T(java.time.LocalDate).now().isAfter(app.applyEndDate)))}"
                                         class="btn-ui btn-ui-danger"
                                         type="button"
-                                        th:data-course-id="${app.courseId}"
-                                        th:data-course-title="${app.courseTitle}"
-                                        onclick="cancelApplicationFromButton(this)">
-                                    취소
+                                        th:onclick="cancelApplication([[${app.courseId}]], [[${app.courseTitle}]])">
+                                    신청취소
                                 </button>
                             </div>
                         </td>
