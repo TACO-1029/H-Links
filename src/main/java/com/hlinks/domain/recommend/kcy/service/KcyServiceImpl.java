@@ -100,4 +100,15 @@ public class KcyServiceImpl implements KcyService {
             throw new BaseException(KcyErrorCode.KCY_INVALID_ANSWER_DUPLICATED);
         }
     }
+    // id를 가지고 kcy 결과를 가져오는 서비스 메서드입니다.
+    @Override
+    public KcyType getResult(Long userId) {
+        String kcyResult = kcyMapper.findKcyResultByUserId(userId);
+
+        if (kcyResult == null || kcyResult.isBlank()) {
+            return null;
+        }
+
+        return KcyType.from(kcyResult);
+    }
 }

@@ -22,4 +22,6 @@ public interface KcyMapper {
     int countDistinctQuestionsByOptionIds(@Param("optionIds") List<Long> optionIds);
 
     int updateUserKcyResult(@Param("userId") Long userId, @Param("kcyResult") String kcyResult);
+
+    String findKcyResultByUserId(@Param("userId") Long userId);
 }
