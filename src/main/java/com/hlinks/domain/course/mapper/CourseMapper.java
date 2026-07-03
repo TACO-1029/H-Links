@@ -48,12 +48,6 @@ public interface CourseMapper {
             @Param("status") String status
     );
 
-    void resetCourseLearningStatus(
-            @Param("courseLearningId") Long courseLearningId,
-            @Param("applicationId") Long applicationId,
-            @Param("status") String status
-    );
-
     int insertChapterLearningStatus(
             @Param("courseLearningId") Long courseLearningId,
             @Param("userId") Long userId,
@@ -63,14 +57,12 @@ public interface CourseMapper {
     );
 
     int startCourseLearning(
-            @Param("userId") Long userId,
-            @Param("courseId") Long courseId,
+            @Param("courseLearningId") Long courseLearningId,
             @Param("status") String status
     );
 
     int startChapterLearning(
-            @Param("userId") Long userId,
-            @Param("courseId") Long courseId,
+            @Param("courseLearningId") Long courseLearningId,
             @Param("chapterId") Long chapterId,
             @Param("status") String status
     );
@@ -108,7 +100,7 @@ public interface CourseMapper {
      */
     List<ChapterResponseDto> findChaptersByCourseId(@Param("courseId") Long courseId);
 
-    Long findLatestLearningChapterId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    Long findLatestLearningChapterId(@Param("courseLearningId") Long courseLearningId);
 
     /**
      * [이슈 #31] 3. 특정 강의에서 다루는 핵심 기술 스킬명(Tags) 목록 조회

@@ -113,8 +113,7 @@
             FROM CHAPTER_LEARNING_STATUS cls
             JOIN COURSE_CHAPTER cc
               ON cls.chapter_id = cc.chapter_id
-            WHERE cls.user_id = #{userId}
-              AND cls.course_id = #{courseId}
+            WHERE cls.course_learning_id = #{courseLearningId}
               AND cls.status IN ('IN_PROGRESS', 'COMPLETED')
               AND cc.use_yn = 'Y'
             ORDER BY NVL(cls.updated_at, cls.started_at) DESC,
@@ -229,9 +228,18 @@
 
     <select id="findCourseLearningId" resultType="long">
         SELECT course_learning_id
-        FROM COURSE_LEARNING_STATUS
-        WHERE user_id = #{userId}
-          AND course_id = #{courseId}
+        FROM (
+            SELECT cls.course_learning_id
+            FROM COURSE_LEARNING_STATUS cls
+            JOIN COURSE_APPLICATION ca
+              ON cls.application_id = ca.application_id
+            WHERE ca.user_id = #{userId}
+              AND ca.course_id = #{courseId}
+              AND ca.application_status = 'APPROVED'
+              AND cls.status != 'CANCELED'
+            ORDER BY ca.application_id DESC
+        )
+        WHERE ROWNUM = 1
     </select>
 
     <select id="nextCourseLearningStatusId" resultType="long">
@@ -262,17 +270,6 @@
             SYSDATE
         )
     </insert>
-
-    <update id="resetCourseLearningStatus">
-        UPDATE COURSE_LEARNING_STATUS
-        SET application_id = #{applicationId},
-            progress_rate = 0,
-            started_at = NULL,
-            completed_at = NULL,
-            status = #{status},
-            updated_at = SYSDATE
-        WHERE course_learning_id = #{courseLearningId}
-    </update>
 
     <insert id="insertChapterLearningStatus">
         INSERT INTO CHAPTER_LEARNING_STATUS (
@@ -318,8 +315,7 @@
         SET status = #{status},
             started_at = NVL(started_at, SYSDATE),
             updated_at = SYSDATE
-        WHERE user_id = #{userId}
-          AND course_id = #{courseId}
+        WHERE course_learning_id = #{courseLearningId}
           AND status = 'NOT_STARTED'
     </update>
 
@@ -328,8 +324,7 @@
         SET status = #{status},
             started_at = NVL(started_at, SYSDATE),
             updated_at = SYSDATE
-        WHERE user_id = #{userId}
-          AND course_id = #{courseId}
+        WHERE course_learning_id = #{courseLearningId}
           AND chapter_id = #{chapterId}
           AND status = 'NOT_STARTED'
     </update>

@@ -120,7 +120,10 @@ public class CourseService {
         }
 
         if (courseDetail.isLearningInProgress()) {
-            Long latestChapterId = courseMapper.findLatestLearningChapterId(userId, courseId);
+            Long courseLearningId = courseMapper.findCourseLearningId(userId, courseId);
+            Long latestChapterId = courseLearningId == null
+                    ? null
+                    : courseMapper.findLatestLearningChapterId(courseLearningId);
             if (latestChapterId != null) {
                 return latestChapterId;
             }
@@ -162,8 +165,12 @@ public class CourseService {
     @Transactional
     public void startOnlineChapterLearning(Long courseId, Long chapterId, Long userId) {
         getOnlineChapterPage(courseId, chapterId, userId);
-        courseMapper.startCourseLearning(userId, courseId, LearningStatus.IN_PROGRESS.name());
-        courseMapper.startChapterLearning(userId, courseId, chapterId, LearningStatus.IN_PROGRESS.name());
+        Long courseLearningId = courseMapper.findCourseLearningId(userId, courseId);
+        if (courseLearningId == null) {
+            throw new BaseException(ErrorResponseCode.FORBIDDEN);
+        }
+        courseMapper.startCourseLearning(courseLearningId, LearningStatus.IN_PROGRESS.name());
+        courseMapper.startChapterLearning(courseLearningId, chapterId, LearningStatus.IN_PROGRESS.name());
     }
     @Transactional
     public CourseApplyResponseDto applyCourse(Long courseId, Long userId) {
@@ -308,24 +315,14 @@ public class CourseService {
     }
 
     private Long initializeCourseLearningStatus(Long applicationId, Long userId, Long courseId) {
-        Long courseLearningId = courseMapper.findCourseLearningId(userId, courseId);
-        if (courseLearningId == null) {
-            courseLearningId = courseMapper.nextCourseLearningStatusId();
-            courseMapper.insertCourseLearningStatus(
-                    courseLearningId,
-                    applicationId,
-                    userId,
-                    courseId,
-                    LearningStatus.NOT_STARTED.name()
-            );
-        } else {
-            courseMapper.resetCourseLearningStatus(
-                    courseLearningId,
-                    applicationId,
-                    LearningStatus.NOT_STARTED.name()
-            );
-        }
-
+        Long courseLearningId = courseMapper.nextCourseLearningStatusId();
+        courseMapper.insertCourseLearningStatus(
+                courseLearningId,
+                applicationId,
+                userId,
+                courseId,
+                LearningStatus.NOT_STARTED.name()
+        );
         return courseLearningId;
     }
 }
