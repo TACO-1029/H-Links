@@ -1,5 +1,6 @@
 package com.hlinks.global.config;
 
+import com.hlinks.global.security.CustomLoginSuccessHandler;
 import com.hlinks.global.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
+    private final CustomLoginSuccessHandler customLoginSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -67,7 +69,7 @@ public class SecurityConfig {
                         .loginProcessingUrl("/login")
                         .usernameParameter("loginId")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/")
+                        .successHandler(customLoginSuccessHandler)
                         .failureUrl("/login?error")
                         .permitAll()
                 )

@@ -22,5 +22,5 @@ public interface InterestMapper {
     void deleteInterestsByUserId(@Param("userId") Long userId);
 
     // 삽입
-    void insertUserInterest(@Param("userId") Long userId, @Param("interestId") Long interestId);
+    void insertUserInterest(@Param("userId") Long userId, @Param("skillId") Long skillId);
 }
