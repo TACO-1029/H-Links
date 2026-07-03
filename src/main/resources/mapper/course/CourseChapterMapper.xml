@@ -47,6 +47,34 @@
         AND USE_YN = 'Y'
     </select>
 
+    <select id="findPendingQuizBuildChapters" resultMap="courseChapterResultMap">
+        SELECT *
+        FROM (
+        SELECT
+        CHAPTER_ID,
+        COURSE_ID,
+        CHAPTER_TITLE,
+        CHAPTER_ORDER,
+        VIDEO_URL,
+        VIDEO_PATH,
+        ORIGINAL_FILE_NAME,
+        FILE_SIZE,
+        DURATION_SECONDS,
+        SUMMARY_TEXT,
+        TRANSCRIPT_TEXT,
+        AI_GENERATED_YN,
+        QUIZ_BUILD_STATUS,
+        USE_YN,
+        CREATED_AT,
+        UPDATED_AT
+        FROM COURSE_CHAPTER
+        WHERE USE_YN = 'Y'
+        AND QUIZ_BUILD_STATUS = 'PENDING'
+        ORDER BY CHAPTER_ID
+        )
+        WHERE ROWNUM &lt;= #{limit}
+    </select>
+
     <update id="updateTranscriptText">
         UPDATE COURSE_CHAPTER
         SET
