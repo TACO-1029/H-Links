@@ -31,16 +31,22 @@
 </div>
 
 <section class="interest-modal-overlay" aria-labelledby="interest-modal-title">
-    <form id="interestSetupForm" class="interest-modal" th:action="@{/interests/setup}" method="post">
+    <form id="interestSetupForm"
+          class="interest-modal"
+          th:action="${formAction != null ? formAction : '/interests/setup'}"
+          method="post">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
         <header class="interest-modal__header">
             <div>
-                <p class="interest-modal__eyebrow">첫 설정</p>
-                <h1 id="interest-modal-title">관심분야를 선택해주세요</h1>
-                <p>
-                    선택한 관심분야는 앞으로 교육 콘텐츠, 커리어 추천, IT 뉴스 추천에 활용됩니다.
-                    최대 5개까지 선택할 수 있어요.
+                <p class="interest-modal__eyebrow"
+                   th:text="${modalEyebrow != null ? modalEyebrow : '첫 설정'}">첫 설정</p>
+                <h1 id="interest-modal-title"
+                    th:text="${modalTitle != null ? modalTitle : '관심분야를 선택해주세요'}">
+                    관심분야를 선택해주세요
+                </h1>
+                <p th:text="${modalDescription != null ? modalDescription : '선택한 관심분야는 앞으로 교육 콘텐츠, 커리어 추천, IT 뉴스 추천에 활용됩니다. 최대 5개까지 선택할 수 있어요.'}">
+                    선택한 관심분야는 앞으로 교육 콘텐츠, 커리어 추천, IT 뉴스 추천에 활용됩니다. 최대 5개까지 선택할 수 있어요.
                 </p>
             </div>
             <span class="interest-modal__limit">최대 5개</span>
@@ -198,8 +204,13 @@
         </div>
 
         <footer class="interest-modal__footer">
-            <p>관심분야는 최소 1개 이상 선택해야 합니다. 나중에 마이페이지에서 수정할 수 있도록 확장할 예정입니다.</p>
-            <button type="submit">관심분야 저장하기</button>
+            <p th:text="${footerText != null ? footerText : '관심분야는 최소 1개 이상 선택해야 합니다. 나중에 마이페이지에서 수정할 수 있도록 확장할 예정입니다.'}">
+                관심분야는 최소 1개 이상 선택해야 합니다. 나중에 마이페이지에서 수정할 수 있도록 확장할 예정입니다.
+            </p>
+            <button type="submit"
+                    th:text="${submitButtonText != null ? submitButtonText : '관심분야 저장하기'}">
+                관심분야 저장하기
+            </button>
         </footer>
     </form>
 
