@@ -23,9 +23,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CourseChapterSummaryService {
 
+    private static final String NEW_SKILL_YN = "Y";
+    private static final String EXISTING_SKILL_YN = "N";
+    private static final String DEFAULT_SKILL_TYPE = "TECH";
+    private static final int MIN_SKILL_NAME_LENGTH = 2;
+    private static final int MAX_SKILL_NAME_LENGTH = 100;
+
     private final CourseChapterMapper courseChapterMapper;
     private final CourseChapterSkillMapper courseChapterSkillMapper;
     private final AiCourseSummaryService aiCourseSummaryService;
+    private final CourseSkillAggregationService courseSkillAggregationService;
 
     @Transactional
     public CourseSummaryGenerateResponse generateAndSaveSummary(Long chapterId) {
@@ -49,6 +56,7 @@ public class CourseChapterSummaryService {
         return aiCourseSummaryService.generateSummary(chapter.getTranscriptText());
     }
 
+    @Transactional
     public void saveSummaryText(Long chapterId, String summaryText) {
         int updatedCount = courseChapterMapper.updateSummaryText(chapterId, summaryText);
 
@@ -60,25 +68,23 @@ public class CourseChapterSummaryService {
         }
     }
 
+    @Transactional
     public void saveChapterSkills(Long chapterId, List<CourseSummarySkill> skills) {
+        CourseChapter chapter = findChapter(chapterId);
+
         courseChapterSkillMapper.deleteByChapterId(chapterId);
 
         if (skills == null || skills.isEmpty()) {
+            courseSkillAggregationService.recalculateCourseSkills(chapter.getCourseId());
             return;
         }
 
         Map<Long, Integer> matchedSkills = new LinkedHashMap<>();
 
         for (CourseSummarySkill skill : skills) {
-            if (skill == null || !StringUtils.hasText(skill.getSkillName())) {
-                continue;
-            }
-
-            String skillName = skill.getSkillName().trim();
-            Long skillId = courseChapterSkillMapper.findSkillIdByName(skillName);
+            Long skillId = resolveSkillId(chapterId, skill);
 
             if (skillId == null) {
-                log.info("AI 강의 요약 skill 미매칭. chapterId={}, skillName={}", chapterId, skillName);
                 continue;
             }
 
@@ -88,6 +94,79 @@ public class CourseChapterSummaryService {
         matchedSkills.forEach((skillId, weight) ->
                 courseChapterSkillMapper.insertChapterSkill(chapterId, skillId, weight)
         );
+
+        courseSkillAggregationService.recalculateCourseSkills(chapter.getCourseId());
+    }
+
+    private Long resolveSkillId(Long chapterId, CourseSummarySkill skill) {
+        if (skill == null) {
+            return null;
+        }
+
+        String skillName = normalizeSkillName(skill.getSkillName());
+
+        if (!isValidSkillName(skillName)) {
+            log.info(
+                    "AI 강의 요약 skill 제외. chapterId={}, skillName={}, sourceSkillName={}",
+                    chapterId,
+                    skill.getSkillName(),
+                    skill.getSourceSkillName()
+            );
+            return null;
+        }
+
+        Long existingSkillId = courseChapterSkillMapper.findSkillIdByName(skillName);
+
+        if (existingSkillId != null) {
+            return existingSkillId;
+        }
+
+        if (!NEW_SKILL_YN.equalsIgnoreCase(normalizeNewSkillYn(skill.getNewSkillYn()))) {
+            log.info(
+                    "AI 강의 요약 skill 미매칭. chapterId={}, skillName={}, sourceSkillName={}, newSkillYn={}",
+                    chapterId,
+                    skillName,
+                    skill.getSourceSkillName(),
+                    skill.getNewSkillYn()
+            );
+            return null;
+        }
+
+        courseChapterSkillMapper.insertSkill(skillName, DEFAULT_SKILL_TYPE);
+        Long newSkillId = courseChapterSkillMapper.findSkillIdByName(skillName);
+
+        if (newSkillId == null) {
+            throw new BaseException(
+                    ErrorResponseCode.INTERNAL_SERVER_ERROR,
+                    "신규 스킬 등록 후 조회에 실패했습니다. skillName=" + skillName
+            );
+        }
+
+        log.info("AI 강의 요약 신규 skill 등록. skillName={}, skillId={}", skillName, newSkillId);
+
+        return newSkillId;
+    }
+
+    private String normalizeSkillName(String skillName) {
+        if (!StringUtils.hasText(skillName)) {
+            return null;
+        }
+
+        return skillName.trim();
+    }
+
+    private boolean isValidSkillName(String skillName) {
+        return StringUtils.hasText(skillName)
+                && skillName.length() >= MIN_SKILL_NAME_LENGTH
+                && skillName.length() <= MAX_SKILL_NAME_LENGTH;
+    }
+
+    private String normalizeNewSkillYn(String newSkillYn) {
+        if (!StringUtils.hasText(newSkillYn)) {
+            return EXISTING_SKILL_YN;
+        }
+
+        return newSkillYn.trim();
     }
 
     private Integer normalizeWeight(Integer weight) {

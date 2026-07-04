@@ -5,12 +5,36 @@
 
 <mapper namespace="com.hlinks.domain.course.mapper.CourseChapterSkillMapper">
 
+    <select id="findActiveSkillNames" resultType="string">
+        SELECT SKILL_NAME
+        FROM SKILL
+        WHERE USE_YN = 'Y'
+        ORDER BY SKILL_NAME
+    </select>
+
     <select id="findSkillIdByName" resultType="long">
         SELECT MIN(SKILL_ID)
         FROM SKILL
         WHERE USE_YN = 'Y'
         AND UPPER(TRIM(SKILL_NAME)) = UPPER(TRIM(#{skillName}))
     </select>
+
+    <insert id="insertSkill">
+        INSERT INTO SKILL (
+        SKILL_ID,
+        SKILL_NAME,
+        PARENT_SKILL_ID,
+        SKILL_TYPE,
+        USE_YN
+        )
+        VALUES (
+        SKILL_SEQ.NEXTVAL,
+        #{skillName, jdbcType=VARCHAR},
+        NULL,
+        #{skillType, jdbcType=VARCHAR},
+        'Y'
+        )
+    </insert>
 
     <delete id="deleteByChapterId">
         DELETE FROM CHAPTER_SKILL

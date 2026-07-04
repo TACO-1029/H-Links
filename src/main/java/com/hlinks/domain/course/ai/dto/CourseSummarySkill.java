@@ -8,5 +8,7 @@ import lombok.Setter;
 public class CourseSummarySkill {
 
     private String skillName;
+    private String sourceSkillName;
+    private String newSkillYn;
     private Integer weight;
 }

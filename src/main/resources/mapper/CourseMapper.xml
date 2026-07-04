@@ -333,6 +333,41 @@
         ORDER BY ps.SKILL_NAME, s.SKILL_NAME
     </select>
 
+    <select id="findChapterSkillsByCourseId"
+            resultType="com.hlinks.domain.course.dto.CourseSkillAggregationRow">
+        SELECT
+        CC.CHAPTER_ID       AS chapterId,
+        CS.SKILL_ID         AS skillId,
+        CS.WEIGHT           AS weight,
+        CC.DURATION_SECONDS AS durationSeconds
+        FROM COURSE_CHAPTER CC
+        JOIN CHAPTER_SKILL CS
+        ON CC.CHAPTER_ID = CS.CHAPTER_ID
+        WHERE CC.COURSE_ID = #{courseId}
+        AND CC.USE_YN = 'Y'
+        ORDER BY CC.CHAPTER_ORDER, CS.SKILL_ID
+    </select>
+
+    <delete id="deleteCourseSkillsByCourseId">
+        DELETE FROM COURSE_SKILL
+        WHERE COURSE_ID = #{courseId}
+    </delete>
+
+    <insert id="insertCourseSkill">
+        INSERT INTO COURSE_SKILL (
+        COURSE_SKILL_ID,
+        COURSE_ID,
+        SKILL_ID,
+        WEIGHT
+        )
+        VALUES (
+        COURSE_SKILL_SEQ.NEXTVAL,
+        #{courseId},
+        #{skillId},
+        #{weight}
+        )
+    </insert>
+
     <select id="findApplicationInfo" resultType="com.hlinks.domain.course.dto.CourseDetailResponseDto">
         SELECT
         CA.APPLICATION_STATUS AS applicationStatus,

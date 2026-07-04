@@ -7,6 +7,7 @@ import com.hlinks.domain.course.ai.AiCourseSummaryException;
 import com.hlinks.domain.course.ai.AiCourseSummaryProperties;
 import com.hlinks.domain.course.ai.CourseSummaryPromptBuilder;
 import com.hlinks.domain.course.ai.dto.CourseSummaryGenerateResponse;
+import com.hlinks.domain.course.mapper.CourseChapterSkillMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -27,13 +28,15 @@ public class AiCourseSummaryService {
     private final CourseSummaryPromptBuilder promptBuilder;
     private final AiCourseSummaryProperties properties;
     private final ObjectMapper objectMapper;
+    private final CourseChapterSkillMapper courseChapterSkillMapper;
 
     public CourseSummaryGenerateResponse generateSummary(String transcriptText) {
         if (!StringUtils.hasText(transcriptText)) {
             throw new AiCourseSummaryException("강의 요약을 위한 transcriptText는 필수입니다.");
         }
 
-        String prompt = promptBuilder.build(transcriptText);
+        List<String> availableSkillNames = courseChapterSkillMapper.findActiveSkillNames();
+        String prompt = promptBuilder.build(transcriptText, availableSkillNames);
         CourseSummaryGenerateResponse response = requestCourseSummaryGeneration(prompt);
 
         if (response == null || !StringUtils.hasText(response.getSummaryText())) {
