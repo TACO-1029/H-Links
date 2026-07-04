@@ -28,4 +28,9 @@ public interface CourseChapterMapper {
             @Param("chapterId") Long chapterId,
             @Param("transcriptText") String transcriptText
     );
+
+    int updateSummaryText(
+            @Param("chapterId") Long chapterId,
+            @Param("summaryText") String summaryText
+    );
 }

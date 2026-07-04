@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.course.mapper.CourseChapterSkillMapper">
+
+    <select id="findSkillIdByName" resultType="long">
+        SELECT MIN(SKILL_ID)
+        FROM SKILL
+        WHERE USE_YN = 'Y'
+        AND UPPER(TRIM(SKILL_NAME)) = UPPER(TRIM(#{skillName}))
+    </select>
+
+    <delete id="deleteByChapterId">
+        DELETE FROM CHAPTER_SKILL
+        WHERE CHAPTER_ID = #{chapterId}
+    </delete>
+
+    <insert id="insertChapterSkill">
+        INSERT INTO CHAPTER_SKILL (
+        CHAPTER_SKILL_ID,
+        CHAPTER_ID,
+        SKILL_ID,
+        WEIGHT
+        )
+        VALUES (
+        CHAPTER_SKILL_SEQ.NEXTVAL,
+        #{chapterId},
+        #{skillId},
+        #{weight}
+        )
+    </insert>
+
+</mapper>
