@@ -13,7 +13,7 @@
 <div th:replace="~{fragments/header :: header}"></div>
 
 <main class="mypage-shell">
-    <section class="mypage-hero" aria-labelledby="mypage-title">
+    <section class="mypage-hero" aria-labelledby="mypage-title" th:replace="~{fragments/mypage :: hero}">
         <div class="mypage-hero__identity">
             <div class="mypage-avatar mypage-avatar--large" aria-hidden="true"
                  th:text="${name != null ? #strings.substring(name, 0, 1) : '도'}">
@@ -40,12 +40,12 @@
             <article class="mypage-summary-card">
                 <span class="mypage-summary-card__label">수강 중</span>
                 <strong class="mypage-summary-card__value"
-                        th:text="${inProgressCount != null ? inProgressCount : 1}">1</strong>
+                        th:text="${inProgressCount != null ? inProgressCount : 0}">0</strong>
             </article>
             <article class="mypage-summary-card">
                 <span class="mypage-summary-card__label">수료 완료</span>
                 <strong class="mypage-summary-card__value mypage-summary-card__value--blue"
-                        th:text="${completedCount != null ? completedCount : 1}">1</strong>
+                        th:text="${completedCount != null ? completedCount : 0}">0</strong>
             </article>
         </div>
     </section>

@@ -8,6 +8,7 @@
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/footer.css}">
     <link rel="stylesheet" th:href="@{/css/course-index.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
@@ -31,29 +32,70 @@
 
 <main class="main-layout">
     <aside class="sidebar">
+        <form id="courseFilterForm" th:action="@{/courses}" method="get">
+            <input type="hidden"
+                   name="categoryType"
+                   th:if="${currentCategory != null and currentCategory != ''}"
+                   th:value="${currentCategory}">
         <div class="filter-section">
             <h3 class="filter-title">교육 운영 유형</h3>
-            <label class="filter-label"><input type="checkbox" checked> 온라인 상시 강좌</label>
-            <label class="filter-label"><input type="checkbox" checked> 오프라인 집합 특강</label>
+            <label class="filter-label">
+                <input type="checkbox"
+                       name="courseTypes"
+                       value="ONLINE"
+                       th:checked="${selectedCourseTypes == null or #lists.isEmpty(selectedCourseTypes) or #lists.contains(selectedCourseTypes, 'ONLINE')}">
+                온라인 상시 강좌
+            </label>
+            <label class="filter-label">
+                <input type="checkbox"
+                       name="courseTypes"
+                       value="OFFLINE"
+                       th:checked="${selectedCourseTypes == null or #lists.isEmpty(selectedCourseTypes) or #lists.contains(selectedCourseTypes, 'OFFLINE')}">
+                오프라인 집합 특강
+            </label>
         </div>
         <div class="filter-section">
             <h3 class="filter-title">핵심 기술 스택 (Tech)</h3>
-            <label class="filter-label"><input type="checkbox"> Java / JDK 17</label>
-            <label class="filter-label"><input type="checkbox"> Spring Boot 3.x</label>
-            <label class="filter-label"><input type="checkbox"> React / Next.js</label>
-            <label class="filter-label"><input type="checkbox"> Oracle DB SQL</label>
+            <div class="skill-filter-list" th:if="${skillGroups != null and !#lists.isEmpty(skillGroups)}">
+                <details class="skill-filter-group" th:each="group : ${skillGroups}">
+                    <summary>
+                        <span th:text="${group.skillName}">백엔드</span>
+                        <span class="skill-filter-count" th:text="${#lists.size(group.skills)}">0</span>
+                    </summary>
+                    <div class="skill-filter-options">
+                        <label class="filter-label skill-filter-option" th:each="skill : ${group.skills}">
+                            <input type="checkbox"
+                                   name="skillIds"
+                                   th:value="${skill.skillId}"
+                                   th:checked="${selectedSkillIds != null and #lists.contains(selectedSkillIds, skill.skillId)}">
+                            <span th:text="${skill.skillName}">Spring Boot</span>
+                        </label>
+                    </div>
+                </details>
+            </div>
+            <p class="filter-empty" th:unless="${skillGroups != null and !#lists.isEmpty(skillGroups)}">
+                등록된 기술 스택이 없습니다.
+            </p>
+            <button type="button"
+                    id="resetSkillFilterButton"
+                    class="filter-reset-btn"
+                    th:if="${skillGroups != null and !#lists.isEmpty(skillGroups)}">
+                <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                초기화
+            </button>
         </div>
+        </form>
     </aside>
 
-    <section class="content-area">
+    <section id="courseResults" class="content-area" th:fragment="courseResults">
         <div class="content-toolbar">
             <div class="total-count">조회된 강의 <span th:text="${courses != null ? courses.size() : 0}">0</span>건</div>
 
             <div class="toolbar-right">
                 <div class="select-custom-wrap">
-                    <select class="select-custom">
-                        <option>최신 등록순</option>
-                        <option>인기 명품순</option>
+                    <select id="courseSortSelect" class="select-custom" name="sort" form="courseFilterForm">
+                        <option value="latest" th:selected="${selectedSort == null or selectedSort == 'latest'}">최신 등록순</option>
+                        <option value="popular" th:selected="${selectedSort == 'popular'}">인기순</option>
                     </select>
                 </div>
 
@@ -116,23 +158,109 @@
 
 <script th:inline="javascript">
     document.addEventListener('DOMContentLoaded', function () {
-        const btnGrid = document.getElementById('btnGrid');
-        const btnList = document.getElementById('btnList');
-        const courseContainer = document.getElementById('courseContainer');
+        const courseFilterForm = document.getElementById('courseFilterForm');
+        let currentView = 'grid';
 
-        btnGrid.addEventListener('click', function () {
-            btnGrid.classList.add('active');
-            btnList.classList.remove('active');
-            courseContainer.classList.remove('view-list');
-            courseContainer.classList.add('view-grid');
-        });
+        function buildFilterParams() {
+            return new URLSearchParams(new FormData(courseFilterForm));
+        }
 
-        btnList.addEventListener('click', function () {
-            btnList.classList.add('active');
-            btnGrid.classList.remove('active');
-            courseContainer.classList.remove('view-grid');
-            courseContainer.classList.add('view-list');
-        });
+        function applyCurrentView() {
+            const btnGrid = document.getElementById('btnGrid');
+            const btnList = document.getElementById('btnList');
+            const courseContainer = document.getElementById('courseContainer');
+
+            if (!btnGrid || !btnList || !courseContainer) {
+                return;
+            }
+
+            btnGrid.classList.toggle('active', currentView === 'grid');
+            btnList.classList.toggle('active', currentView === 'list');
+            courseContainer.classList.toggle('view-grid', currentView === 'grid');
+            courseContainer.classList.toggle('view-list', currentView === 'list');
+        }
+
+        function bindResultControls() {
+            const btnGrid = document.getElementById('btnGrid');
+            const btnList = document.getElementById('btnList');
+            const courseSortSelect = document.getElementById('courseSortSelect');
+
+            if (btnGrid) {
+                btnGrid.addEventListener('click', function () {
+                    currentView = 'grid';
+                    applyCurrentView();
+                });
+            }
+
+            if (btnList) {
+                btnList.addEventListener('click', function () {
+                    currentView = 'list';
+                    applyCurrentView();
+                });
+            }
+
+            if (courseSortSelect) {
+                courseSortSelect.addEventListener('change', reloadCourses);
+            }
+
+            applyCurrentView();
+        }
+
+        async function reloadCourses() {
+            if (!courseFilterForm) {
+                return;
+            }
+
+            const params = buildFilterParams();
+            const queryString = params.toString();
+            const fragmentUrl = `/courses/fragments/list${queryString ? '?' + queryString : ''}`;
+            const pageUrl = `/courses${queryString ? '?' + queryString : ''}`;
+
+            try {
+                const response = await fetch(fragmentUrl, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load course list: ${response.status}`);
+                }
+
+                const html = await response.text();
+                const courseResults = document.getElementById('courseResults');
+                if (!courseResults) {
+                    return;
+                }
+
+                courseResults.outerHTML = html;
+                window.history.replaceState(null, '', pageUrl);
+                bindResultControls();
+            } catch (error) {
+                console.error(error);
+                courseFilterForm.submit();
+            }
+        }
+
+        if (courseFilterForm) {
+            courseFilterForm.querySelectorAll('input[name="skillIds"], input[name="courseTypes"]').forEach((checkbox) => {
+                checkbox.addEventListener('change', function () {
+                    reloadCourses();
+                });
+            });
+
+            const resetSkillFilterButton = document.getElementById('resetSkillFilterButton');
+            if (resetSkillFilterButton) {
+                resetSkillFilterButton.addEventListener('click', function () {
+                    courseFilterForm.querySelectorAll('input[name="skillIds"]').forEach((checkbox) => {
+                        checkbox.checked = false;
+                    });
+                    reloadCourses();
+                });
+            }
+        }
+
+        bindResultControls();
     });
 </script>
 </body>

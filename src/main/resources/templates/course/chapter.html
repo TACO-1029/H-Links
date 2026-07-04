@@ -32,12 +32,12 @@
                 </div>
 
                 <div class="learning-video">
-                    <video th:if="${currentChapter.videoUrl != null and currentChapter.videoUrl != ''}"
-                           th:src="${currentChapter.videoUrl}"
+                    <video th:if="${currentChapter.playableVideoUrl != null and currentChapter.playableVideoUrl != ''}"
+                           th:src="${currentChapter.playableVideoUrl}"
                            controls
                            preload="metadata"></video>
                     <div class="learning-video__placeholder"
-                         th:unless="${currentChapter.videoUrl != null and currentChapter.videoUrl != ''}">
+                         th:unless="${currentChapter.playableVideoUrl != null and currentChapter.playableVideoUrl != ''}">
                         <button class="learning-video__play" type="button" aria-label="재생">
                             <i class="fa-solid fa-play"></i>
                         </button>
@@ -48,11 +48,12 @@
             <article class="learning-guide">
                 <div>
                     <h2>학습 가이드</h2>
-                    <p>진도율이 90% 이상 도달 시 자동으로 해당 챕터 수강 완료(이수) 처리됩니다.</p>
+                    <p>진도율 95% 이상 및 퀴즈 풀이 시 해당 챕터는 수강완료 처리됩니다.</p>
                 </div>
                 <div class="learning-guide__progress">
                     <span>현재 챕터 달성률</span>
-                    <strong>0%</strong>
+                    <strong class="js-current-progress"
+                            th:text="${currentChapter.progressRate != null ? currentChapter.progressRate + '%' : '0%'}">0%</strong>
                 </div>
             </article>
         </section>
@@ -60,7 +61,7 @@
         <aside class="chapter-sidebar">
             <div class="chapter-sidebar__header">
                 <h2>학습 목차</h2>
-                <span>전체 진도 0%</span>
+                <span th:text="'전체 진도 ' + ${course.progressRate != null ? course.progressRate : 0} + '%'">전체 진도 0%</span>
             </div>
 
             <div class="chapter-toc">
@@ -72,10 +73,14 @@
                     <strong th:text="${chapter.chapterOrder} + '강. ' + ${chapter.chapterTitle}">
                         1강. App Router의 핵심 원리
                     </strong>
-                    <span class="chapter-toc__bar" aria-hidden="true"></span>
+                    <span class="chapter-toc__bar"
+                          th:style="|--progress:${chapter.progressRate != null ? chapter.progressRate : 0}%|"
+                          aria-hidden="true"></span>
                     <span class="chapter-toc__meta">
-                        <span>진도 0%</span>
-                        <span th:text="'0:00 / ' + ${chapter.durationSeconds != null ? chapter.durationSeconds / 60 : 1} + ':00'">0:00 / 1:00</span>
+                        <span th:text="'진도 ' + ${chapter.progressRate != null ? chapter.progressRate : 0} + '%'">진도 0%</span>
+                        <span th:text="${chapter.durationSeconds != null and chapter.durationSeconds > 0
+                                ? '0:00 / ' + (chapter.durationSeconds / 60) + ':' + #numbers.formatInteger(chapter.durationSeconds % 60, 2)
+                                : '0:00 / 0:00'}">0:00 / 0:00</span>
                     </span>
                 </a>
             </div>
@@ -92,7 +97,24 @@
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
         const video = document.querySelector('.learning-video video');
         const placeholderPlayButton = document.querySelector('.learning-video__play');
+        const currentProgressText = document.querySelector('.js-current-progress');
         let startRequested = false;
+        let progressTimer = null;
+        let restoredProgress = false;
+        let completed = false;
+
+        function buildHeaders(json) {
+            const headers = {
+                'Accept': 'application/json'
+            };
+            if (json) {
+                headers['Content-Type'] = 'application/json';
+            }
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+            return headers;
+        }
 
         async function startLearning() {
             if (startRequested || !courseId || !chapterId) {
@@ -101,17 +123,10 @@
 
             startRequested = true;
 
-            const headers = {
-                'Accept': 'application/json'
-            };
-            if (csrfHeader && csrfToken) {
-                headers[csrfHeader] = csrfToken;
-            }
-
             try {
                 const response = await fetch(`/courses/${courseId}/chapters/${chapterId}/learning/start`, {
                     method: 'POST',
-                    headers,
+                    headers: buildHeaders(false),
                     credentials: 'same-origin'
                 });
 
@@ -123,13 +138,139 @@
             }
         }
 
+        async function loadProgress() {
+            if (!courseId || !chapterId) {
+                return null;
+            }
+
+            try {
+                const response = await fetch(`/courses/${courseId}/chapters/${chapterId}/learning/progress`, {
+                    method: 'GET',
+                    headers: buildHeaders(false),
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    return null;
+                }
+
+                const body = await response.json();
+                return body?.data || null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        async function restoreLastPosition() {
+            if (!video || restoredProgress) {
+                return;
+            }
+
+            restoredProgress = true;
+
+            const progress = await loadProgress();
+            const lastPlaySeconds = Number(progress?.lastPlaySeconds || 0);
+
+            if (lastPlaySeconds > 0 && Number.isFinite(video.duration) && lastPlaySeconds < video.duration) {
+                video.currentTime = lastPlaySeconds;
+            }
+        }
+
+        function renderCurrentProgress(progress) {
+            if (!currentProgressText || !progress) {
+                return;
+            }
+
+            const progressRate = Number(progress.progressRate || 0);
+            currentProgressText.textContent = `${progressRate}%`;
+        }
+
+        function getProgressPayload(eventType, flush, forceCompleted) {
+            const currentTime = video ? Math.floor(video.currentTime || 0) : 0;
+            const duration = video && Number.isFinite(video.duration) ? Math.floor(video.duration) : 0;
+
+            return {
+                lastPlaySeconds: currentTime,
+                durationSeconds: duration,
+                eventType: eventType || 'PROGRESS',
+                flush: Boolean(flush),
+                completed: Boolean(forceCompleted)
+            };
+        }
+
+        async function saveProgress(eventType, flush, forceCompleted, keepalive) {
+            if (!courseId || !chapterId || !video || !restoredProgress) {
+                return;
+            }
+
+            const payload = getProgressPayload(eventType, flush, forceCompleted);
+
+            try {
+                const response = await fetch(`/courses/${courseId}/chapters/${chapterId}/learning/progress`, {
+                    method: 'PATCH',
+                    headers: buildHeaders(true),
+                    body: JSON.stringify(payload),
+                    credentials: 'same-origin',
+                    keepalive: Boolean(keepalive)
+                });
+
+                if (response.ok && !keepalive) {
+                    renderCurrentProgress(await loadProgress());
+                }
+            } catch (error) {
+                // Progress saving is best-effort during playback and page exit.
+            }
+        }
+
+        function startProgressTimer() {
+            if (progressTimer || completed) {
+                return;
+            }
+
+            progressTimer = window.setInterval(function () {
+                if (video && !video.paused && !video.ended) {
+                    saveProgress('PROGRESS', false, false, false);
+                }
+            }, 15000);
+        }
+
+        function stopProgressTimer() {
+            if (!progressTimer) {
+                return;
+            }
+
+            window.clearInterval(progressTimer);
+            progressTimer = null;
+        }
+
         if (video) {
-            video.addEventListener('play', startLearning);
+            video.addEventListener('loadedmetadata', restoreLastPosition);
+            video.addEventListener('play', function () {
+                startLearning();
+                startProgressTimer();
+            });
+            video.addEventListener('pause', function () {
+                stopProgressTimer();
+                if (!completed && !video.ended) {
+                    saveProgress('PAUSE', true, false, false);
+                }
+            });
+            video.addEventListener('ended', function () {
+                completed = true;
+                stopProgressTimer();
+                saveProgress('COMPLETE', true, true, false);
+            });
         }
 
         if (placeholderPlayButton) {
             placeholderPlayButton.addEventListener('click', startLearning);
         }
+
+        window.addEventListener('pagehide', function () {
+            if (!completed) {
+                saveProgress('EXIT', true, false, true);
+            }
+        });
     });
 </script>
 </body>

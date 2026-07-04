@@ -121,7 +121,6 @@
     </update>
 
     <select id="findAllCourses"
-            parameterType="string"
             resultType="com.hlinks.domain.course.dto.CourseListResponseDto">
         SELECT
         c.course_id AS courseId,
@@ -170,9 +169,38 @@
             <if test="categoryType != null and categoryType != ''">
                 AND c.category_type = #{categoryType}
             </if>
+            <if test="courseTypes != null and courseTypes.size() > 0">
+                AND c.course_type IN
+                <foreach collection="courseTypes" item="courseType" open="(" separator="," close=")">
+                    #{courseType}
+                </foreach>
+            </if>
+            <if test="skillIds != null and skillIds.size() > 0">
+                AND EXISTS (
+                    SELECT 1
+                    FROM COURSE_SKILL cs
+                    WHERE cs.COURSE_ID = c.COURSE_ID
+                      AND cs.SKILL_ID IN
+                      <foreach collection="skillIds" item="skillId" open="(" separator="," close=")">
+                          #{skillId}
+                      </foreach>
+                )
+            </if>
         </where>
 
-        ORDER BY c.course_id DESC
+        <choose>
+            <when test="sort == 'popular'">
+                ORDER BY (
+                    SELECT COUNT(*)
+                    FROM COURSE_APPLICATION ca
+                    WHERE ca.COURSE_ID = c.COURSE_ID
+                      AND ca.APPLICATION_STATUS IN ('APPROVED', 'COMPLETED')
+                ) DESC, c.course_id DESC
+            </when>
+            <otherwise>
+                ORDER BY c.course_id DESC
+            </otherwise>
+        </choose>
     </select>
 
     <select id="findCourseDetailById" resultType="com.hlinks.domain.course.dto.CourseDetailResponseDto">
@@ -197,14 +225,8 @@
         OFF.STATUS              AS offlineStatus,
         OFF.APPLY_START_DATE    AS applyStartDate,
         OFF.APPLY_END_DATE      AS applyEndDate,
-        CASE
-            WHEN C.COURSE_TYPE = 'ONLINE' THEN TRUNC(C.CREATED_AT)
-            ELSE OFF.COURSE_START_DATE
-        END AS courseStartDate,
-        CASE
-            WHEN C.COURSE_TYPE = 'ONLINE' THEN ADD_MONTHS(TRUNC(C.CREATED_AT), 2)
-            ELSE OFF.COURSE_END_DATE
-        END AS courseEndDate
+        OFF.COURSE_START_DATE   AS courseStartDate,
+        OFF.COURSE_END_DATE     AS courseEndDate
         FROM COURSE C
         LEFT JOIN ONLINE_COURSE ONL  ON C.COURSE_ID = ONL.COURSE_ID
         LEFT JOIN OFFLINE_COURSE OFF ON C.COURSE_ID = OFF.COURSE_ID
@@ -224,12 +246,43 @@
         DURATION_SECONDS   AS durationSeconds,
         SUMMARY_TEXT       AS summaryText,
         TRANSCRIPT_TEXT    AS transcriptText,
+        0                  AS progressRate,
+        0                  AS lastPlaySeconds,
+        0                  AS maxPlaySeconds,
+        NULL               AS learningStatus
         AI_GENERATED_YN    AS aiGeneratedYn,
         QUIZ_BUILD_STATUS  AS quizBuildStatus
         FROM COURSE_CHAPTER
         WHERE COURSE_ID = #{courseId}
         AND USE_YN = 'Y'
         ORDER BY CHAPTER_ORDER ASC
+    </select>
+
+    <select id="findChaptersByCourseIdWithLearning"
+            resultType="com.hlinks.domain.course.dto.ChapterResponseDto">
+        SELECT
+        cc.CHAPTER_ID         AS chapterId,
+        cc.COURSE_ID          AS courseId,
+        cc.CHAPTER_TITLE      AS chapterTitle,
+        cc.CHAPTER_ORDER      AS chapterOrder,
+        cc.VIDEO_URL          AS videoUrl,
+        cc.VIDEO_PATH         AS videoPath,
+        cc.ORIGINAL_FILE_NAME AS originalFileName,
+        cc.FILE_SIZE          AS fileSize,
+        cc.DURATION_SECONDS   AS durationSeconds,
+        cc.SUMMARY_TEXT       AS summaryText,
+        cc.TRANSCRIPT_TEXT    AS transcriptText,
+        NVL(cls.PROGRESS_RATE, 0)      AS progressRate,
+        NVL(cls.LAST_PLAY_SECONDS, 0)  AS lastPlaySeconds,
+        NVL(cls.MAX_PLAY_SECONDS, 0)   AS maxPlaySeconds,
+        cls.STATUS                     AS learningStatus
+        FROM COURSE_CHAPTER cc
+        LEFT JOIN CHAPTER_LEARNING_STATUS cls
+          ON cls.CHAPTER_ID = cc.CHAPTER_ID
+         AND cls.COURSE_LEARNING_ID = #{courseLearningId}
+        WHERE cc.COURSE_ID = #{courseId}
+        AND cc.USE_YN = 'Y'
+        ORDER BY cc.CHAPTER_ORDER ASC
     </select>
 
     <select id="findLatestLearningChapterId" resultType="long">
@@ -260,6 +313,22 @@
         AND S.USE_YN = 'Y'
         GROUP BY PS.SKILL_NAME
         ORDER BY COUNT(PS.SKILL_NAME) DESC
+    </select>
+
+    <select id="findSkillFilterOptions"
+            resultType="com.hlinks.domain.course.dto.SkillFilterOptionDto">
+        SELECT
+            ps.SKILL_ID   AS parentSkillId,
+            ps.SKILL_NAME AS parentSkillName,
+            s.SKILL_ID    AS skillId,
+            s.SKILL_NAME  AS skillName
+        FROM SKILL ps
+        JOIN SKILL s
+          ON s.PARENT_SKILL_ID = ps.SKILL_ID
+        WHERE ps.USE_YN = 'Y'
+          AND s.USE_YN = 'Y'
+          AND ps.SKILL_TYPE = 'CATEGORY'
+        ORDER BY ps.SKILL_NAME, s.SKILL_NAME
     </select>
 
     <select id="findApplicationInfo" resultType="com.hlinks.domain.course.dto.CourseDetailResponseDto">
@@ -455,6 +524,121 @@
           AND status = 'NOT_STARTED'
     </update>
 
+    <select id="findLearningProgressTarget"
+            resultType="com.hlinks.domain.course.dto.LearningProgressTargetDto">
+        SELECT
+            cls.course_learning_id     AS courseLearningId,
+            chs.chapter_learning_id    AS chapterLearningId,
+            cls.course_id              AS courseId,
+            cc.chapter_id              AS chapterId,
+            cc.duration_seconds        AS durationSeconds,
+            chs.last_play_seconds      AS lastPlaySeconds,
+            chs.max_play_seconds       AS maxPlaySeconds,
+            chs.progress_rate          AS progressRate,
+            chs.status                 AS status
+        FROM COURSE_LEARNING_STATUS cls
+        JOIN COURSE_APPLICATION ca
+          ON ca.application_id = cls.application_id
+        JOIN COURSE c
+          ON c.course_id = cls.course_id
+        JOIN ONLINE_COURSE oc
+          ON oc.course_id = c.course_id
+        JOIN COURSE_CHAPTER cc
+          ON cc.course_id = c.course_id
+         AND cc.chapter_id = #{chapterId}
+        JOIN CHAPTER_LEARNING_STATUS chs
+          ON chs.course_learning_id = cls.course_learning_id
+         AND chs.chapter_id = cc.chapter_id
+        WHERE cls.user_id = #{userId}
+          AND cls.course_id = #{courseId}
+          AND ca.application_status = 'APPROVED'
+          AND cls.status != 'CANCELED'
+          AND c.course_type = 'ONLINE'
+          AND NVL(oc.status, 'OPEN') = 'OPEN'
+          AND cc.use_yn = 'Y'
+    </select>
+
+    <update id="updateChapterLearningProgress">
+        UPDATE CHAPTER_LEARNING_STATUS
+        SET last_play_seconds = #{lastPlaySeconds},
+            max_play_seconds = GREATEST(max_play_seconds, #{maxPlaySeconds}),
+            progress_rate = GREATEST(progress_rate, #{progressRate}),
+            updated_at = SYSDATE
+        WHERE chapter_learning_id = #{chapterLearningId}
+          AND status != 'COMPLETED'
+    </update>
+
+    <update id="completeChapterLearning">
+        UPDATE CHAPTER_LEARNING_STATUS
+        SET last_play_seconds = #{lastPlaySeconds},
+            max_play_seconds = GREATEST(max_play_seconds, #{maxPlaySeconds}),
+            progress_rate = GREATEST(progress_rate, #{progressRate}),
+            status = #{status},
+            completed_at = NVL(completed_at, SYSDATE),
+            updated_at = SYSDATE
+        WHERE chapter_learning_id = #{chapterLearningId}
+    </update>
+
+    <update id="updateCourseLearningProgress">
+        UPDATE COURSE_LEARNING_STATUS cls
+        SET progress_rate = (
+                SELECT NVL(TRUNC(AVG(NVL(chs.progress_rate, 0))), 0)
+                FROM COURSE_CHAPTER cc
+                LEFT JOIN CHAPTER_LEARNING_STATUS chs
+                  ON chs.chapter_id = cc.chapter_id
+                 AND chs.course_learning_id = #{courseLearningId}
+                WHERE cc.course_id = #{courseId}
+                  AND cc.use_yn = 'Y'
+            ),
+            updated_at = SYSDATE
+        WHERE cls.course_learning_id = #{courseLearningId}
+    </update>
+
+    <update id="completeCourseLearningIfAllChaptersCompleted">
+        UPDATE COURSE_LEARNING_STATUS cls
+        SET status = #{status},
+            progress_rate = 100,
+            completed_at = NVL(completed_at, SYSDATE),
+            updated_at = SYSDATE
+        WHERE cls.course_learning_id = #{courseLearningId}
+          AND NOT EXISTS (
+              SELECT 1
+              FROM COURSE_CHAPTER cc
+              LEFT JOIN CHAPTER_LEARNING_STATUS chs
+                ON chs.chapter_id = cc.chapter_id
+               AND chs.course_learning_id = #{courseLearningId}
+              WHERE cc.course_id = #{courseId}
+                AND cc.use_yn = 'Y'
+                AND NVL(chs.status, 'NOT_STARTED') != 'COMPLETED'
+          )
+    </update>
+
+    <insert id="insertLearningLog">
+        INSERT INTO LEARNING_LOG (
+            log_id,
+            course_learning_id,
+            chapter_learning_id,
+            user_id,
+            course_id,
+            chapter_id,
+            event_type,
+            play_seconds,
+            progress_rate,
+            event_at
+        ) VALUES (
+            LEARNING_LOG_SEQ.NEXTVAL,
+            #{courseLearningId},
+            #{chapterLearningId},
+            #{userId},
+            #{courseId},
+            #{chapterId},
+            #{eventType},
+            #{playSeconds},
+            #{progressRate},
+            SYSDATE
+        )
+    </insert>
+
     <update id="increaseOfflineCurrentApplicantCount">
         UPDATE OFFLINE_COURSE
         SET current_applicant_count = current_applicant_count + 1
@@ -501,5 +685,12 @@
         WHERE course_id = #{courseId}
           AND current_applicant_count &gt; 0
     </update>
+
+    <select id="countCourseLearningByStatus" resultType="int">
+        SELECT COUNT(*)
+        FROM COURSE_LEARNING_STATUS
+        WHERE user_id = #{userId}
+          AND status = #{status}
+    </select>
 
 </mapper>

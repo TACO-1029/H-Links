@@ -4,6 +4,9 @@ import com.hlinks.domain.course.dto.ChapterResponseDto;
 import com.hlinks.domain.course.dto.CourseApplyResponseDto;
 import com.hlinks.domain.course.dto.CourseDetailResponseDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
+import com.hlinks.domain.course.dto.LearningProgressResponseDto;
+import com.hlinks.domain.course.dto.LearningProgressSaveRequest;
+import com.hlinks.domain.course.service.CourseLearningService;
 import com.hlinks.domain.course.service.CourseService;
 import com.hlinks.global.response.SuccessResponse;
 import com.hlinks.global.response.code.SuccessResponseCode;
@@ -17,8 +20,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -32,6 +37,7 @@ import java.util.List;
 public class CourseController {
 
     private final CourseService courseService;
+    private final CourseLearningService courseLearningService;
 
     /**
      * 교육 콘텐츠 탭 - 전체 강의 목록 조회 화면
@@ -40,15 +46,27 @@ public class CourseController {
     @GetMapping
     public String index(
             @RequestParam(required = false) String categoryType,
+            @RequestParam(required = false) List<String> courseTypes,
+            @RequestParam(required = false) List<Long> skillIds,
+            @RequestParam(defaultValue = "latest") String sort,
             Model model) {
 
         log.info("강의 목록 화면 진입 - 요청 카테고리: {}", categoryType);
 
         // 1. Service를 통해 화면에 뿌려줄 강의 데이터 리스트 조회
-        List<CourseListResponseDto> courses = courseService.getCourseList(categoryType);
+        List<CourseListResponseDto> courses = courseService.getCourseList(
+                categoryType,
+                courseTypes != null ? courseTypes : List.of(),
+                skillIds != null ? skillIds : List.of(),
+                sort
+        );
 
         // 2. Thymeleaf 템플릿(HTML)에서 접근할 수 있도록 Model에 데이터 담기
         model.addAttribute("courses", courses);
+        model.addAttribute("skillGroups", courseService.getSkillFilterGroups());
+        model.addAttribute("selectedCourseTypes", courseTypes != null ? courseTypes : List.of());
+        model.addAttribute("selectedSkillIds", skillIds != null ? skillIds : List.of());
+        model.addAttribute("selectedSort", "popular".equals(sort) ? "popular" : "latest");
 
         // 3. UI 처리용 부가 정보 세팅
         // 3-1. 현재 활성화된 GNB(상단 메뉴) 표시를 위한 설정 (제공해주신 예시 참고)
@@ -59,6 +77,27 @@ public class CourseController {
 
         // 4. src/main/resources/templates/course/index.html 파일로 렌더링 포워딩
         return "course/index";
+    }
+
+    @GetMapping("/fragments/list")
+    public String courseListFragment(
+            @RequestParam(required = false) String categoryType,
+            @RequestParam(required = false) List<String> courseTypes,
+            @RequestParam(required = false) List<Long> skillIds,
+            @RequestParam(defaultValue = "latest") String sort,
+            Model model) {
+
+        List<CourseListResponseDto> courses = courseService.getCourseList(
+                categoryType,
+                courseTypes != null ? courseTypes : List.of(),
+                skillIds != null ? skillIds : List.of(),
+                sort
+        );
+
+        model.addAttribute("courses", courses);
+        model.addAttribute("selectedSort", "popular".equals(sort) ? "popular" : "latest");
+
+        return "course/index :: courseResults";
     }
 
     // ========================================================
@@ -117,7 +156,7 @@ public class CourseController {
             @PathVariable("chapterId") Long chapterId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        courseService.startOnlineChapterLearning(courseId, chapterId, userDetails.getUserId());
+        courseLearningService.startOnlineChapterLearning(courseId, chapterId, userDetails.getUserId());
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(SuccessResponse.empty());
@@ -125,6 +164,36 @@ public class CourseController {
 
 
     // 강의 신청
+    @GetMapping("/{courseId}/chapters/{chapterId}/learning/progress")
+    @ResponseBody
+    public ResponseEntity<SuccessResponse<LearningProgressResponseDto>> getChapterProgress(
+            @PathVariable("courseId") Long courseId,
+            @PathVariable("chapterId") Long chapterId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        LearningProgressResponseDto result =
+                courseLearningService.getChapterProgress(courseId, chapterId, userDetails.getUserId());
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.from(result));
+    }
+
+    @PatchMapping("/{courseId}/chapters/{chapterId}/learning/progress")
+    @ResponseBody
+    public ResponseEntity<SuccessResponse<Void>> saveChapterProgress(
+            @PathVariable("courseId") Long courseId,
+            @PathVariable("chapterId") Long chapterId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody LearningProgressSaveRequest request) {
+
+        courseLearningService.saveChapterProgress(courseId, chapterId, userDetails.getUserId(), request);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(SuccessResponse.empty());
+    }
+
     @PostMapping("/{courseId}/applications")
     @ResponseBody
     public ResponseEntity<SuccessResponse<CourseApplyResponseDto>> applyCourse(
