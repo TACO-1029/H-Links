@@ -14,7 +14,7 @@
 
 <main class="career-dashboard-container">
     <header class="dashboard-header">
-        <h1 th:text="${userName + ' 대리님의 커리어패스 대시보드'}">김민지 대리님의 커리어패스 대시보드</h1>
+        <h1 th:text="${userName + ' 님의 커리어패스 대시보드'}">김철용 님의 커리어패스 대시보드</h1>
         <p>AI가 분석한 역량 진단 및 맞춤 추천 코스를 확인해 보세요.</p>
     </header>
 
@@ -23,7 +23,7 @@
         <section class="dashboard-card status-card">
             <h2>📝 커리어패스 진단 진행상황</h2>
             <div class="card-body" th:switch="${status}">
-                
+
                 <!-- 1. 목표 기술 선택중 -->
                 <div th:case="'WELCOME'">
                     <p class="status-text">학습 목표 스킬 설정을 완료하지 않았습니다. 이어서 학습 목표를 설정해 보세요.</p>
@@ -77,6 +77,11 @@
                         <a th:href="@{/courses/career-path/start}" class="btn-primary">다시 설정하기</a>
                     </div>
                 </div>
+
+                <div th:case="*">
+                    <p class="status-text">진단 상태를 확인할 수 없습니다.</p>
+                </div>
+
             </div>
         </section>
 
