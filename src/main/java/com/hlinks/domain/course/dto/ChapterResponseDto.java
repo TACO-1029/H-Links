@@ -52,6 +52,8 @@ public class ChapterResponseDto {
 
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
+    }
+
     private String aiGeneratedYn;
     private QuizBuildStatus quizBuildStatus;
 
