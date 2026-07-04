@@ -359,7 +359,7 @@
     background: var(--color-brand);
     border-color: var(--color-brand);
     color: white;
-    font-weight: var(--font-bold);
+    text-shadow: 0.6px 0 0 currentColor, -0.6px 0 0 currentColor;
 }
 
 .skills-empty-alert {

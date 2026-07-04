@@ -50,55 +50,8 @@
         <section class="survey-section">
             <h2 class="section-title"><span>Q1.</span> 어떤 IT 핵심 기술 분야를 심도 있게 학습하고 싶으신가요?</h2>
             
-            <div class="category-grid">
-                <!-- 인프라 -->
-                <div class="category-card" data-category="infra">
-                    <div class="category-card-header">
-                        <h3>인프라</h3>
-                        <span class="check-icon">✓</span>
-                    </div>
-                    <p>서버, 클라우드, 컨테이너 가상화, 무중단 배포/운영 기술</p>
-                </div>
-                <!-- 정보보안 -->
-                <div class="category-card" data-category="security">
-                    <div class="category-card-header">
-                        <h3>정보보안</h3>
-                        <span class="check-icon">✓</span>
-                    </div>
-                    <p>웹 모의해킹, OWASP 10 취약점 분석, 접근 제어 및 암호화</p>
-                </div>
-                <!-- AI LAB -->
-                <div class="category-card" data-category="ai">
-                    <div class="category-card-header">
-                        <h3>AI LAB</h3>
-                        <span class="check-icon">✓</span>
-                    </div>
-                    <p>LLM 미세조정, RAG 지식베이스, 벡터 DB 가동 핵심 기술</p>
-                </div>
-                <!-- AX -->
-                <div class="category-card" data-category="ax">
-                    <div class="category-card-header">
-                        <h3>AX</h3>
-                        <span class="check-icon">✓</span>
-                    </div>
-                    <p>RPA 자동화 구축, ChatGPT API 연계, 에이전트 시스템화</p>
-                </div>
-                <!-- 프론트엔드 -->
-                <div class="category-card" data-category="frontend">
-                    <div class="category-card-header">
-                        <h3>프론트엔드</h3>
-                        <span class="check-icon">✓</span>
-                    </div>
-                    <p>Next.js 프레임워크, 사용자 경험 최적화, 상태관리</p>
-                </div>
-                <!-- 백엔드 -->
-                <div class="category-card" data-category="backend">
-                    <div class="category-card-header">
-                        <h3>백엔드</h3>
-                        <span class="check-icon">✓</span>
-                    </div>
-                    <p>Spring Boot, Node.js 서버 아키텍처, 효율적 대용량 DB 설계</p>
-                </div>
+            <div class="category-grid" id="category-container">
+                <!-- 동적으로 DB 카테고리 스킬들이 채워집니다 -->
             </div>
             <!-- 선택 필드 추적용 히든 인풋 -->
             <input type="hidden" name="selectedCategory" id="selectedCategory" value="">
@@ -107,7 +60,7 @@
         <!-- Q2. 세부 기술 선택 (Q1 선택시 노출) -->
         <section class="survey-section" id="section-q2" style="display: none;">
             <h2 class="section-title"><span>Q2.</span> <span id="category-name-display">인프라</span> 분야에서 집중 학습할 세부 기술들을 모두 선택해 주세요.</h2>
-            <p class="section-subtitle">선택한 실제 기술 키워드를 분석하여 AI 시험지 문항과 커리어 추천 강의가 자동 생성 및 매칭됩니다.</p>
+            <p class="section-subtitle">선택한 실제 기술 키워드를 분석하여 AI 시험지 문항 and 커리어 추천 강의가 자동 생성 및 매칭됩니다.</p>
             
             <div class="skills-chip-group" id="skills-container">
                 <!-- 자바스크립트로 칩들이 생성됩니다 -->
@@ -118,7 +71,7 @@
         </section>
 
         <!-- Q3. 난이도 선택 -->
-        <section class="survey-section">
+        <section class="survey-section" id="section-q3" style="display: none;">
             <h2 class="section-title"><span>Q3.</span> 희망하시는 학습 및 레벨 테스트 난이도를 지정해 주세요.</h2>
             
             <div class="difficulty-grid">
@@ -166,89 +119,66 @@
 </script>
 
 <script>
-    // 카테고리별 스킬 매핑 (DB 데이터가 매칭되지 않을 경우를 위한 예비/폴백 가상 데이터 세트 포함)
-    const categoryMapping = {
-        infra: {
-            name: "인프라",
-            keywords: ['infra', '인프라', '클라우드', 'cloud', 'aws', 'docker', 'kubernetes', 'devops', 'linux', 'nginx', 'terraform', 'ansible', 'ci/cd', 'cicd', 'monitoring', 'network', '네트워크', '서버'],
-            fallback: [
-                { skillId: 101, skillName: 'Linux' },
-                { skillId: 102, skillName: 'Docker' },
-                { skillId: 103, skillName: 'Kubernetes' },
-                { skillId: 104, skillName: 'AWS' },
-                { skillId: 105, skillName: 'Nginx' },
-                { skillId: 106, skillName: 'CI/CD' },
-                { skillId: 107, skillName: 'Monitoring' },
-                { skillId: 108, skillName: 'Terraform' },
-                { skillId: 109, skillName: 'Ansible' }
-            ]
-        },
-        security: {
-            name: "정보보안",
-            keywords: ['보안', 'security', 'hack', 'owasp', '취약점', '암호화', '접근 제어', 'pentest'],
-            fallback: [
-                { skillId: 201, skillName: '웹 모의해킹' },
-                { skillId: 202, skillName: 'OWASP Top 10' },
-                { skillId: 203, skillName: '접근제어' },
-                { skillId: 204, skillName: '암호화 알고리즘' },
-                { skillId: 205, skillName: '취약점 분석' },
-                { skillId: 206, skillName: 'Network Security' }
-            ]
-        },
-        ai: {
-            name: "AI LAB",
-            keywords: ['ai', 'AI', 'llm', 'rag', 'vector', 'machine', 'deep', 'learning', 'python', '모델', '데이터', 'pytorch', 'tensorflow'],
-            fallback: [
-                { skillId: 301, skillName: 'LLM Fine-tuning' },
-                { skillId: 302, skillName: 'RAG Architecture' },
-                { skillId: 303, skillName: 'Vector DB' },
-                { skillId: 304, skillName: 'Python' },
-                { skillId: 305, skillName: 'Deep Learning' },
-                { skillId: 306, skillName: 'Machine Learning' }
-            ]
-        },
-        ax: {
-            name: "AX",
-            keywords: ['ax', 'rpa', '자동화', 'chatgpt', 'agent', '에이전트', 'prompt', '프롬프트'],
-            fallback: [
-                { skillId: 401, skillName: 'RPA 구축' },
-                { skillId: 402, skillName: 'ChatGPT API 연계' },
-                { skillId: 403, skillName: 'AI Agent' },
-                { skillId: 404, skillName: '업무 자동화' },
-                { skillId: 405, skillName: '프롬프트 엔지니어링' }
-            ]
-        },
-        frontend: {
-            name: "프론트엔드",
-            keywords: ['frontend', '프론트', 'react', 'vue', 'javascript', 'typescript', 'next', 'html', 'css'],
-            fallback: [
-                { skillId: 501, skillName: 'React' },
-                { skillId: 502, skillName: 'Vue.js' },
-                { skillId: 503, skillName: 'Next.js' },
-                { skillId: 504, skillName: 'TypeScript' },
-                { skillId: 505, skillName: 'JavaScript' },
-                { skillId: 506, skillName: 'HTML5/CSS3' },
-                { skillId: 507, skillName: 'Redux/Recoil' }
-            ]
-        },
-        backend: {
-            name: "백엔드",
-            keywords: ['backend', '백엔드', 'spring', 'java', 'node', 'api', 'database', 'sql', 'db', 'jpa', 'mybatis'],
-            fallback: [
-                { skillId: 601, skillName: 'Spring Boot' },
-                { skillId: 602, skillName: 'Java' },
-                { skillId: 603, skillName: 'Node.js' },
-                { skillId: 604, skillName: 'REST API' },
-                { skillId: 605, skillName: 'Oracle DB' },
-                { skillId: 606, skillName: 'MySQL / PostgreSQL' },
-                { skillId: 607, skillName: 'JPA / Hibernate' },
-                { skillId: 608, skillName: 'MyBatis' }
-            ]
-        }
+    // 카테고리 설명 매핑 도우미 함수
+    function getCategoryDescription(name) {
+        if (name.includes('인프라')) return '서버, 클라우드, 컨테이너 가상화, 무중단 배포/운영 기술';
+        if (name.includes('보안')) return '웹 모의해킹, OWASP 10 취약점 분석, 접근 제어 및 암호화';
+        if (name.includes('AI')) return 'LLM 미세조정, RAG 지식베이스, 벡터 DB 가동 핵심 기술';
+        if (name.includes('AX')) return 'RPA 자동화 구축, ChatGPT API 연계, 에이전트 시스템화';
+        if (name.includes('프론트')) return 'Next.js 프레임워크, 사용자 경험 최적화, 상태관리';
+        if (name.includes('백엔드')) return 'Spring Boot, Node.js 서버 아키텍처, 효율적 대용량 DB 설계';
+        return '해당 기술 분야를 심도 있게 학습할 수 있는 커리큘럼을 제공합니다.';
+    }
+
+    // 가상 폴백 데이터 (DB 데이터가 비어 있을 경우를 대비)
+    const fallbackCategories = [
+        { skillId: 1000, skillName: '인프라', skillType: 'CATEGORY' },
+        { skillId: 2000, skillName: '정보보안', skillType: 'CATEGORY' },
+        { skillId: 3000, skillName: 'AI LAB', skillType: 'CATEGORY' },
+        { skillId: 4000, skillName: 'AX', skillType: 'CATEGORY' },
+        { skillId: 5000, skillName: '프론트엔드', skillType: 'CATEGORY' },
+        { skillId: 6000, skillName: '백엔드', skillType: 'CATEGORY' }
+    ];
+
+    const fallbackSubSkills = {
+        1000: [
+            { skillId: 101, skillName: 'Linux' }, { skillId: 102, skillName: 'Docker' },
+            { skillId: 103, skillName: 'Kubernetes' }, { skillId: 104, skillName: 'AWS' },
+            { skillId: 105, skillName: 'Nginx' }, { skillId: 106, skillName: 'CI/CD' },
+            { skillId: 107, skillName: 'Monitoring' }, { skillId: 108, skillName: 'Terraform' },
+            { skillId: 109, skillName: 'Ansible' }
+        ],
+        2000: [
+            { skillId: 201, skillName: '웹 모의해킹' }, { skillId: 202, skillName: 'OWASP Top 10' },
+            { skillId: 203, skillName: '접근제어' }, { skillId: 204, skillName: '암호화 알고리즘' },
+            { skillId: 205, skillName: '취약점 분석' }, { skillId: 206, skillName: 'Network Security' }
+        ],
+        3000: [
+            { skillId: 301, skillName: 'LLM Fine-tuning' }, { skillId: 302, skillName: 'RAG Architecture' },
+            { skillId: 303, skillName: 'Vector DB' }, { skillId: 304, skillName: 'Python' },
+            { skillId: 305, skillName: 'Deep Learning' }, { skillId: 306, skillName: 'Machine Learning' }
+        ],
+        4000: [
+            { skillId: 401, skillName: 'RPA 구축' }, { skillId: 402, skillName: 'ChatGPT API 연계' },
+            { skillId: 403, skillName: 'AI Agent' }, { skillId: 404, skillName: '업무 자동화' },
+            { skillId: 405, skillName: '프롬프트 엔지니어링' }
+        ],
+        5000: [
+            { skillId: 501, skillName: 'React' }, { skillId: 502, skillName: 'Vue.js' },
+            { skillId: 503, skillName: 'Next.js' }, { skillId: 504, skillName: 'TypeScript' },
+            { skillId: 505, skillName: 'JavaScript' }, { skillId: 506, skillName: 'HTML5/CSS3' },
+            { skillId: 507, skillName: 'Redux/Recoil' }
+        ],
+        6000: [
+            { skillId: 601, skillName: 'Spring Boot' }, { skillId: 602, skillName: 'Java' },
+            { skillId: 603, skillName: 'Node.js' }, { skillId: 604, skillName: 'REST API' },
+            { skillId: 605, skillName: 'Oracle DB' }, { skillId: 606, skillName: 'MySQL / PostgreSQL' },
+            { skillId: 607, skillName: 'JPA / Hibernate' }, { skillId: 608, skillName: 'MyBatis' }
+        ]
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-        const categoryCards = document.querySelectorAll('.category-card');
+        const categoryContainer = document.getElementById('category-container');
         const q2Section = document.getElementById('section-q2');
         const displayCategoryName = document.getElementById('category-name-display');
         const skillsContainer = document.getElementById('skills-container');
@@ -258,47 +188,83 @@
         const selectedDifficultyInput = document.getElementById('selectedDifficulty');
         const surveyForm = document.getElementById('careerSurveyForm');
         const jsErrorAlert = document.getElementById('js-error-alert');
+        const q3Section = document.getElementById('section-q3');
 
-        // Q1 카테고리 카드 클릭 핸들러
-        categoryCards.forEach(card => {
+        // 1. Q1 카테고리 스킬 분류 동적 생성
+        let categories = dbSkills.filter(skill => skill.skillType === 'CATEGORY' || !skill.parentSkillId);
+        if (categories.length === 0) {
+            categories = fallbackCategories;
+        }
+
+        categoryContainer.innerHTML = '';
+        categories.forEach(cat => {
+            const card = document.createElement('div');
+            card.className = 'category-card';
+            card.setAttribute('data-category-id', cat.skillId);
+            card.setAttribute('data-category-name', cat.skillName);
+
+            card.innerHTML = `
+                <div class="category-card-header">
+                    <h3>${cat.skillName}</h3>
+                    <span class="check-icon">✓</span>
+                </div>
+                <p>${getCategoryDescription(cat.skillName)}</p>
+            `;
+
+            // 클릭 이벤트
             card.addEventListener('click', () => {
-                // 기존 활성화 제거
+                const categoryCards = document.querySelectorAll('.category-card');
                 categoryCards.forEach(c => c.classList.remove('active'));
-                
-                // 현재 카드 활성화
                 card.classList.add('active');
-                
-                const categoryKey = card.getAttribute('data-category');
-                selectedCategoryInput.value = categoryKey;
-                localStorage.setItem('career_selectedCategory', categoryKey);
-                
-                const categoryInfo = categoryMapping[categoryKey];
-                displayCategoryName.textContent = categoryInfo.name;
-                
-                // 세부 기술 스택 렌더링
-                renderSubSkills(categoryKey);
-                
-                // Q2 섹션 보이기
+
+                selectedCategoryInput.value = cat.skillId;
+                localStorage.setItem('career_selectedCategory', cat.skillId);
+                displayCategoryName.textContent = cat.skillName;
+
+                // 새로운 분야를 누르면 Q2 스킬들을 다시 선택해야 하므로 Q3를 숨기고 에러를 가립니다.
+                q3Section.style.display = 'none';
+                jsErrorAlert.style.display = 'none';
+
+                renderSubSkills(cat.skillId, cat.skillName);
+
                 q2Section.style.display = 'block';
                 q2Section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             });
+
+            categoryContainer.appendChild(card);
         });
 
-        // Q2 세부 기술 칩 렌더링 함수
-        function renderSubSkills(categoryKey, preselectedSkillIds = []) {
-            skillsContainer.innerHTML = '';
-            const categoryInfo = categoryMapping[categoryKey];
-            
-            // DB에서 가져온 스킬 중 키워드 매칭되는 항목 선별
-            let filteredSkills = dbSkills.filter(skill => {
-                const nameLower = (skill.skillName || '').toLowerCase();
-                const typeLower = (skill.skillType || '').toLowerCase();
-                return categoryInfo.keywords.some(kw => nameLower.includes(kw) || typeLower.includes(kw));
-            });
+        // Q3 노출 조건 연산 및 에러 제거 헬퍼
+        function checkQ3Visibility() {
+            const checkedCount = document.querySelectorAll('input[name="skillIds"]:checked').length;
+            if (checkedCount > 0) {
+                q3Section.style.display = 'block';
+                // Q2 스킬 미선택 에러가 켜져 있으면 가림
+                if (jsErrorAlert.style.display === 'block' && jsErrorAlert.textContent.includes('Q2.')) {
+                    jsErrorAlert.style.display = 'none';
+                }
+            } else {
+                q3Section.style.display = 'none';
+            }
+        }
 
-            // 매치되는 DB 스킬이 없을 시 폴백 데이터 사용
+        // 2. Q2 세부 기술 스택 렌더링
+        function renderSubSkills(categoryId, categoryName, preselectedSkillIds = []) {
+            skillsContainer.innerHTML = '';
+            
+            // parentSkillId가 카테고리의 skillId와 매칭되는 스킬들 조회
+            let filteredSkills = dbSkills.filter(skill => Number(skill.parentSkillId) === Number(categoryId));
+
+            // 매칭되는 스킬이 없을 시 폴백 데이터 사용
             if (filteredSkills.length === 0) {
-                filteredSkills = categoryInfo.fallback;
+                // 이름을 기준으로 폴백 매핑
+                let fallbackKey = 1000;
+                if (categoryName.includes('보안')) fallbackKey = 2000;
+                else if (categoryName.includes('AI')) fallbackKey = 3000;
+                else if (categoryName.includes('AX')) fallbackKey = 4000;
+                else if (categoryName.includes('프론트')) fallbackKey = 5000;
+                else if (categoryName.includes('백엔드')) fallbackKey = 6000;
+                filteredSkills = fallbackSubSkills[fallbackKey] || [];
             }
 
             filteredSkills.forEach(skill => {
@@ -311,7 +277,6 @@
                 checkbox.value = skill.skillId;
                 checkbox.style.display = 'none';
 
-                // preselect가 있으면 체크 처리
                 if (preselectedSkillIds.includes(String(skill.skillId)) || preselectedSkillIds.includes(Number(skill.skillId))) {
                     checkbox.checked = true;
                     label.classList.add('active');
@@ -320,16 +285,15 @@
                 const span = document.createElement('span');
                 span.textContent = skill.skillName;
 
-                // 클릭 이벤트 바인딩
-                label.addEventListener('click', (e) => {
+                label.addEventListener('click', () => {
                     setTimeout(() => {
                         if (checkbox.checked) {
                             label.classList.add('active');
                         } else {
                             label.classList.remove('active');
                         }
-                        // 변경 시점마다 localStorage 저장
                         saveSelectedSkills();
+                        checkQ3Visibility();
                     }, 10);
                 });
 
@@ -337,6 +301,9 @@
                 label.appendChild(span);
                 skillsContainer.appendChild(label);
             });
+
+            // 초기 로딩 복원 시 Q3 노출 여부 판단
+            checkQ3Visibility();
         }
 
         function saveSelectedSkills() {
@@ -357,7 +324,7 @@
             });
         });
 
-        // localStorage로부터 저장된 선택 복원
+        // localStorage 복원
         function restoreSavedState() {
             const savedCategory = localStorage.getItem('career_selectedCategory');
             const savedSkillsJSON = localStorage.getItem('career_skillIds');
@@ -372,17 +339,15 @@
             }
 
             if (savedCategory) {
-                const targetCard = document.querySelector(`.category-card[data-category="${savedCategory}"]`);
+                const targetCard = document.querySelector(`.category-card[data-category-id="${savedCategory}"]`);
                 if (targetCard) {
-                    // Q1 클릭
+                    const catName = targetCard.getAttribute('data-category-name');
+                    const categoryCards = document.querySelectorAll('.category-card');
                     categoryCards.forEach(c => c.classList.remove('active'));
                     targetCard.classList.add('active');
                     selectedCategoryInput.value = savedCategory;
+                    displayCategoryName.textContent = catName;
                     
-                    const categoryInfo = categoryMapping[savedCategory];
-                    displayCategoryName.textContent = categoryInfo.name;
-                    
-                    // Q2 스킬 세부 칩 복원 렌더링
                     let preselectedSkillIds = [];
                     if (savedSkillsJSON) {
                         try {
@@ -391,13 +356,12 @@
                             console.error(e);
                         }
                     }
-                    renderSubSkills(savedCategory, preselectedSkillIds);
+                    renderSubSkills(savedCategory, catName, preselectedSkillIds);
                     q2Section.style.display = 'block';
                 }
             }
         }
 
-        // 복원 시작
         restoreSavedState();
 
         // 폼 제출 검증
@@ -417,7 +381,6 @@
             }
             jsErrorAlert.style.display = 'none';
 
-            // 제출 완료 시 localStorage 초기화
             localStorage.removeItem('career_selectedCategory');
             localStorage.removeItem('career_skillIds');
             localStorage.removeItem('career_difficulty');
