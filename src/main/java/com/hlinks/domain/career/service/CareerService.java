@@ -1,6 +1,7 @@
 package com.hlinks.domain.career.service;
 
 import com.hlinks.domain.career.entity.CareerDiagnosis;
+import com.hlinks.domain.career.dto.CareerSkillDto;
 import java.util.List;
 
 public interface CareerService {
@@ -31,4 +32,7 @@ public interface CareerService {
 
     // 생성된 강좌 추천 수 조회
     int getRecommendationCount(Long diagnosisId);
+
+    // 전체 활성 스킬 목록 조회
+    List<CareerSkillDto> getAllActiveSkills();
 }

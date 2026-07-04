@@ -1,8 +1,10 @@
 package com.hlinks.domain.career.mapper;
 
 import com.hlinks.domain.career.entity.CareerDiagnosis;
+import com.hlinks.domain.career.dto.CareerSkillDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import java.util.List;
 
 @Mapper
 public interface CareerMapper {
@@ -33,4 +35,7 @@ public interface CareerMapper {
 
     // 진단에 등록된 목표 스킬 수 조회
     int countTargetSkillsByDiagnosisId(@Param("diagnosisId") Long diagnosisId);
+
+    // 전체 활성 스킬 및 카테고리 정보 조회
+    List<CareerSkillDto> findAllActiveSkills();
 }

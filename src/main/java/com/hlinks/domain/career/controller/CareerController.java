@@ -52,7 +52,7 @@ public class CareerController {
     ) {
         model.addAttribute("activeMenu", "courses");
         model.addAttribute("activeSubMenu", "careerPath");
-        model.addAttribute("skills", interestService.getAllInterests());
+        model.addAttribute("skills", careerService.getAllActiveSkills());
         model.addAttribute("diagnosisId", diagnosisId);
         return "career/survey";
     }
@@ -68,7 +68,7 @@ public class CareerController {
         if (skillIds == null || skillIds.isEmpty()) {
             model.addAttribute("activeMenu", "courses");
             model.addAttribute("activeSubMenu", "careerPath");
-            model.addAttribute("skills", interestService.getAllInterests());
+            model.addAttribute("skills", careerService.getAllActiveSkills());
             model.addAttribute("diagnosisId", diagnosisId);
             model.addAttribute("errorMessage", "목표 스킬을 최소 1개 이상 선택해 주세요.");
             return "career/survey";

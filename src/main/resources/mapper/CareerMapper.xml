@@ -83,4 +83,15 @@
         WHERE DIAGNOSIS_ID = #{diagnosisId}
     </select>
 
+    <select id="findAllActiveSkills" resultType="com.hlinks.domain.career.dto.CareerSkillDto">
+        SELECT
+            SKILL_ID AS skillId,
+            SKILL_NAME AS skillName,
+            PARENT_SKILL_ID AS parentSkillId,
+            SKILL_TYPE AS skillType
+        FROM SKILL
+        WHERE USE_YN = 'Y'
+        ORDER BY SKILL_TYPE, SKILL_NAME
+    </select>
+
 </mapper>

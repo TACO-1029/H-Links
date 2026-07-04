@@ -3,6 +3,7 @@ package com.hlinks.domain.career.service;
 import com.hlinks.domain.career.exception.CareerErrorCode;
 import com.hlinks.domain.career.mapper.CareerMapper;
 import com.hlinks.domain.career.entity.CareerDiagnosis;
+import com.hlinks.domain.career.dto.CareerSkillDto;
 import com.hlinks.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -82,5 +83,10 @@ public class CareerServiceImpl implements CareerService {
     @Override
     public int getRecommendationCount(Long diagnosisId) {
         return careerMapper.countRecommendationsByDiagnosisId(diagnosisId);
+    }
+
+    @Override
+    public List<CareerSkillDto> getAllActiveSkills() {
+        return careerMapper.findAllActiveSkills();
     }
 }
