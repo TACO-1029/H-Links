@@ -1,8 +1,8 @@
-package com.hlinks.domain.quiz.scheduler;
+package com.hlinks.domain.course.scheduler;
 
 import com.hlinks.domain.course.entity.CourseChapter;
 import com.hlinks.domain.course.mapper.CourseChapterMapper;
-import com.hlinks.domain.quiz.service.QuizBuildService;
+import com.hlinks.domain.course.service.CourseChapterAiBuildService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,26 +13,28 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class QuizBuildScheduler {
+public class CourseChapterAiBuildScheduler {
 
     private static final int POLLING_LIMIT = 3;
+
     private final CourseChapterMapper courseChapterMapper;
-    private final QuizBuildService quizBuildService;
+    private final CourseChapterAiBuildService courseChapterAiBuildService;
 
     @Scheduled(fixedDelay = 60_000)
-    public void processPendingQuizBuilds() {
+    public void processPendingCourseChapterAiBuilds() {
         List<CourseChapter> pendingChapters = courseChapterMapper.findPendingQuizBuildChapters(POLLING_LIMIT);
 
         if (pendingChapters.isEmpty()) {
             return;
         }
-        log.info("퀴즈 생성 대기 챕터 조회: {} 건", pendingChapters.size());
+
+        log.info("AI 처리 대기 챕터 조회: {} 건", pendingChapters.size());
 
         for (CourseChapter chapter : pendingChapters) {
-            try{
-                quizBuildService.buildQuizForChapter(chapter.getChapterId());
-            }catch (Exception e){
-                log.error("퀴즈 생성 처리 중 예외 발생. chapterId={}", chapter.getChapterId(), e);
+            try {
+                courseChapterAiBuildService.buildForChapter(chapter.getChapterId());
+            } catch (Exception e) {
+                log.error("챕터 AI 처리 중 예외 발생. chapterId={}", chapter.getChapterId(), e);
             }
         }
     }

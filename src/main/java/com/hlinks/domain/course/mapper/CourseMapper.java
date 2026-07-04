@@ -8,6 +8,7 @@ import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.domain.course.entity.Course;
 import com.hlinks.domain.course.entity.CourseChapter;
 import com.hlinks.domain.course.dto.LearningProgressTargetDto;
+import com.hlinks.domain.course.dto.CourseSkillAggregationRow;
 import com.hlinks.domain.course.dto.SkillFilterOptionDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -199,6 +200,16 @@ public interface CourseMapper {
     List<String> findSkillNamesByCourseId(@Param("courseId") Long courseId);
 
     List<SkillFilterOptionDto> findSkillFilterOptions();
+
+    List<CourseSkillAggregationRow> findChapterSkillsByCourseId(@Param("courseId") Long courseId);
+
+    int deleteCourseSkillsByCourseId(@Param("courseId") Long courseId);
+
+    int insertCourseSkill(
+            @Param("courseId") Long courseId,
+            @Param("skillId") Long skillId,
+            @Param("weight") Integer weight
+    );
 
     /**
      * [이슈 #31] 4. 특정 사용자의 해당 강의 수강 신청 정보 조회
