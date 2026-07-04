@@ -249,7 +249,7 @@
         0                  AS progressRate,
         0                  AS lastPlaySeconds,
         0                  AS maxPlaySeconds,
-        NULL               AS learningStatus
+        NULL               AS learningStatus,
         AI_GENERATED_YN    AS aiGeneratedYn,
         QUIZ_BUILD_STATUS  AS quizBuildStatus
         FROM COURSE_CHAPTER
@@ -275,7 +275,9 @@
         NVL(cls.PROGRESS_RATE, 0)      AS progressRate,
         NVL(cls.LAST_PLAY_SECONDS, 0)  AS lastPlaySeconds,
         NVL(cls.MAX_PLAY_SECONDS, 0)   AS maxPlaySeconds,
-        cls.STATUS                     AS learningStatus
+        cls.STATUS                     AS learningStatus,
+        cc.AI_GENERATED_YN             AS aiGeneratedYn,
+        cc.QUIZ_BUILD_STATUS           AS quizBuildStatus
         FROM COURSE_CHAPTER cc
         LEFT JOIN CHAPTER_LEARNING_STATUS cls
           ON cls.CHAPTER_ID = cc.CHAPTER_ID
