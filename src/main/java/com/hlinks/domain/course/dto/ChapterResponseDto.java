@@ -1,5 +1,6 @@
 package com.hlinks.domain.course.dto;
 
+import com.hlinks.domain.quiz.type.QuizBuildStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,5 +52,10 @@ public class ChapterResponseDto {
 
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
+    private String aiGeneratedYn;
+    private QuizBuildStatus quizBuildStatus;
+
+    public String getQuizBuildStatusLabel() {
+        return quizBuildStatus == null ? "생성 대기" : quizBuildStatus.getDescription();
     }
 }

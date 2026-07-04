@@ -250,6 +250,8 @@
         0                  AS lastPlaySeconds,
         0                  AS maxPlaySeconds,
         NULL               AS learningStatus
+        AI_GENERATED_YN    AS aiGeneratedYn,
+        QUIZ_BUILD_STATUS  AS quizBuildStatus
         FROM COURSE_CHAPTER
         WHERE COURSE_ID = #{courseId}
         AND USE_YN = 'Y'

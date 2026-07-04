@@ -20,5 +20,7 @@ public interface QuizMapper {
 
     List<Quiz> findByChapterId(@Param("chapterId") Long chapterId);
 
+    List<Quiz> findAiGeneratedQuizzes();
+
     List<QuizOption> findOptionsByQuizId(@Param("quizId") Long quizId);
 }

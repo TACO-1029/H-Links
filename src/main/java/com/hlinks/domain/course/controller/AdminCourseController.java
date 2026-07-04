@@ -22,7 +22,7 @@ public class AdminCourseController {
 
     @GetMapping("/new")
     public String newCourseForm() {
-        return "redirect:/hr";
+        return "hr/course-new";
     }
 
     @PostMapping
