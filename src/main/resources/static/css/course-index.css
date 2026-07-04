@@ -141,6 +141,112 @@
         }
 
         /* 우측 콘텐츠 메인 */
+        .skill-filter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .skill-filter-group {
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-md);
+            background: #F8FAFC;
+            overflow: hidden;
+        }
+
+        .skill-filter-group summary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 14px;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--color-text-primary);
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .skill-filter-group summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .skill-filter-group summary::after {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-right: 2px solid #64748B;
+            border-bottom: 2px solid #64748B;
+            transform: rotate(45deg);
+            transition: transform 0.2s ease;
+            margin-left: auto;
+        }
+
+        .skill-filter-group[open] summary::after {
+            transform: rotate(225deg);
+        }
+
+        .skill-filter-count {
+            min-width: 22px;
+            height: 22px;
+            padding: 0 7px;
+            border-radius: 999px;
+            background: #E2E8F0;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .skill-filter-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 0 14px 14px;
+        }
+
+        .skill-filter-option {
+            margin-bottom: 0;
+            font-size: 13px;
+        }
+
+        .filter-empty {
+            margin: 0;
+            color: var(--color-text-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .filter-reset-btn {
+            width: 100%;
+            height: 40px;
+            margin-top: 16px;
+            border: 1px solid var(--color-border-focus);
+            border-radius: var(--radius-md);
+            background: var(--color-bg-card);
+            color: var(--color-text-secondary);
+            font-size: 14px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .filter-reset-btn:hover {
+            border-color: var(--color-brand);
+            color: var(--color-brand);
+            background: #EFF6FF;
+        }
+
+        .filter-reset-btn .bi {
+            font-size: 15px;
+            line-height: 1;
+        }
+
         .content-area {
             flex-grow: 1;
             min-width: 0;

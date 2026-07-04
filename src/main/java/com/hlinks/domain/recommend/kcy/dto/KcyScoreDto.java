@@ -41,4 +41,30 @@ public class KcyScoreDto {
     private String getPrompterOrManualCode() {
         return prompterScore >= manualScore ? "P" : "M";
     }
+
+    public int getActionOrOutlinePercent() {
+        return getWinnerPercent(actionScore, outlineScore);
+    }
+
+    public int getWideOrDeepPercent() {
+        return getWinnerPercent(wideScore, deepScore);
+    }
+
+    public int getIndependentOrCorporatePercent() {
+        return getWinnerPercent(independentScore, corporateScore);
+    }
+
+    public int getPrompterOrManualPercent() {
+        return getWinnerPercent(prompterScore, manualScore);
+    }
+
+    private int getWinnerPercent(int firstScore, int secondScore) {
+        int total = firstScore + secondScore;
+
+        if (total == 0) {
+            return 50;
+        }
+
+        return Math.round((Math.max(firstScore, secondScore) * 100.0f) / total);
+    }
 }

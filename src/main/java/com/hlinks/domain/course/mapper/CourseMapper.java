@@ -7,6 +7,8 @@ import com.hlinks.domain.course.dto.CourseDetailResponseDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.domain.course.entity.Course;
 import com.hlinks.domain.course.entity.CourseChapter;
+import com.hlinks.domain.course.dto.LearningProgressTargetDto;
+import com.hlinks.domain.course.dto.SkillFilterOptionDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -47,7 +49,12 @@ public interface CourseMapper {
      * @param categoryType 선택적 필터링 (CAREER_HIGH, CAREER_PATH). null이거나 빈 값이면 전체 조회
      * @return 화면용 List DTO
      */
-    List<CourseListResponseDto> findAllCourses(@Param("categoryType") String categoryType);
+    List<CourseListResponseDto> findAllCourses(
+            @Param("categoryType") String categoryType,
+            @Param("courseTypes") List<String> courseTypes,
+            @Param("skillIds") List<Long> skillIds,
+            @Param("sort") String sort
+    );
 
     CourseApplyTargetDto findCourseApplyTarget(@Param("courseId") Long courseId);
 
@@ -96,6 +103,49 @@ public interface CourseMapper {
             @Param("status") String status
     );
 
+    LearningProgressTargetDto findLearningProgressTarget(
+            @Param("userId") Long userId,
+            @Param("courseId") Long courseId,
+            @Param("chapterId") Long chapterId
+    );
+
+    int updateChapterLearningProgress(
+            @Param("chapterLearningId") Long chapterLearningId,
+            @Param("lastPlaySeconds") int lastPlaySeconds,
+            @Param("maxPlaySeconds") int maxPlaySeconds,
+            @Param("progressRate") int progressRate
+    );
+
+    int completeChapterLearning(
+            @Param("chapterLearningId") Long chapterLearningId,
+            @Param("lastPlaySeconds") int lastPlaySeconds,
+            @Param("maxPlaySeconds") int maxPlaySeconds,
+            @Param("progressRate") int progressRate,
+            @Param("status") String status
+    );
+
+    int updateCourseLearningProgress(
+            @Param("courseLearningId") Long courseLearningId,
+            @Param("courseId") Long courseId
+    );
+
+    int completeCourseLearningIfAllChaptersCompleted(
+            @Param("courseLearningId") Long courseLearningId,
+            @Param("courseId") Long courseId,
+            @Param("status") String status
+    );
+
+    void insertLearningLog(
+            @Param("courseLearningId") Long courseLearningId,
+            @Param("chapterLearningId") Long chapterLearningId,
+            @Param("userId") Long userId,
+            @Param("courseId") Long courseId,
+            @Param("chapterId") Long chapterId,
+            @Param("eventType") String eventType,
+            @Param("playSeconds") int playSeconds,
+            @Param("progressRate") int progressRate
+    );
+
     int increaseOfflineCurrentApplicantCount(@Param("courseId") Long courseId);
 
     CourseApplicationCancelTargetDto findActiveCourseApplicationForUpdate(
@@ -115,6 +165,11 @@ public interface CourseMapper {
 
     int decreaseOfflineCurrentApplicantCount(@Param("courseId") Long courseId);
 
+    int countCourseLearningByStatus(
+            @Param("userId") Long userId,
+            @Param("status") String status
+    );
+
     /**
      * 1. 강의 상세 조회 (부모 + 온라인/오프라인 자식 테이블 LEFT JOIN)
      * @param courseId 조회할 강의 고유 ID
@@ -129,6 +184,11 @@ public interface CourseMapper {
      */
     List<ChapterResponseDto> findChaptersByCourseId(@Param("courseId") Long courseId);
 
+    List<ChapterResponseDto> findChaptersByCourseIdWithLearning(
+            @Param("courseId") Long courseId,
+            @Param("courseLearningId") Long courseLearningId
+    );
+
     Long findLatestLearningChapterId(@Param("courseLearningId") Long courseLearningId);
 
     /**
@@ -137,6 +197,8 @@ public interface CourseMapper {
      * @return 핵심 스킬명 리스트 (예: ["Spring", "Java", "SQL"])
      */
     List<String> findSkillNamesByCourseId(@Param("courseId") Long courseId);
+
+    List<SkillFilterOptionDto> findSkillFilterOptions();
 
     /**
      * [이슈 #31] 4. 특정 사용자의 해당 강의 수강 신청 정보 조회

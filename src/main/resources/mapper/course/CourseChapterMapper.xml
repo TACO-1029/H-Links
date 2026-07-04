@@ -18,6 +18,7 @@
         <result property="summaryText" column="SUMMARY_TEXT"/>
         <result property="transcriptText" column="TRANSCRIPT_TEXT"/>
         <result property="aiGeneratedYn" column="AI_GENERATED_YN"/>
+        <result property="quizBuildStatus" column="QUIZ_BUILD_STATUS"/>
         <result property="useYn" column="USE_YN"/>
         <result property="createdAt" column="CREATED_AT"/>
         <result property="updatedAt" column="UPDATED_AT"/>
@@ -25,33 +26,92 @@
 
     <select id="findById" resultMap="courseChapterResultMap">
         SELECT
-        CHAPTER_ID,
-        COURSE_ID,
-        CHAPTER_TITLE,
-        CHAPTER_ORDER,
-        VIDEO_URL,
-        VIDEO_PATH,
-        ORIGINAL_FILE_NAME,
-        FILE_SIZE,
-        DURATION_SECONDS,
-        SUMMARY_TEXT,
-        TRANSCRIPT_TEXT,
-        AI_GENERATED_YN,
-        USE_YN,
-        CREATED_AT,
-        UPDATED_AT
-        FROM COURSE_CHAPTER
-        WHERE CHAPTER_ID = #{chapterId}
-        AND USE_YN = 'Y'
+        CC.CHAPTER_ID,
+        CC.COURSE_ID,
+        CC.CHAPTER_TITLE,
+        CC.CHAPTER_ORDER,
+        CC.VIDEO_URL,
+        CC.VIDEO_PATH,
+        CC.ORIGINAL_FILE_NAME,
+        CC.FILE_SIZE,
+        CC.DURATION_SECONDS,
+        CC.SUMMARY_TEXT,
+        CC.TRANSCRIPT_TEXT,
+        CC.AI_GENERATED_YN,
+        CC.QUIZ_BUILD_STATUS,
+        CC.USE_YN,
+        CC.CREATED_AT,
+        CC.UPDATED_AT
+        FROM COURSE_CHAPTER CC
+        WHERE CC.CHAPTER_ID = #{chapterId}
+        AND CC.USE_YN = 'Y'
+    </select>
+
+    <select id="findPendingQuizBuildChapters" resultMap="courseChapterResultMap">
+        SELECT *
+        FROM (
+        SELECT
+        CC.CHAPTER_ID,
+        CC.COURSE_ID,
+        CC.CHAPTER_TITLE,
+        CC.CHAPTER_ORDER,
+        CC.VIDEO_URL,
+        CC.VIDEO_PATH,
+        CC.ORIGINAL_FILE_NAME,
+        CC.FILE_SIZE,
+        CC.DURATION_SECONDS,
+        CC.SUMMARY_TEXT,
+        CC.TRANSCRIPT_TEXT,
+        CC.AI_GENERATED_YN,
+        CC.QUIZ_BUILD_STATUS,
+        CC.USE_YN,
+        CC.CREATED_AT,
+        CC.UPDATED_AT
+        FROM COURSE_CHAPTER CC
+        JOIN COURSE C
+        ON CC.COURSE_ID = C.COURSE_ID
+        WHERE CC.USE_YN = 'Y'
+        AND C.COURSE_TYPE = 'ONLINE'
+        AND CC.QUIZ_BUILD_STATUS = 'PENDING'
+        AND TRIM(CC.VIDEO_PATH) IS NOT NULL
+        AND TRIM(CC.ORIGINAL_FILE_NAME) IS NOT NULL
+        AND CC.FILE_SIZE IS NOT NULL
+        AND CC.FILE_SIZE > 0
+        ORDER BY CC.CHAPTER_ID
+        )
+        WHERE ROWNUM &lt;= #{limit}
     </select>
 
     <update id="updateTranscriptText">
         UPDATE COURSE_CHAPTER
         SET
         TRANSCRIPT_TEXT = #{transcriptText},
-        AI_GENERATED_YN = 'Y',
         UPDATED_AT = SYSDATE
         WHERE CHAPTER_ID = #{chapterId}
+        AND USE_YN = 'Y'
+    </update>
+
+    <update id="updateQuizBuildStatus">
+        UPDATE COURSE_CHAPTER
+        SET
+        QUIZ_BUILD_STATUS = #{quizBuildStatus},
+        AI_GENERATED_YN = CASE
+        WHEN #{quizBuildStatus} = 'COMPLETED' THEN 'Y'
+        WHEN #{quizBuildStatus} = 'FAILED' THEN 'N'
+        ELSE AI_GENERATED_YN
+        END,
+        UPDATED_AT = SYSDATE
+        WHERE CHAPTER_ID = #{chapterId}
+        AND USE_YN = 'Y'
+    </update>
+
+    <update id="updateQuizBuildStatusIfPending">
+        UPDATE COURSE_CHAPTER
+        SET
+        QUIZ_BUILD_STATUS = #{quizBuildStatus},
+        UPDATED_AT = SYSDATE
+        WHERE CHAPTER_ID = #{chapterId}
+        AND QUIZ_BUILD_STATUS = 'PENDING'
         AND USE_YN = 'Y'
     </update>
 

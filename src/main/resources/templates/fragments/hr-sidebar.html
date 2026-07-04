@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside class="hr-sidebar" aria-label="HR 관리 메뉴" th:fragment="sidebar(activeMenu)">
+  <a class="hr-sidebar__title"
+     th:classappend="${activeMenu == 'dashboard'} ? ' is-active'"
+     th:href="@{/hr}">Dashboard</a>
+  <nav class="hr-nav">
+    <div class="hr-nav__group">
+      <p class="hr-nav__heading">
+        <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
+        <span>강의 관리</span>
+      </p>
+      <a class="hr-nav__link" th:href="@{/courses}">강의 목록</a>
+      <a class="hr-nav__link"
+         th:classappend="${activeMenu == 'course-create'} ? ' is-active'"
+         th:href="@{/admin/courses/new}">강의 등록</a>
+    </div>
+    <div class="hr-nav__divider" aria-hidden="true"></div>
+    <div class="hr-nav__group">
+      <p class="hr-nav__heading">
+        <i class="bi bi-cpu-fill" aria-hidden="true"></i>
+        <span>퀴즈 관리</span>
+      </p>
+      <a class="hr-nav__link"
+         th:classappend="${activeMenu == 'ai-quiz'} ? ' is-active'"
+         th:href="@{/hr/quizzes/ai}">AI 생성 퀴즈</a>
+    </div>
+    <div class="hr-nav__divider" aria-hidden="true"></div>
+    <div class="hr-nav__group">
+      <p class="hr-nav__heading">
+        <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+        <span>신청 관리</span>
+      </p>
+      <a class="hr-nav__link" href="#">수강 신청 현황</a>
+      <a class="hr-nav__link" href="#">수료 현황</a>
+    </div>
+    <div class="hr-nav__divider" aria-hidden="true"></div>
+    <div class="hr-nav__group">
+      <p class="hr-nav__heading">
+        <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
+        <span>통계</span>
+      </p>
+      <a class="hr-nav__link" href="#">학습 통계</a>
+      <a class="hr-nav__link" href="#">강의 통계</a>
+    </div>
+  </nav>
+</aside>
+</body>
+</html>

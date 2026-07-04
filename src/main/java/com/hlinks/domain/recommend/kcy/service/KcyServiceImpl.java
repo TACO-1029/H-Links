@@ -64,7 +64,7 @@ public class KcyServiceImpl implements KcyService {
 
     @Override
     @Transactional
-    public KcyType submit(Long userId, List<Long> selectedOptionIds) {
+    public KcyScoreDto submit(Long userId, List<Long> selectedOptionIds) {
         // 먼저 검증합니다
         validateSelectedOptions(selectedOptionIds);
         // 점수 계산 로직을 타고와서
@@ -82,7 +82,7 @@ public class KcyServiceImpl implements KcyService {
             throw new BaseException(KcyErrorCode.KCY_RESULT_SAVE_FAILED);
         }
         // 그 후 결과 반환
-        return resultType;
+        return score;
     }
     // 예외 없는지 검사하는 함수입니다
     private void validateSelectedOptions(List<Long> selectedOptionIds) {

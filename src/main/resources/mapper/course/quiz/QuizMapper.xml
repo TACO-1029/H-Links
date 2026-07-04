@@ -117,6 +117,84 @@
         ORDER BY QUIZ_ID
     </select>
 
+    <select id="findAiGeneratedQuizzes" resultType="com.hlinks.domain.quiz.entity.Quiz">
+        SELECT
+        quizId,
+        courseId,
+        chapterId,
+        courseTitle,
+        chapterTitle,
+        questionType,
+        questionText,
+        answerText,
+        explanation,
+        difficulty,
+        status,
+        aiGeneratedYn,
+        quizBuildStatus,
+        createdAt,
+        updatedAt,
+        sortAt
+        FROM (
+        SELECT
+        Q.QUIZ_ID AS quizId,
+        Q.COURSE_ID AS courseId,
+        Q.CHAPTER_ID AS chapterId,
+        C.COURSE_TITLE AS courseTitle,
+        CC.CHAPTER_TITLE AS chapterTitle,
+        Q.QUESTION_TYPE AS questionType,
+        DBMS_LOB.SUBSTR(Q.QUESTION_TEXT, 4000, 1) AS questionText,
+        Q.ANSWER_TEXT AS answerText,
+        DBMS_LOB.SUBSTR(Q.EXPLANATION, 4000, 1) AS explanation,
+        Q.DIFFICULTY AS difficulty,
+        Q.STATUS AS status,
+        Q.AI_GENERATED_YN AS aiGeneratedYn,
+        CC.QUIZ_BUILD_STATUS AS quizBuildStatus,
+        Q.CREATED_AT AS createdAt,
+        Q.UPDATED_AT AS updatedAt,
+        Q.CREATED_AT AS sortAt
+        FROM QUIZ Q
+        JOIN COURSE C
+        ON Q.COURSE_ID = C.COURSE_ID
+        LEFT JOIN COURSE_CHAPTER CC
+        ON Q.CHAPTER_ID = CC.CHAPTER_ID
+        WHERE Q.AI_GENERATED_YN = 'Y'
+
+        UNION ALL
+
+        SELECT
+        CAST(NULL AS NUMBER) AS quizId,
+        CC.COURSE_ID AS courseId,
+        CC.CHAPTER_ID AS chapterId,
+        C.COURSE_TITLE AS courseTitle,
+        CC.CHAPTER_TITLE AS chapterTitle,
+        CAST(NULL AS VARCHAR2(30)) AS questionType,
+        CAST(NULL AS VARCHAR2(4000)) AS questionText,
+        CAST(NULL AS VARCHAR2(4000)) AS answerText,
+        CAST(NULL AS VARCHAR2(4000)) AS explanation,
+        CAST(NULL AS VARCHAR2(30)) AS difficulty,
+        CAST(NULL AS VARCHAR2(30)) AS status,
+        CC.AI_GENERATED_YN AS aiGeneratedYn,
+        CC.QUIZ_BUILD_STATUS AS quizBuildStatus,
+        CC.CREATED_AT AS createdAt,
+        CC.UPDATED_AT AS updatedAt,
+        CC.UPDATED_AT AS sortAt
+        FROM COURSE_CHAPTER CC
+        JOIN COURSE C
+        ON CC.COURSE_ID = C.COURSE_ID
+        WHERE C.COURSE_TYPE = 'ONLINE'
+        AND CC.USE_YN = 'Y'
+        AND CC.QUIZ_BUILD_STATUS IN ('PENDING', 'PROCESSING', 'FAILED')
+        AND NOT EXISTS (
+        SELECT 1
+        FROM QUIZ Q
+        WHERE Q.CHAPTER_ID = CC.CHAPTER_ID
+        AND Q.AI_GENERATED_YN = 'Y'
+        )
+        )
+        ORDER BY sortAt DESC NULLS LAST, courseId DESC, chapterId DESC, quizId DESC NULLS LAST
+    </select>
+
     <select id="findOptionsByQuizId" resultType="com.hlinks.domain.quiz.entity.QuizOption">
         SELECT
         OPTION_ID AS optionId,

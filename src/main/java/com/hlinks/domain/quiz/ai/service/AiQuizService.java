@@ -53,6 +53,7 @@ public class AiQuizService {
         validateAiResponse(aiResponse, quizCount);
 
         return aiResponse.getQuizzes().stream()
+                .limit(quizCount)
                 .map(aiQuiz -> toCreateRequest(request, aiQuiz))
                 .toList();
     }
@@ -192,7 +193,11 @@ public class AiQuizService {
         }
 
         if (aiResponse.getQuizzes().size() != expectedQuizCount) {
-            throw new AiQuizException("AI 퀴즈 생성 개수가 요청과 일치하지 않습니다.");
+            log.warn(
+                    "AI 퀴즈 생성 개수가 요청과 다릅니다. expected={}, actual={}",
+                    expectedQuizCount,
+                    aiResponse.getQuizzes().size()
+            );
         }
     }
 

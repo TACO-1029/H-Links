@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section class="mypage-hero" aria-labelledby="mypage-title" th:fragment="hero">
+    <div class="mypage-hero__identity">
+        <div class="mypage-avatar mypage-avatar--large" aria-hidden="true"
+             th:text="${name != null ? #strings.substring(name, 0, 1) : 'H'}">
+            H
+        </div>
+        <div class="mypage-hero__text">
+            <span class="mypage-badge"
+                  th:text="${loginId != null ? '사번 ' + loginId : '사번 -'}">
+                사번 -
+            </span>
+            <h1 id="mypage-title" class="mypage-hero__title">
+                <span th:text="${name != null ? name : '사용자'}">사용자</span>
+                <span th:text="${positionName != null ? positionName : '사원'}">사원</span>
+            </h1>
+            <p class="mypage-hero__meta">
+                <span th:text="${departmentName != null ? departmentName : '소속 미지정'}">소속 미지정</span>
+                <span aria-hidden="true">·</span>
+                <span th:text="${jobName != null ? jobName : '직무 미지정'}">직무 미지정</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="mypage-summary" aria-label="학습 요약">
+        <article class="mypage-summary-card">
+            <span class="mypage-summary-card__label">수강 중</span>
+            <strong class="mypage-summary-card__value"
+                    th:text="${inProgressCount != null ? inProgressCount : 0}">0</strong>
+        </article>
+        <article class="mypage-summary-card">
+            <span class="mypage-summary-card__label">수료 완료</span>
+            <strong class="mypage-summary-card__value mypage-summary-card__value--blue"
+                    th:text="${completedCount != null ? completedCount : 0}">0</strong>
+        </article>
+    </div>
+</section>
+</body>
+</html>

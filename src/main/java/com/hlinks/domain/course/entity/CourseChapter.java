@@ -1,5 +1,6 @@
 package com.hlinks.domain.course.entity;
 
+import com.hlinks.domain.quiz.type.QuizBuildStatus;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,6 +22,7 @@ public class CourseChapter {
     private String summaryText;
     private String transcriptText;
     private String aiGeneratedYn;
+    private QuizBuildStatus quizBuildStatus;
     private String useYn;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
