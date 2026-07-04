@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>커리어패스 대시보드 - H-Link</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/career.css}">
+</head>
+<body class="career-dashboard-page">
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="career-dashboard-container">
+    <header class="dashboard-header">
+        <h1 th:text="${userName + ' 대리님의 커리어패스 대시보드'}">김민지 대리님의 커리어패스 대시보드</h1>
+        <p>AI가 분석한 역량 진단 및 맞춤 추천 코스를 확인해 보세요.</p>
+    </header>
+
+    <div class="dashboard-grid">
+        <!-- 커리어패스 진단 진행상황 카드 -->
+        <section class="dashboard-card status-card">
+            <h2>📝 커리어패스 진단 진행상황</h2>
+            <div class="card-body" th:switch="${status}">
+                
+                <!-- 1. 목표 기술 선택중 -->
+                <div th:case="'WELCOME'">
+                    <p class="status-text">학습 목표 스킬 설정을 완료하지 않았습니다. 이어서 학습 목표를 설정해 보세요.</p>
+                    <div class="status-badge status-badge--pending">선택 대기 중</div>
+                    <div class="action-wrap">
+                        <a th:href="@{/courses/career-path/survey(diagnosisId=${diagnosis.diagnosisId})}" class="btn-primary">이어서 선택하기</a>
+                    </div>
+                </div>
+
+                <!-- 2. AI 레벨테스트 생성중 -->
+                <div th:case="'CREATING'">
+                    <p class="status-text">목표 기술 분야에 따른 AI 레벨테스트 문항을 구성하는 중입니다. 잠시만 기다려 주세요.</p>
+                    <div class="status-badge status-badge--processing">생성 중...</div>
+                    <div class="action-wrap">
+                        <button class="btn-disabled" disabled>레벨 테스트 시작하기</button>
+                    </div>
+                </div>
+
+                <!-- 3. AI 레벨테스트 생성완료 -->
+                <div th:case="'READY'">
+                    <p class="status-text">AI 시험지 구성이 완료되었습니다. 지금 바로 테스트를 시작하여 내 수준을 파악해 보세요.</p>
+                    <div class="status-badge status-badge--ready">생성 완료</div>
+                    <div class="action-wrap">
+                        <button class="btn-primary" onclick="alert('레벨 테스트 시작 기능은 #56 이슈에서 구현될 예정입니다.')">레벨 테스트 시작하기</button>
+                    </div>
+                </div>
+
+                <!-- 4. 레벨 테스트 이어하기 -->
+                <div th:case="'RESUMING'">
+                    <p class="status-text">진행 중이던 레벨 테스트가 있습니다. 이어서 테스트를 진행하고 역량을 분석해 보세요.</p>
+                    <div class="status-badge status-badge--progress">진행 중</div>
+                    <div class="action-wrap">
+                        <button class="btn-primary" onclick="alert('레벨 테스트 이어하기 기능은 #56 이슈에서 구현될 예정입니다.')">레벨 테스트 이어하기</button>
+                    </div>
+                </div>
+
+                <!-- 5. 커리어패스 진단 완료 -->
+                <div th:case="'COMPLETED'">
+                    <p class="status-text">이미 커리어패스 진단 및 교육 추천서 생성을 완료하셨습니다. 다시 새 진단을 시작하고 싶으신가요?</p>
+                    <div class="status-badge status-badge--completed">진단 완료</div>
+                    <div class="action-wrap">
+                        <a th:href="@{/courses/career-path/start}" class="btn-primary">새 진단 시작하기</a>
+                    </div>
+                </div>
+
+                <!-- 예외/생성 실패 -->
+                <div th:case="'FAILED'">
+                    <p class="status-text">AI 시험지 생성 중 에러가 발생했습니다. 다시 시도해 주세요.</p>
+                    <div class="status-badge status-badge--failed">생성 실패</div>
+                    <div class="action-wrap">
+                        <a th:href="@{/courses/career-path/start}" class="btn-primary">다시 설정하기</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 진단 요약 카드 -->
+        <section class="dashboard-card summary-card">
+            <h2>💡 AI 진단 가이드</h2>
+            <div class="card-body">
+                <blockquote class="ai-quote">
+                    "선택하신 목표 기술 스택을 완벽하게 학습하여 실무에 적용할 수 있는 초개인화 강의 로드맵을 구성하고 있습니다. 하단의 권장 코스를 따라가시면 레벨 향상에 큰 도움이 됩니다."
+                </blockquote>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

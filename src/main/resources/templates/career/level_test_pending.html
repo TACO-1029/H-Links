@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 시험지 생성 중 - H-Link</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/career.css}">
+</head>
+<body class="career-pending-page">
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 상단 스텝 프로그레스 바 -->
+<div class="career-progress-bar">
+    <div class="progress-step completed">
+        <span class="step-num">✓</span>
+        <span class="step-label">목표/스택 설정</span>
+    </div>
+    <div class="progress-line active"></div>
+    <div class="progress-step active">
+        <span class="step-num">2</span>
+        <span class="step-label">AI 시험지 생성</span>
+    </div>
+    <div class="progress-line"></div>
+    <div class="progress-step">
+        <span class="step-num">3</span>
+        <span class="step-label">레벨 테스트</span>
+    </div>
+    <div class="progress-line"></div>
+    <div class="progress-step">
+        <span class="step-num">4</span>
+        <span class="step-label">역량 & 강의 분석</span>
+    </div>
+</div>
+
+<main class="career-pending-container">
+    <div class="pending-card">
+        <!-- 중앙 문구 및 로딩 애니메이션 -->
+        <h1 class="pending-title">테스트 문항을 구성하고 있습니다.</h1>
+        
+        <div class="loading-dots">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+
+        <!-- 하단 생성 조건 -->
+        <div class="generation-condition-box">
+            <div class="condition-header">생성 조건</div>
+            <div class="condition-grid">
+                <div class="condition-item">
+                    <span class="condition-label">분야</span>
+                    <span class="condition-value" th:text="${difficulty == '상' ? '고급 스택' : (difficulty == '하' ? '기초 스택' : '현업 스택')}">인프라</span>
+                </div>
+                <div class="condition-item">
+                    <span class="condition-label">난이도</span>
+                    <span class="condition-value" th:text="${difficulty == '상' ? '고급' : (difficulty == '하' ? '초급' : '중급')}">중급</span>
+                </div>
+                <div class="condition-item">
+                    <span class="condition-label">모드</span>
+                    <span class="condition-value" th:text="${mode}">표준 진단</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 다음 단계 연결 시뮬레이션용 가이드 (실무 환경 개발용) -->
+    <div class="pending-simulation-guide">
+        <p>💡 AI 출제 서비스(다음 이슈 개발 사항)와 연계될 영역입니다. 현재 테스트를 위해 4초 후 대시보드로 자동 리다이렉트됩니다.</p>
+        <a th:href="@{/courses/career-path/dashboard}" class="btn-simulation-dashboard">즉시 대시보드로 이동</a>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    // 4초 뒤 대시보드로 리다이렉트 시뮬레이션
+    setTimeout(() => {
+        window.location.href = '/courses/career-path/dashboard';
+    }, 4000);
+</script>
+</body>
+</html>

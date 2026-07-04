@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>커리어패스 - H-Link</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/career.css}">
+</head>
+<body class="career-path-page">
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="career-welcome-container">
+    <!-- 처음이신가요? 안내 가이드 버블 -->
+    <div class="career-welcome-bubble-wrap">
+        <div class="panda-avatar">
+            <!-- 🐼 임시 판다 아바타 이미지 영역 -->
+            <div class="panda-avatar-inner">🐼</div>
+        </div>
+        <div class="career-welcome-bubble">
+            <span><strong>처음</strong>이신가요? 딱 맞는 학습 순서를 정리해 드릴게요.</span>
+        </div>
+    </div>
+
+    <!-- 타이틀 영역 -->
+    <section class="career-welcome-hero">
+        <h1>나를 위해 초개인화된 단 하나의 교육 로드맵으로,<br>앞서가는 능력자가 되어보세요.</h1>
+    </section>
+
+    <!-- 3단계 강점/가치 설명 리스트 -->
+    <section class="career-feature-list">
+        <!-- 1. 역량진단 -->
+        <article class="career-feature-card">
+            <div class="career-feature-media">
+                <!-- TODO: 배경 이미지 리소스 추가 시 반영 예정 -->
+                <div class="media-placeholder icon-diagnosis">💻</div>
+            </div>
+            <div class="career-feature-desc">
+                <h2>역량진단</h2>
+                <h3>전문가가 꼼꼼하게,<br>나의 성장만을 위해 설계한.</h3>
+                <p>정확한 현재 수준을 진단하는 것만이, 도달하고자 하는 목적 수준을 설정할 수 있습니다.</p>
+            </div>
+        </article>
+
+        <!-- 2. 초개인화 큐레이션 -->
+        <article class="career-feature-card">
+            <div class="career-feature-media">
+                <!-- TODO: 배경 이미지 리소스 추가 시 반영 예정 -->
+                <div class="media-placeholder icon-curation">📋</div>
+            </div>
+            <div class="career-feature-desc">
+                <h2>초개인화 큐레이션</h2>
+                <h3>내 진단 결과에 따라 전문가가,<br>나만을 위해서만.</h3>
+                <p>약 5,200개 학습 콘텐츠 중 목표 달성을 위한 콘텐츠만을 큐레이션하여 최적의 로드맵을 제시합니다.</p>
+            </div>
+        </article>
+
+        <!-- 3. 학습 효율성 -->
+        <article class="career-feature-card">
+            <div class="career-feature-media">
+                <!-- TODO: 배경 이미지 리소스 추가 시 반영 예정 -->
+                <div class="media-placeholder icon-efficiency">⚡</div>
+            </div>
+            <div class="career-feature-desc">
+                <h2>학습 효율성</h2>
+                <h3>목표 도달까지 최적의 루트로,<br>남들과는 다르게.</h3>
+                <p>모두 다른 수준과 상황에서 왜 똑같이 학습하나요? 출발지가 다른 우리 모두를 위해, 가장 효과적이고 효율적인 방법을 제공합니다.</p>
+            </div>
+        </article>
+    </section>
+
+    <!-- 하단 진단 시작 버튼 -->
+    <div class="career-welcome-action">
+        <a th:href="@{/courses/career-path/start}" class="btn-start-diagnosis">진단 지금 바로 시작하기</a>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
