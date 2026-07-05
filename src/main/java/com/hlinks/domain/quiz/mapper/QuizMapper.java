@@ -1,5 +1,7 @@
 package com.hlinks.domain.quiz.mapper;
 
+import com.hlinks.domain.quiz.dto.ChapterQuizOptionResponse;
+import com.hlinks.domain.quiz.dto.ChapterQuizQuestionResponse;
 import com.hlinks.domain.quiz.dto.QuizAnswerResultRow;
 import com.hlinks.domain.quiz.dto.QuizAttemptResultRow;
 import com.hlinks.domain.quiz.dto.QuizAttemptTargetDto;
@@ -27,6 +29,10 @@ public interface QuizMapper {
     List<Quiz> findAiGeneratedQuizzes();
 
     List<QuizOption> findOptionsByQuizId(@Param("quizId") Long quizId);
+
+    List<ChapterQuizQuestionResponse> findAttemptQuestionsByChapterId(@Param("chapterId") Long chapterId);
+
+    List<ChapterQuizOptionResponse> findAttemptOptionsByQuizId(@Param("quizId") Long quizId);
 
     QuizAttemptTargetDto findQuizAttemptTarget(
             @Param("userId") Long userId,

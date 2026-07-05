@@ -1,16 +1,15 @@
 package com.hlinks.domain.quiz.dto;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
 @Getter
-@Builder
+@Setter
 public class ChapterQuizQuestionResponse {
 
     private Long quizId;
     private String questionText;
-    private String explanation;
-    private List<QuizOptionResponse> options;
+    private List<ChapterQuizOptionResponse> options;
 }

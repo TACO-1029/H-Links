@@ -207,6 +207,27 @@
         ORDER BY OPTION_NO
     </select>
 
+    <select id="findAttemptQuestionsByChapterId"
+            resultType="com.hlinks.domain.quiz.dto.ChapterQuizQuestionResponse">
+        SELECT
+        QUIZ_ID AS quizId,
+        DBMS_LOB.SUBSTR(QUESTION_TEXT, 4000, 1) AS questionText
+        FROM QUIZ
+        WHERE CHAPTER_ID = #{chapterId}
+        ORDER BY QUIZ_ID
+    </select>
+
+    <select id="findAttemptOptionsByQuizId"
+            resultType="com.hlinks.domain.quiz.dto.ChapterQuizOptionResponse">
+        SELECT
+        OPTION_ID AS optionId,
+        OPTION_NO AS optionNo,
+        DBMS_LOB.SUBSTR(OPTION_TEXT, 4000, 1) AS optionText
+        FROM QUIZ_OPTION
+        WHERE QUIZ_ID = #{quizId}
+        ORDER BY OPTION_NO
+    </select>
+
     <select id="findQuizAttemptTarget"
             resultType="com.hlinks.domain.quiz.dto.QuizAttemptTargetDto">
         SELECT

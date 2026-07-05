@@ -2,6 +2,7 @@ package com.hlinks.domain.quiz.service;
 
 import com.hlinks.domain.course.mapper.CourseMapper;
 import com.hlinks.domain.course.type.LearningStatus;
+import com.hlinks.domain.quiz.dto.ChapterQuizOptionResponse;
 import com.hlinks.domain.quiz.dto.ChapterQuizPageResponse;
 import com.hlinks.domain.quiz.dto.ChapterQuizQuestionResponse;
 import com.hlinks.domain.quiz.dto.ChapterQuizResultItem;
@@ -9,7 +10,6 @@ import com.hlinks.domain.quiz.dto.ChapterQuizResultResponse;
 import com.hlinks.domain.quiz.dto.QuizAnswerResultRow;
 import com.hlinks.domain.quiz.dto.QuizAttemptResultRow;
 import com.hlinks.domain.quiz.dto.QuizAttemptTargetDto;
-import com.hlinks.domain.quiz.dto.QuizOptionResponse;
 import com.hlinks.domain.quiz.dto.WrongAnswerNoteResponse;
 import com.hlinks.domain.quiz.entity.Quiz;
 import com.hlinks.domain.quiz.entity.QuizOption;
@@ -44,16 +44,14 @@ public class QuizAttemptService {
         validateProgress(target);
         validateNotSubmitted(courseId, chapterId, userId);
 
-        List<Quiz> quizzes = findChapterQuizzes(chapterId);
+        List<ChapterQuizQuestionResponse> questions = findAttemptQuestions(chapterId);
         return ChapterQuizPageResponse.builder()
                 .courseId(target.getCourseId())
                 .chapterId(target.getChapterId())
                 .courseTitle(target.getCourseTitle())
                 .chapterTitle(target.getChapterTitle())
                 .progressRate(defaultNumber(target.getProgressRate()))
-                .questions(quizzes.stream()
-                        .map(this::toQuestionResponse)
-                        .toList())
+                .questions(questions)
                 .build();
     }
 
@@ -194,25 +192,17 @@ public class QuizAttemptService {
         }
     }
 
-    private ChapterQuizQuestionResponse toQuestionResponse(Quiz quiz) {
-        return ChapterQuizQuestionResponse.builder()
-                .quizId(quiz.getQuizId())
-                .questionText(quiz.getQuestionText())
-                .explanation(quiz.getExplanation())
-                .options(quizMapper.findOptionsByQuizId(quiz.getQuizId()).stream()
-                        .map(this::toUserOptionResponse)
-                        .toList())
-                .build();
-    }
+    private List<ChapterQuizQuestionResponse> findAttemptQuestions(Long chapterId) {
+        List<ChapterQuizQuestionResponse> questions = quizMapper.findAttemptQuestionsByChapterId(chapterId);
+        if (questions == null || questions.isEmpty()) {
+            throw new BaseException(ErrorResponseCode.NOT_FOUND_ENDPOINT, "응시할 퀴즈가 없습니다.");
+        }
 
-    private QuizOptionResponse toUserOptionResponse(QuizOption option) {
-        QuizOptionResponse response = new QuizOptionResponse();
-        response.setOptionId(option.getOptionId());
-        response.setQuizId(option.getQuizId());
-        response.setOptionNo(option.getOptionNo());
-        response.setOptionText(option.getOptionText());
-        response.setCorrectYn(null);
-        return response;
+        for (ChapterQuizQuestionResponse question : questions) {
+            List<ChapterQuizOptionResponse> options = quizMapper.findAttemptOptionsByQuizId(question.getQuizId());
+            question.setOptions(options);
+        }
+        return questions;
     }
 
     private QuizOption findCorrectOption(Long quizId) {
