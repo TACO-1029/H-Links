@@ -3,12 +3,14 @@ package com.hlinks.domain.course.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 public class CourseSkillAggregationRow {
 
     private Long chapterId;
     private Long skillId;
-    private Integer weight;
+    private BigDecimal weight;
     private Integer durationSeconds;
 }
