@@ -22,13 +22,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CareerController {
 
+    private static final String ACTIVE_MENU = "recommend";
+    private static final String ACTIVE_SUB_MENU = "careerPath";
+
     private final CareerService careerService;
     private final InterestService interestService;
 
     @GetMapping
     public String index(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
-        model.addAttribute("activeMenu", "courses");
-        model.addAttribute("activeSubMenu", "careerPath");
+        setActiveMenu(model);
 
         if (userDetails != null && careerService.hasDiagnosis(userDetails.getUserId())) {
             // 진단 이력이 존재할 경우 대시보드로 이동
@@ -50,8 +52,7 @@ public class CareerController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model
     ) {
-        model.addAttribute("activeMenu", "courses");
-        model.addAttribute("activeSubMenu", "careerPath");
+        setActiveMenu(model);
         model.addAttribute("skills", careerService.getAllActiveSkills());
         model.addAttribute("diagnosisId", diagnosisId);
         return "career/survey";
@@ -66,8 +67,7 @@ public class CareerController {
             Model model
     ) {
         if (skillIds == null || skillIds.isEmpty()) {
-            model.addAttribute("activeMenu", "courses");
-            model.addAttribute("activeSubMenu", "careerPath");
+            setActiveMenu(model);
             model.addAttribute("skills", careerService.getAllActiveSkills());
             model.addAttribute("diagnosisId", diagnosisId);
             model.addAttribute("errorMessage", "목표 스킬을 최소 1개 이상 선택해 주세요.");
@@ -87,8 +87,7 @@ public class CareerController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model
     ) {
-        model.addAttribute("activeMenu", "courses");
-        model.addAttribute("activeSubMenu", "careerPath");
+        setActiveMenu(model);
         model.addAttribute("diagnosisId", diagnosisId);
         model.addAttribute("difficulty", difficulty);
 
@@ -99,8 +98,7 @@ public class CareerController {
 
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
-        model.addAttribute("activeMenu", "courses");
-        model.addAttribute("activeSubMenu", "careerPath");
+        setActiveMenu(model);
         model.addAttribute("userName", userDetails.getName());
 
         Long userId = userDetails.getUserId();
@@ -141,5 +139,10 @@ public class CareerController {
         model.addAttribute("status", status);
         model.addAttribute("diagnosis", latestDiagnosis);
         return "career/dashboard";
+    }
+
+    private void setActiveMenu(Model model) {
+        model.addAttribute("activeMenu", ACTIVE_MENU);
+        model.addAttribute("activeSubMenu", ACTIVE_SUB_MENU);
     }
 }

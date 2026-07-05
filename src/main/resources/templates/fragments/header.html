@@ -21,7 +21,10 @@
                th:href="@{/courses}">교육 콘텐츠</a>
             <a class="site-header__nav-item"
                th:classappend="${activeMenu == 'recommend'} ? ' is-active'"
-               th:href="@{/recommend}">추천</a>
+               th:href="@{/courses/career-path}">추천</a>
+            <a class="site-header__nav-item"
+               th:classappend="${activeMenu == 'kcy'} ? ' is-active'"
+               th:href="@{/kcy}">KCY TEST</a>
 
             <div class="site-header__role-actions">
                 <a class="site-header__team-button"
@@ -104,30 +107,6 @@
         </div>
     </div>
 
-    <div class="site-header__submenu" aria-label="하위 메뉴">
-        <div class="site-header__mega-inner">
-            <div class="site-header__submenu-group site-header__submenu-group--courses">
-                <a class="site-header__submenu-item"
-                   th:classappend="${activeSubMenu == 'careerPath'} ? ' is-active'"
-                   th:href="@{/courses/career-path}">
-                    커리어패스
-                </a>
-                <a class="site-header__submenu-item"
-                   th:classappend="${activeSubMenu == 'careerHigh'} ? ' is-active'"
-                   th:href="@{/courses/career-high}">
-                    커리어하이
-                </a>
-            </div>
-
-            <div class="site-header__submenu-group site-header__submenu-group--recommend">
-                <a class="site-header__submenu-item"
-                   th:classappend="${activeSubMenu == 'kcy'} ? ' is-active'"
-                   th:href="@{/recommend/kcy}">
-                    KCY 테스트
-                </a>
-            </div>
-        </div>
-    </div>
 </header>
 </body>
 </html>
