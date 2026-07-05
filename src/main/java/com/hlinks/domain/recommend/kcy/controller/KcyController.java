@@ -27,9 +27,9 @@ public class KcyController {
     private final KcyService kcyService;
 
     // 테스트 화면에 Kcy결과 담아서 제출할 거 담아서 보냅니다.
-    @GetMapping("/recommend/kcy")
+    @GetMapping("/kcy")
     public String test(Model model) {
-        model.addAttribute("activeMenu", "recommend");
+        model.addAttribute("activeMenu", "kcy");
         model.addAttribute("activeSubMenu", "kcy");
         model.addAttribute("questions", kcyService.getQuestions());
         model.addAttribute("kcySubmitRequest", new KcySubmitRequest());
@@ -38,7 +38,7 @@ public class KcyController {
     }
 
     // 사용자가 고른 답변을 제출합니다. 앞에서 넘겨준 KcySubmitRequest 객체가 여기로 다시 들어옵니다.
-    @PostMapping("/recommend/kcy")
+    @PostMapping("/kcy")
     public String submit(
             @Valid KcySubmitRequest request,
             BindingResult bindingResult,
@@ -48,7 +48,7 @@ public class KcyController {
     ) {
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("activeMenu", "recommend");
+            model.addAttribute("activeMenu", "kcy");
             model.addAttribute("activeSubMenu", "kcy");
             model.addAttribute("questions", kcyService.getQuestions());
 
@@ -65,20 +65,20 @@ public class KcyController {
         redirectAttributes.addFlashAttribute("kcyType", type);
         redirectAttributes.addFlashAttribute("kcyScore", score);
 
-        return "redirect:/recommend/kcy/result";
+        return "redirect:/kcy/result";
     }
 
-    @GetMapping("/recommend/kcy/result")
+    @GetMapping("/kcy/result")
     public String result(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model
     ) {
-        model.addAttribute("activeMenu", "recommend");
+        model.addAttribute("activeMenu", "kcy");
         model.addAttribute("activeSubMenu", "kcy");
         model.addAttribute("userName", userDetails.getName());
 
         if (!model.containsAttribute("kcyType") || !model.containsAttribute("kcyScore")) {
-            return "redirect:/recommend/kcy";
+            return "redirect:/kcy";
         }
 
         return "recommend/kcy/result";

@@ -13,4 +13,11 @@ public class MainController {
 
         return "home/index";
     }
+
+    @GetMapping("/recommend")
+    public String recommend(Model model) {
+        model.addAttribute("activeMenu", "recommend");
+
+        return "recommend/index";
+    }
 }
