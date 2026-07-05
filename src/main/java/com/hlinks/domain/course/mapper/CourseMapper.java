@@ -126,6 +126,12 @@ public interface CourseMapper {
             @Param("status") String status
     );
 
+    int completeChapterLearningByQuizAttempt(
+            @Param("chapterLearningId") Long chapterLearningId,
+            @Param("quizAttemptId") Long quizAttemptId,
+            @Param("status") String status
+    );
+
     int updateCourseLearningProgress(
             @Param("courseLearningId") Long courseLearningId,
             @Param("courseId") Long courseId

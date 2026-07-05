@@ -249,6 +249,7 @@
         0                  AS progressRate,
         0                  AS lastPlaySeconds,
         0                  AS maxPlaySeconds,
+        NULL               AS quizAttemptId,
         NULL               AS learningStatus,
         AI_GENERATED_YN    AS aiGeneratedYn,
         QUIZ_BUILD_STATUS  AS quizBuildStatus
@@ -275,6 +276,7 @@
         NVL(cls.PROGRESS_RATE, 0)      AS progressRate,
         NVL(cls.LAST_PLAY_SECONDS, 0)  AS lastPlaySeconds,
         NVL(cls.MAX_PLAY_SECONDS, 0)   AS maxPlaySeconds,
+        cls.QUIZ_ATTEMPT_ID            AS quizAttemptId,
         cls.STATUS                     AS learningStatus,
         cc.AI_GENERATED_YN             AS aiGeneratedYn,
         cc.QUIZ_BUILD_STATUS           AS quizBuildStatus
@@ -626,6 +628,16 @@
         SET last_play_seconds = #{lastPlaySeconds},
             max_play_seconds = GREATEST(max_play_seconds, #{maxPlaySeconds}),
             progress_rate = GREATEST(progress_rate, #{progressRate}),
+            status = #{status},
+            completed_at = NVL(completed_at, SYSDATE),
+            updated_at = SYSDATE
+        WHERE chapter_learning_id = #{chapterLearningId}
+    </update>
+
+    <update id="completeChapterLearningByQuizAttempt">
+        UPDATE CHAPTER_LEARNING_STATUS
+        SET quiz_attempt_id = NVL(quiz_attempt_id, #{quizAttemptId}),
+            progress_rate = 100,
             status = #{status},
             completed_at = NVL(completed_at, SYSDATE),
             updated_at = SYSDATE
