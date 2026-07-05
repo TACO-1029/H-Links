@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CourseLearningService {
 
-    private static final int COMPLETE_PROGRESS_RATE = 95;
     private static final int MAX_PROGRESS_JUMP_SECONDS = 30;
     private static final String EVENT_START = "START";
     private static final String EVENT_PAUSE = "PAUSE";
@@ -86,53 +85,33 @@ public class CourseLearningService {
         int lastPlaySeconds = resolveLastPlaySeconds(previousMaxPlaySeconds, requestedPlaySeconds, maxPlaySeconds);
         int progressRate = calculateProgressRate(maxPlaySeconds, durationSeconds);
         boolean alreadyCompleted = LearningStatus.COMPLETED.name().equals(target.getStatus());
-        boolean completed = !alreadyCompleted && progressRate >= COMPLETE_PROGRESS_RATE;
 
         if (alreadyCompleted) {
             return;
         }
 
-        if (completed) {
-            progressRate = 100;
-            courseMapper.completeChapterLearning(
-                    target.getChapterLearningId(),
-                    lastPlaySeconds,
-                    maxPlaySeconds,
-                    progressRate,
-                    LearningStatus.COMPLETED.name()
-            );
-        } else {
-            courseMapper.updateChapterLearningProgress(
-                    target.getChapterLearningId(),
-                    lastPlaySeconds,
-                    maxPlaySeconds,
-                    progressRate
-            );
-        }
+        courseMapper.updateChapterLearningProgress(
+                target.getChapterLearningId(),
+                lastPlaySeconds,
+                maxPlaySeconds,
+                progressRate
+        );
 
-        if (shouldInsertLearningLog(request, completed)) {
+        if (shouldInsertLearningLog(request)) {
             courseMapper.insertLearningLog(
                     target.getCourseLearningId(),
                     target.getChapterLearningId(),
                     userId,
                     courseId,
                     chapterId,
-                    resolveEventType(request, completed),
+                    resolveEventType(request),
                     lastPlaySeconds,
                     progressRate
             );
         }
 
-        if (completed || Boolean.TRUE.equals(request.getFlush())) {
+        if (Boolean.TRUE.equals(request.getFlush())) {
             courseMapper.updateCourseLearningProgress(target.getCourseLearningId(), courseId);
-        }
-
-        if (completed) {
-            courseMapper.completeCourseLearningIfAllChaptersCompleted(
-                    target.getCourseLearningId(),
-                    courseId,
-                    LearningStatus.COMPLETED.name()
-            );
         }
     }
 
@@ -174,20 +153,14 @@ public class CourseLearningService {
         return maxPlaySeconds;
     }
 
-    private boolean shouldInsertLearningLog(LearningProgressSaveRequest request, boolean completed) {
-        if (completed) {
-            return true;
-        }
+    private boolean shouldInsertLearningLog(LearningProgressSaveRequest request) {
         String eventType = request.getEventType();
-        return EVENT_PAUSE.equals(eventType) || EVENT_EXIT.equals(eventType);
+        return EVENT_PAUSE.equals(eventType) || EVENT_EXIT.equals(eventType) || EVENT_COMPLETE.equals(eventType);
     }
 
-    private String resolveEventType(LearningProgressSaveRequest request, boolean completed) {
-        if (completed) {
-            return EVENT_COMPLETE;
-        }
+    private String resolveEventType(LearningProgressSaveRequest request) {
         String eventType = request.getEventType();
-        if (EVENT_PAUSE.equals(eventType) || EVENT_EXIT.equals(eventType)) {
+        if (EVENT_PAUSE.equals(eventType) || EVENT_EXIT.equals(eventType) || EVENT_COMPLETE.equals(eventType)) {
             return eventType;
         }
         return "PROGRESS";

@@ -31,7 +31,12 @@ public class CourseSummaryPromptBuilder {
                 - 신규 skillName을 작성한 경우 skills.newSkillYn은 "Y"로 작성하세요.
                 - skills.sourceSkillName에는 강의 내용에서 발견한 실제 세부 표현을 작성하세요.
                 - 관련 스킬이 없으면 skills는 빈 배열로 반환하세요.
-                - skills.weight는 강의에서 해당 skill이 차지하는 중요도를 1~5 사이 정수로 작성하세요.
+                - skills.weight는 챕터에서 해당 skill이 차지하는 학습 비중을 0~1 사이 소수로 작성하세요.
+                - skills.weight의 합은 반드시 1.0이 되도록 작성하세요.
+                - 핵심 학습 목표이거나 실습의 중심 기술은 0.6~0.8 수준으로 크게 부여하세요.
+                - 핵심 기술을 이해하기 위한 주요 보조 기술은 0.2~0.4 수준으로 부여하세요.
+                - 간단히 언급되거나 환경/배경으로만 사용되는 기술은 0.05~0.15 수준으로 작게 부여하세요.
+                - 단순 언급 빈도보다 학습 목표 중심성을 우선하여 weight를 산정하세요.
 
                 사용 가능한 skillName 목록:
                 %s
@@ -44,7 +49,7 @@ public class CourseSummaryPromptBuilder {
                       "skillName": "최종 저장할 스킬명",
                       "sourceSkillName": "강의 내용에서 발견한 실제 세부 표현",
                       "newSkillYn": "N",
-                      "weight": 3
+                      "weight": 0.7
                     }
                   ]
                 }

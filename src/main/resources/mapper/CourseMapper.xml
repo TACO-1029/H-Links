@@ -249,6 +249,7 @@
         0                  AS progressRate,
         0                  AS lastPlaySeconds,
         0                  AS maxPlaySeconds,
+        NULL               AS quizAttemptId,
         NULL               AS learningStatus,
         AI_GENERATED_YN    AS aiGeneratedYn,
         QUIZ_BUILD_STATUS  AS quizBuildStatus
@@ -275,7 +276,8 @@
         NVL(cls.PROGRESS_RATE, 0)      AS progressRate,
         NVL(cls.LAST_PLAY_SECONDS, 0)  AS lastPlaySeconds,
         NVL(cls.MAX_PLAY_SECONDS, 0)   AS maxPlaySeconds,
-        NVL(cls.STATUS, 'NOT_STARTED')                     AS learningStatus,
+        cls.QUIZ_ATTEMPT_ID            AS quizAttemptId,
+        cls.STATUS                     AS learningStatus,
         cc.AI_GENERATED_YN             AS aiGeneratedYn,
         cc.QUIZ_BUILD_STATUS           AS quizBuildStatus
         FROM COURSE_CHAPTER cc
@@ -348,6 +350,15 @@
         ORDER BY CC.CHAPTER_ORDER, CS.SKILL_ID
     </select>
 
+    <select id="findCourseIdsHavingChapterSkills" resultType="long">
+        SELECT DISTINCT CC.COURSE_ID
+        FROM COURSE_CHAPTER CC
+        JOIN CHAPTER_SKILL CS
+        ON CC.CHAPTER_ID = CS.CHAPTER_ID
+        WHERE CC.USE_YN = 'Y'
+        ORDER BY CC.COURSE_ID
+    </select>
+
     <delete id="deleteCourseSkillsByCourseId">
         DELETE FROM COURSE_SKILL
         WHERE COURSE_ID = #{courseId}
@@ -372,7 +383,7 @@
         SELECT
         CA.APPLICATION_STATUS AS applicationStatus,
         CA.REJECT_REASON      AS rejectReason,
-        NVL(cls.STATUS, 'NOT_STARTED')            AS learningStatus,
+        CLS.STATUS            AS learningStatus,
         CLS.PROGRESS_RATE     AS progressRate
         FROM COURSE_APPLICATION CA
         LEFT JOIN COURSE_LEARNING_STATUS CLS
@@ -623,6 +634,16 @@
         WHERE chapter_learning_id = #{chapterLearningId}
     </update>
 
+    <update id="completeChapterLearningByQuizAttempt">
+        UPDATE CHAPTER_LEARNING_STATUS
+        SET quiz_attempt_id = NVL(quiz_attempt_id, #{quizAttemptId}),
+            progress_rate = 100,
+            status = #{status},
+            completed_at = NVL(completed_at, SYSDATE),
+            updated_at = SYSDATE
+        WHERE chapter_learning_id = #{chapterLearningId}
+    </update>
+
     <update id="updateCourseLearningProgress">
         UPDATE COURSE_LEARNING_STATUS cls
         SET progress_rate = (
@@ -834,10 +855,10 @@
             q.QUESTION_TEXT as questionText,
             q.EXPLANATION as explanation,
             qo_sub.OPTION_TEXT as submittedOptionText,
-            (SELECT qo_cor.OPTION_TEXT 
-             FROM QUIZ_OPTION qo_cor 
-             WHERE qo_cor.QUIZ_ID = q.QUIZ_ID 
-               AND qo_cor.CORRECT_YN = 'Y' 
+            (SELECT qo_cor.OPTION_TEXT
+             FROM QUIZ_OPTION qo_cor
+             WHERE qo_cor.QUIZ_ID = q.QUIZ_ID
+               AND qo_cor.CORRECT_YN = 'Y'
                AND ROWNUM = 1) as correctOptionText,
             TO_CHAR(qa.SUBMITTED_AT, 'YYYY.MM.DD') as submittedAtStr
         FROM QUIZ_ATTEMPT qa
@@ -886,4 +907,3 @@
     </select>
 
 </mapper>
-

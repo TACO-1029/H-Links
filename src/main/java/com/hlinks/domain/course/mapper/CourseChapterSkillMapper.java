@@ -3,6 +3,7 @@ package com.hlinks.domain.course.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Mapper
@@ -22,6 +23,6 @@ public interface CourseChapterSkillMapper {
     int insertChapterSkill(
             @Param("chapterId") Long chapterId,
             @Param("skillId") Long skillId,
-            @Param("weight") Integer weight
+            @Param("weight") BigDecimal weight
     );
 }
