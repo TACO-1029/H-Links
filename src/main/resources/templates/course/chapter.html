@@ -65,24 +65,72 @@
             </div>
 
             <div class="chapter-toc">
-                <a th:each="chapter : ${course.chapters}"
-                   th:href="@{/courses/{courseId}/chapters/{chapterId}(courseId=${course.courseId}, chapterId=${chapter.chapterId})}"
-                   class="chapter-toc__item"
-                   th:classappend="${chapter.chapterId == currentChapter.chapterId} ? ' is-active' : ''">
-                    <span class="chapter-toc__order" th:text="${chapter.chapterOrder} + '강'">1강</span>
-                    <strong th:text="${chapter.chapterOrder} + '강. ' + ${chapter.chapterTitle}">
-                        1강. App Router의 핵심 원리
-                    </strong>
-                    <span class="chapter-toc__bar"
-                          th:style="|--progress:${chapter.progressRate != null ? chapter.progressRate : 0}%|"
-                          aria-hidden="true"></span>
-                    <span class="chapter-toc__meta">
-                        <span th:text="'진도 ' + ${chapter.progressRate != null ? chapter.progressRate : 0} + '%'">진도 0%</span>
-                        <span th:text="${chapter.durationSeconds != null and chapter.durationSeconds > 0
-                                ? '0:00 / ' + (chapter.durationSeconds / 60) + ':' + #numbers.formatInteger(chapter.durationSeconds % 60, 2)
-                                : '0:00 / 0:00'}">0:00 / 0:00</span>
-                    </span>
-                </a>
+                <th:block th:each="chapter : ${course.chapters}">
+                    <a th:href="@{/courses/{courseId}/chapters/{chapterId}(courseId=${course.courseId}, chapterId=${chapter.chapterId})}"
+                       class="chapter-toc__item"
+                       th:classappend="${chapter.chapterId == currentChapter.chapterId} ? ' is-active' : ''">
+                        <span class="chapter-toc__order" th:text="${chapter.chapterOrder} + '강'">1강</span>
+                        <strong th:text="${chapter.chapterOrder} + '강. ' + ${chapter.chapterTitle}">
+                            1강. App Router의 핵심 원리
+                        </strong>
+                        <span class="chapter-toc__meta">
+                            <span th:text="'진도 ' + ${chapter.progressRate != null ? chapter.progressRate : 0} + '%'">진도 0%</span>
+                            <span th:text="${chapter.durationSeconds != null and chapter.durationSeconds > 0
+                                    ? '0:00 / ' + (chapter.durationSeconds / 60) + ':' + #numbers.formatInteger(chapter.durationSeconds % 60, 2)
+                                    : '0:00 / 0:00'}">0:00 / 0:00</span>
+                        </span>
+                        <span class="chapter-toc__bar"
+                              th:style="|--progress:${chapter.progressRate != null ? chapter.progressRate : 0}%|"
+                              aria-hidden="true"></span>
+                    </a>
+
+                    <article class="chapter-quiz-card"
+                             th:if="${chapter.chapterId == currentChapter.chapterId}">
+                        <div class="chapter-quiz-card__header">
+                            <span th:text="${chapter.chapterOrder} + '강 퀴즈'">1강 퀴즈</span>
+                            <span class="chapter-quiz-card__status"
+                                  th:classappend="${currentChapter.quizAttemptId != null
+                                      ? ' is-done'
+                                      : ((currentChapter.progressRate != null and currentChapter.progressRate >= 95)
+                                          ? ' is-ready'
+                                          : ' is-locked')}"
+                                  th:text="${currentChapter.quizAttemptId != null
+                                      ? '응시 완료'
+                                      : ((currentChapter.progressRate != null and currentChapter.progressRate >= 95)
+                                          ? '응시 가능'
+                                          : '잠김')}">
+                                잠김
+                            </span>
+                        </div>
+                        <div>
+                            <h3 th:text="${chapter.chapterTitle} + ' 퀴즈'">챕터 퀴즈</h3>
+                            <strong class="chapter-quiz-card__chapter"
+                                    th:text="${chapter.chapterOrder} + '강 학습을 마친 뒤 응시할 수 있습니다.'">1강 학습을 마친 뒤 응시할 수 있습니다.</strong>
+                            <p class="js-quiz-message"
+                               th:text="${currentChapter.quizAttemptId != null
+                                   ? '이미 제출한 퀴즈 결과를 확인할 수 있습니다.'
+                                   : ((currentChapter.progressRate != null and currentChapter.progressRate >= 95)
+                                       ? '퀴즈 응시가 가능합니다. 제출 후 챕터가 수강 완료 처리됩니다.'
+                                       : '진도율 95% 이상 수강 후 응시 가능')}">
+                                진도율 95% 이상 수강 후 응시 가능
+                            </p>
+                        </div>
+                        <a class="chapter-quiz-card__button"
+                           th:if="${currentChapter.quizAttemptId != null}"
+                           th:href="@{/courses/{courseId}/chapters/{chapterId}/quiz/result/{attemptId}(courseId=${course.courseId}, chapterId=${currentChapter.chapterId}, attemptId=${currentChapter.quizAttemptId})}">
+                            결과 보기
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </a>
+                        <a class="chapter-quiz-card__button js-quiz-link"
+                           th:if="${currentChapter.quizAttemptId == null}"
+                           th:classappend="${currentChapter.progressRate == null or currentChapter.progressRate lt 95} ? ' is-disabled'"
+                           th:href="@{/courses/{courseId}/chapters/{chapterId}/quiz(courseId=${course.courseId}, chapterId=${currentChapter.chapterId})}"
+                           th:attr="aria-disabled=${currentChapter.progressRate == null or currentChapter.progressRate lt 95}">
+                            퀴즈 응시
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        </a>
+                    </article>
+                </th:block>
             </div>
         </aside>
     </div>
@@ -183,6 +231,29 @@
 
             const progressRate = Number(progress.progressRate || 0);
             currentProgressText.textContent = `${progressRate}%`;
+            updateQuizButton(progressRate);
+        }
+
+        function updateQuizButton(progressRate) {
+            const quizLink = document.querySelector('.js-quiz-link');
+            const quizMessage = document.querySelector('.js-quiz-message');
+            const quizStatus = document.querySelector('.chapter-quiz-card__status');
+            if (!quizLink) {
+                return;
+            }
+
+            if (progressRate >= 95) {
+                quizLink.classList.remove('is-disabled');
+                quizLink.setAttribute('aria-disabled', 'false');
+                if (quizStatus) {
+                    quizStatus.classList.remove('is-locked');
+                    quizStatus.classList.add('is-ready');
+                    quizStatus.textContent = '응시 가능';
+                }
+                if (quizMessage) {
+                    quizMessage.textContent = '퀴즈 응시가 가능합니다. 제출 후 챕터가 수강 완료 처리됩니다.';
+                }
+            }
         }
 
         function getProgressPayload(eventType, flush, forceCompleted) {
@@ -265,6 +336,15 @@
         if (placeholderPlayButton) {
             placeholderPlayButton.addEventListener('click', startLearning);
         }
+
+        document.addEventListener('click', function (event) {
+            const disabledQuizLink = event.target.closest('.js-quiz-link.is-disabled');
+            if (!disabledQuizLink) {
+                return;
+            }
+            event.preventDefault();
+            alert('진도율 95% 이상 수강 후 응시 가능합니다.');
+        });
 
         window.addEventListener('pagehide', function () {
             if (!completed) {
