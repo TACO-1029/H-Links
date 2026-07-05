@@ -2,6 +2,7 @@ package com.hlinks.domain.course.service;
 
 import com.hlinks.domain.course.dto.CourseSkillAggregationRow;
 import com.hlinks.domain.course.mapper.CourseMapper;
+import com.hlinks.domain.course.util.SkillWeightNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -106,7 +107,7 @@ public class CourseSkillAggregationService {
             }
         }
 
-        return normalizeToOne(rawScores);
+        return SkillWeightNormalizer.normalizeToOne(rawScores);
     }
 
     private BigDecimal resolveChapterRatio(
@@ -131,7 +132,7 @@ public class CourseSkillAggregationService {
                 continue;
             }
 
-            BigDecimal weight = resolveRawSkillWeight(row.getWeight());
+            BigDecimal weight = SkillWeightNormalizer.resolveRawWeight(row.getWeight());
 
             if (weight == null) {
                 continue;
@@ -140,50 +141,6 @@ public class CourseSkillAggregationService {
             rawWeights.merge(row.getSkillId(), weight, BigDecimal::add);
         }
 
-        return normalizeToOne(rawWeights);
-    }
-
-    private BigDecimal resolveRawSkillWeight(BigDecimal weight) {
-        if (weight == null) {
-            return BigDecimal.ONE;
-        }
-
-        if (weight.compareTo(BigDecimal.ZERO) <= 0) {
-            return null;
-        }
-
-        return weight;
-    }
-
-    private Map<Long, BigDecimal> normalizeToOne(Map<Long, BigDecimal> rawScores) {
-        BigDecimal rawTotal = rawScores.values().stream()
-                .filter(weight -> weight != null && weight.compareTo(BigDecimal.ZERO) > 0)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        if (rawScores.isEmpty() || rawTotal.compareTo(BigDecimal.ZERO) <= 0) {
-            return Map.of();
-        }
-
-        Map<Long, BigDecimal> normalizedWeights = new LinkedHashMap<>();
-        List<Map.Entry<Long, BigDecimal>> entries = rawScores.entrySet().stream()
-                .filter(entry -> entry.getValue() != null && entry.getValue().compareTo(BigDecimal.ZERO) > 0)
-                .toList();
-        BigDecimal accumulatedWeight = BigDecimal.ZERO;
-
-        for (int index = 0; index < entries.size(); index++) {
-            Map.Entry<Long, BigDecimal> entry = entries.get(index);
-            BigDecimal normalizedWeight;
-
-            if (index == entries.size() - 1) {
-                normalizedWeight = BigDecimal.ONE.subtract(accumulatedWeight);
-            } else {
-                normalizedWeight = entry.getValue().divide(rawTotal, WEIGHT_SCALE, RoundingMode.HALF_UP);
-                accumulatedWeight = accumulatedWeight.add(normalizedWeight);
-            }
-
-            normalizedWeights.put(entry.getKey(), normalizedWeight.max(BigDecimal.ZERO));
-        }
-
-        return normalizedWeights;
+        return SkillWeightNormalizer.normalizeToOne(rawWeights);
     }
 }

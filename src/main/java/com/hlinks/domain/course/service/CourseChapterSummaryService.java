@@ -6,6 +6,7 @@ import com.hlinks.domain.course.ai.service.AiCourseSummaryService;
 import com.hlinks.domain.course.entity.CourseChapter;
 import com.hlinks.domain.course.mapper.CourseChapterMapper;
 import com.hlinks.domain.course.mapper.CourseChapterSkillMapper;
+import com.hlinks.domain.course.util.SkillWeightNormalizer;
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.global.response.code.ErrorResponseCode;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,6 @@ public class CourseChapterSummaryService {
     private static final String DEFAULT_SKILL_TYPE = "TECH";
     private static final int MIN_SKILL_NAME_LENGTH = 2;
     private static final int MAX_SKILL_NAME_LENGTH = 100;
-    private static final int WEIGHT_SCALE = 6;
 
     private final CourseChapterMapper courseChapterMapper;
     private final CourseChapterSkillMapper courseChapterSkillMapper;
@@ -91,7 +90,7 @@ public class CourseChapterSummaryService {
                 continue;
             }
 
-            BigDecimal weight = normalizeWeight(skill.getWeight());
+            BigDecimal weight = SkillWeightNormalizer.resolveRawWeight(skill.getWeight());
 
             if (weight == null) {
                 continue;
@@ -100,7 +99,7 @@ public class CourseChapterSummaryService {
             matchedSkills.merge(skillId, weight, BigDecimal::add);
         }
 
-        Map<Long, BigDecimal> normalizedSkills = normalizeToOne(matchedSkills);
+        Map<Long, BigDecimal> normalizedSkills = SkillWeightNormalizer.normalizeToOne(matchedSkills);
 
         normalizedSkills.forEach((skillId, weight) ->
                 courseChapterSkillMapper.insertChapterSkill(chapterId, skillId, weight)
@@ -178,50 +177,6 @@ public class CourseChapterSummaryService {
         }
 
         return newSkillYn.trim();
-    }
-
-    private BigDecimal normalizeWeight(BigDecimal weight) {
-        if (weight == null) {
-            return BigDecimal.ONE;
-        }
-
-        if (weight.compareTo(BigDecimal.ZERO) <= 0) {
-            return null;
-        }
-
-        return weight;
-    }
-
-    private Map<Long, BigDecimal> normalizeToOne(Map<Long, BigDecimal> weights) {
-        BigDecimal totalWeight = weights.values().stream()
-                .filter(weight -> weight != null && weight.compareTo(BigDecimal.ZERO) > 0)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        if (weights.isEmpty() || totalWeight.compareTo(BigDecimal.ZERO) <= 0) {
-            return Map.of();
-        }
-
-        Map<Long, BigDecimal> normalizedWeights = new LinkedHashMap<>();
-        List<Map.Entry<Long, BigDecimal>> entries = weights.entrySet().stream()
-                .filter(entry -> entry.getValue() != null && entry.getValue().compareTo(BigDecimal.ZERO) > 0)
-                .toList();
-        BigDecimal accumulatedWeight = BigDecimal.ZERO;
-
-        for (int index = 0; index < entries.size(); index++) {
-            Map.Entry<Long, BigDecimal> entry = entries.get(index);
-            BigDecimal normalizedWeight;
-
-            if (index == entries.size() - 1) {
-                normalizedWeight = BigDecimal.ONE.subtract(accumulatedWeight);
-            } else {
-                normalizedWeight = entry.getValue().divide(totalWeight, WEIGHT_SCALE, RoundingMode.HALF_UP);
-                accumulatedWeight = accumulatedWeight.add(normalizedWeight);
-            }
-
-            normalizedWeights.put(entry.getKey(), normalizedWeight.max(BigDecimal.ZERO));
-        }
-
-        return normalizedWeights;
     }
 
     private CourseChapter findChapter(Long chapterId) {
