@@ -218,4 +218,50 @@ public interface CourseMapper {
      * @return 신청 상태(Status) 및 반려 사유가 매핑된 DTO 객체 (이력이 없으면 null 반환)
      */
     CourseDetailResponseDto findApplicationInfo(@Param("courseId") Long courseId, @Param("userId") Long userId);
+
+    // ========================================================
+    // [이슈 #65] 마이페이지/내 수강현황 관련 추가 메서드들
+    // ========================================================
+
+    /**
+     * [이슈 #65] 마이페이지/내 수강현황 - 사용자별 신청/수강 코스 정보 및 진도율 조회
+     */
+    List<com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto.MyCourseDto> selectMyCoursesWithProgress(@Param("userId") Long userId);
+
+    /**
+     * [이슈 #65] 마이페이지/내 수강현황 - 최근 수료한 강의 단건 조회
+     */
+    com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto.RecentCompletedCourseDto selectRecentCompletedCourse(@Param("userId") Long userId);
+
+    /**
+     * [이슈 #65] 마이페이지/내 수강현황 - 실시간 학습 활동 로그 조회
+     */
+    List<com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto.LearningActivityDto> selectLearningActivities(@Param("userId") Long userId);
+
+    /**
+     * [이슈 #65] 마이페이지/내 수강현황 - 오답노트 문항 및 해설 조회
+     */
+    List<com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto.QuizWrongNoteDto> selectQuizWrongNotes(@Param("userId") Long userId);
+
+    /**
+     * [이슈 #65] 마이페이지/내 수강현황 - 퀴즈 평균 점수가 80점 미만인 보완 필요 코스 수 카운트
+     */
+    int countReinforcementCourses(@Param("userId") Long userId);
+
+    /**
+     * [이슈 #65] 마이페이지/내 수강현황 - 사용자 학습 이력이 존재하는지 확인
+     */
+    boolean hasCourseLearnings(@Param("userId") Long userId);
+
+    /**
+     * [이슈 #65] 마이페이지/내 수강현황 - 사용자 퀴즈 응시 이력이 존재하는지 확인
+     */
+    boolean hasQuizAttempts(@Param("userId") Long userId);
+
+    /**
+     * [이슈 #65] 마이페이지/내 수강현황 - 사용자 학습 로그가 존재하는지 확인
+     */
+    boolean hasLearningLogs(@Param("userId") Long userId);
 }
+
+

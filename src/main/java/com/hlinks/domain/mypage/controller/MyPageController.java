@@ -4,6 +4,7 @@ import com.hlinks.domain.interest.dto.InterestDto;
 import com.hlinks.domain.interest.service.InterestService;
 import com.hlinks.domain.course.dto.CourseApplicationListResponseDto;
 import com.hlinks.domain.course.service.CourseService;
+import com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto;
 import com.hlinks.domain.recommend.kcy.service.KcyService;
 import com.hlinks.domain.recommend.kcy.type.KcyType;
 import com.hlinks.global.response.SuccessResponse;
@@ -64,6 +65,30 @@ public class MyPageController {
         model.addAttribute("careerDescription", "UI 아키텍처와 클라우드 기반 배포 역량을 함께 강화하면 제품형 엔지니어로 성장 가능성이 높습니다.");
 
         return "mypage/info";
+    }
+
+    // ========================================================
+    // [이슈 #65] 내 수강현황 화면 조회
+    // ========================================================
+    /**
+     * 로그인한 임직원의 내 수강현황 대시보드 페이지를 보여줍니다.
+     */
+    @GetMapping("/mypage/courses")
+    public String myCourseStatus(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        Long userId = userDetails.getUserId();
+        log.info("마이페이지 내 수강현황 화면 요청 - 유저 ID: {}", userId);
+
+        // 1. 사이드바 내 서브메뉴 활성화 상태값 설정
+        model.addAttribute("activeMenu", "mypage");
+        model.addAttribute("activeSubMenu", "myCourses");
+        addMyPageHeroModel(userDetails, model);
+
+        // 2. 대시보드 리치 데이터 조회 및 바인딩
+        MyCourseStatusResponseDto statusDto = courseService.getMyCourseStatus(userId);
+        model.addAttribute("statusDto", statusDto);
+
+        // 3. templates/mypage/courses.html 렌더링
+        return "mypage/courses";
     }
 
     // ========================================================
