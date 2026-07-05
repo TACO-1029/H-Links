@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hlinks.domain.career.mapper.CareerMapper">
+
+    <select id="countDiagnosisByUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM CAREER_DIAGNOSIS
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <select id="findLatestDiagnosisIdByUserId" resultType="Long">
+        SELECT MAX(DIAGNOSIS_ID)
+        FROM CAREER_DIAGNOSIS
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <select id="findLatestDiagnosisByUserId" resultType="com.hlinks.domain.career.entity.CareerDiagnosis">
+        SELECT *
+        FROM (
+            SELECT *
+            FROM CAREER_DIAGNOSIS
+            WHERE USER_ID = #{userId}
+            ORDER BY DIAGNOSIS_ID DESC
+        )
+        WHERE ROWNUM = 1
+    </select>
+
+    <insert id="insertCareerDiagnosis" parameterType="com.hlinks.domain.career.entity.CareerDiagnosis">
+        <selectKey keyProperty="diagnosisId" resultType="long" order="BEFORE">
+            SELECT CAREER_DIAGNOSIS_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO CAREER_DIAGNOSIS (
+            DIAGNOSIS_ID,
+            USER_ID,
+            LLM_SUMMARY,
+            LEVEL_TEST_BUILD_STATUS,
+            CREATED_AT
+        ) VALUES (
+            #{diagnosisId},
+            #{userId},
+            #{llmSummary, jdbcType=CLOB},
+            #{levelTestBuildStatus, jdbcType=VARCHAR},
+            SYSDATE
+        )
+    </insert>
+
+    <insert id="insertCareerTargetSkill">
+        INSERT INTO CAREER_TARGET_SKILL (
+            TARGET_SKILL_ID,
+            DIAGNOSIS_ID,
+            SKILL_ID
+        ) VALUES (
+            CAREER_TARGET_SKILL_SEQ.NEXTVAL,
+            #{diagnosisId},
+            #{skillId}
+        )
+    </insert>
+
+    <select id="countQuestionsByDiagnosisId" resultType="int">
+        SELECT COUNT(*)
+        FROM LEVEL_TEST_QUESTION
+        WHERE DIAGNOSIS_ID = #{diagnosisId}
+    </select>
+
+    <select id="countAnswersByDiagnosisId" resultType="int">
+        SELECT COUNT(*)
+        FROM LEVEL_TEST_ANSWER_LOG al
+        JOIN LEVEL_TEST_QUESTION q ON al.LEVEL_QUESTION_ID = q.LEVEL_QUESTION_ID
+        WHERE q.DIAGNOSIS_ID = #{diagnosisId}
+    </select>
+
+    <select id="countRecommendationsByDiagnosisId" resultType="int">
+        SELECT COUNT(*)
+        FROM CAREER_RECOMMENDATION
+        WHERE DIAGNOSIS_ID = #{diagnosisId}
+    </select>
+
+    <select id="countTargetSkillsByDiagnosisId" resultType="int">
+        SELECT COUNT(*)
+        FROM CAREER_TARGET_SKILL
+        WHERE DIAGNOSIS_ID = #{diagnosisId}
+    </select>
+
+    <select id="findAllActiveSkills" resultType="com.hlinks.domain.career.dto.CareerSkillDto">
+        SELECT
+            SKILL_ID AS skillId,
+            SKILL_NAME AS skillName,
+            PARENT_SKILL_ID AS parentSkillId,
+            SKILL_TYPE AS skillType
+        FROM SKILL
+        WHERE USE_YN = 'Y'
+        ORDER BY SKILL_TYPE, SKILL_NAME
+    </select>
+
+</mapper>
