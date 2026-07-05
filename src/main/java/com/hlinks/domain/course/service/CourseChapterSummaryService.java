@@ -6,6 +6,7 @@ import com.hlinks.domain.course.ai.service.AiCourseSummaryService;
 import com.hlinks.domain.course.entity.CourseChapter;
 import com.hlinks.domain.course.mapper.CourseChapterMapper;
 import com.hlinks.domain.course.mapper.CourseChapterSkillMapper;
+import com.hlinks.domain.course.util.SkillWeightNormalizer;
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.global.response.code.ErrorResponseCode;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +81,7 @@ public class CourseChapterSummaryService {
             return;
         }
 
-        Map<Long, Integer> matchedSkills = new LinkedHashMap<>();
+        Map<Long, BigDecimal> matchedSkills = new LinkedHashMap<>();
 
         for (CourseSummarySkill skill : skills) {
             Long skillId = resolveSkillId(chapterId, skill);
@@ -88,10 +90,18 @@ public class CourseChapterSummaryService {
                 continue;
             }
 
-            matchedSkills.merge(skillId, normalizeWeight(skill.getWeight()), Math::max);
+            BigDecimal weight = SkillWeightNormalizer.resolveRawWeight(skill.getWeight());
+
+            if (weight == null) {
+                continue;
+            }
+
+            matchedSkills.merge(skillId, weight, BigDecimal::add);
         }
 
-        matchedSkills.forEach((skillId, weight) ->
+        Map<Long, BigDecimal> normalizedSkills = SkillWeightNormalizer.normalizeToOne(matchedSkills);
+
+        normalizedSkills.forEach((skillId, weight) ->
                 courseChapterSkillMapper.insertChapterSkill(chapterId, skillId, weight)
         );
 
@@ -167,14 +177,6 @@ public class CourseChapterSummaryService {
         }
 
         return newSkillYn.trim();
-    }
-
-    private Integer normalizeWeight(Integer weight) {
-        if (weight == null) {
-            return 1;
-        }
-
-        return Math.max(1, Math.min(weight, 5));
     }
 
     private CourseChapter findChapter(Long chapterId) {

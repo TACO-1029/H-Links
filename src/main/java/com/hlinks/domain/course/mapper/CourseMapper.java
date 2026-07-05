@@ -13,6 +13,7 @@ import com.hlinks.domain.course.dto.SkillFilterOptionDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -208,8 +209,10 @@ public interface CourseMapper {
     int insertCourseSkill(
             @Param("courseId") Long courseId,
             @Param("skillId") Long skillId,
-            @Param("weight") Integer weight
+            @Param("weight") BigDecimal weight
     );
+
+    List<Long> findCourseIdsHavingChapterSkills();
 
     /**
      * [이슈 #31] 4. 특정 사용자의 해당 강의 수강 신청 정보 조회

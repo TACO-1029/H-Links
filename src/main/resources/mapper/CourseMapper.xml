@@ -348,6 +348,15 @@
         ORDER BY CC.CHAPTER_ORDER, CS.SKILL_ID
     </select>
 
+    <select id="findCourseIdsHavingChapterSkills" resultType="long">
+        SELECT DISTINCT CC.COURSE_ID
+        FROM COURSE_CHAPTER CC
+        JOIN CHAPTER_SKILL CS
+        ON CC.CHAPTER_ID = CS.CHAPTER_ID
+        WHERE CC.USE_YN = 'Y'
+        ORDER BY CC.COURSE_ID
+    </select>
+
     <delete id="deleteCourseSkillsByCourseId">
         DELETE FROM COURSE_SKILL
         WHERE COURSE_ID = #{courseId}

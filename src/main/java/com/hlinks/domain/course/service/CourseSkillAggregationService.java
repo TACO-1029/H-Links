@@ -2,13 +2,14 @@ package com.hlinks.domain.course.service;
 
 import com.hlinks.domain.course.dto.CourseSkillAggregationRow;
 import com.hlinks.domain.course.mapper.CourseMapper;
+import com.hlinks.domain.course.util.SkillWeightNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,20 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CourseSkillAggregationService {
 
-    private static final int TOTAL_WEIGHT = 100;
+    private static final int WEIGHT_SCALE = 6;
 
     private final CourseMapper courseMapper;
+
+    @Transactional
+    public int recalculateAllCourseSkills() {
+        List<Long> courseIds = courseMapper.findCourseIdsHavingChapterSkills();
+
+        for (Long courseId : courseIds) {
+            recalculateCourseSkills(courseId);
+        }
+
+        return courseIds.size();
+    }
 
     @Transactional
     public void recalculateCourseSkills(Long courseId) {
@@ -34,7 +46,7 @@ public class CourseSkillAggregationService {
             return;
         }
 
-        Map<Long, Integer> weights = calculateCourseSkillWeights(chapterSkills);
+        Map<Long, BigDecimal> weights = calculateCourseSkillWeights(chapterSkills);
 
         if (weights.isEmpty()) {
             log.info("강의 스킬 집계 생략. 집계 가능한 스킬이 없습니다. courseId={}", courseId);
@@ -46,7 +58,7 @@ public class CourseSkillAggregationService {
         );
     }
 
-    private Map<Long, Integer> calculateCourseSkillWeights(List<CourseSkillAggregationRow> chapterSkills) {
+    private Map<Long, BigDecimal> calculateCourseSkillWeights(List<CourseSkillAggregationRow> chapterSkills) {
         Map<Long, Integer> chapterDurations = chapterSkills.stream()
                 .collect(Collectors.toMap(
                         CourseSkillAggregationRow::getChapterId,
@@ -62,102 +74,73 @@ public class CourseSkillAggregationService {
         boolean useDurationWeight = totalDuration > 0
                 && chapterDurations.values().stream().allMatch(duration -> duration != null && duration > 0);
 
-        Map<Long, Double> rawScores = new LinkedHashMap<>();
+        Map<Long, List<CourseSkillAggregationRow>> chapterSkillGroups = chapterSkills.stream()
+                .filter(row -> row.getChapterId() != null)
+                .collect(Collectors.groupingBy(
+                        CourseSkillAggregationRow::getChapterId,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        Map<Long, BigDecimal> rawScores = new LinkedHashMap<>();
         int chapterCount = Math.max(1, chapterDurations.size());
 
-        for (CourseSkillAggregationRow row : chapterSkills) {
-            if (row.getSkillId() == null) {
+        for (Map.Entry<Long, List<CourseSkillAggregationRow>> entry : chapterSkillGroups.entrySet()) {
+            Long chapterId = entry.getKey();
+            List<CourseSkillAggregationRow> rows = entry.getValue();
+            Map<Long, BigDecimal> chapterWeights = normalizeChapterSkillWeights(rows);
+
+            if (chapterWeights.isEmpty()) {
                 continue;
             }
 
-            double chapterRatio = resolveChapterRatio(row, chapterCount, totalDuration, useDurationWeight);
-            double score = normalizeChapterSkillWeight(row.getWeight()) * chapterRatio;
-            rawScores.merge(row.getSkillId(), score, Double::sum);
+            BigDecimal chapterRatio = resolveChapterRatio(
+                    chapterDurations.get(chapterId),
+                    chapterCount,
+                    totalDuration,
+                    useDurationWeight
+            );
+
+            for (Map.Entry<Long, BigDecimal> chapterWeight : chapterWeights.entrySet()) {
+                BigDecimal score = chapterWeight.getValue().multiply(chapterRatio);
+                rawScores.merge(chapterWeight.getKey(), score, BigDecimal::add);
+            }
         }
 
-        return normalizeToTotalWeight(rawScores);
+        return SkillWeightNormalizer.normalizeToOne(rawScores);
     }
 
-    private double resolveChapterRatio(
-            CourseSkillAggregationRow row,
+    private BigDecimal resolveChapterRatio(
+            Integer durationSeconds,
             int chapterCount,
             int totalDuration,
             boolean useDurationWeight
     ) {
         if (!useDurationWeight) {
-            return 1.0 / chapterCount;
+            return BigDecimal.ONE.divide(BigDecimal.valueOf(chapterCount), WEIGHT_SCALE, RoundingMode.HALF_UP);
         }
 
-        return (double) row.getDurationSeconds() / totalDuration;
+        return BigDecimal.valueOf(durationSeconds)
+                .divide(BigDecimal.valueOf(totalDuration), WEIGHT_SCALE, RoundingMode.HALF_UP);
     }
 
-    private int normalizeChapterSkillWeight(Integer weight) {
-        if (weight == null) {
-            return 1;
+    private Map<Long, BigDecimal> normalizeChapterSkillWeights(List<CourseSkillAggregationRow> rows) {
+        Map<Long, BigDecimal> rawWeights = new LinkedHashMap<>();
+
+        for (CourseSkillAggregationRow row : rows) {
+            if (row.getSkillId() == null) {
+                continue;
+            }
+
+            BigDecimal weight = SkillWeightNormalizer.resolveRawWeight(row.getWeight());
+
+            if (weight == null) {
+                continue;
+            }
+
+            rawWeights.merge(row.getSkillId(), weight, BigDecimal::add);
         }
 
-        return Math.max(1, weight);
-    }
-
-    private Map<Long, Integer> normalizeToTotalWeight(Map<Long, Double> rawScores) {
-        double rawTotal = rawScores.values().stream()
-                .mapToDouble(Double::doubleValue)
-                .sum();
-
-        if (rawScores.isEmpty() || rawTotal <= 0) {
-            return Map.of();
-        }
-
-        List<WeightedSkill> weightedSkills = new ArrayList<>();
-        int floorSum = 0;
-
-        for (Map.Entry<Long, Double> entry : rawScores.entrySet()) {
-            double normalized = entry.getValue() / rawTotal * TOTAL_WEIGHT;
-            int floorWeight = (int) Math.floor(normalized);
-            floorSum += floorWeight;
-            weightedSkills.add(new WeightedSkill(entry.getKey(), floorWeight, normalized - floorWeight));
-        }
-
-        int remainingWeight = TOTAL_WEIGHT - floorSum;
-        weightedSkills.stream()
-                .sorted(Comparator.comparingDouble(WeightedSkill::remainder).reversed())
-                .limit(remainingWeight)
-                .forEach(WeightedSkill::increaseWeight);
-
-        return weightedSkills.stream()
-                .collect(Collectors.toMap(
-                        WeightedSkill::skillId,
-                        WeightedSkill::weight,
-                        Integer::sum,
-                        LinkedHashMap::new
-                ));
-    }
-
-    private static class WeightedSkill {
-        private final Long skillId;
-        private int weight;
-        private final double remainder;
-
-        private WeightedSkill(Long skillId, int weight, double remainder) {
-            this.skillId = skillId;
-            this.weight = weight;
-            this.remainder = remainder;
-        }
-
-        private Long skillId() {
-            return skillId;
-        }
-
-        private int weight() {
-            return weight;
-        }
-
-        private double remainder() {
-            return remainder;
-        }
-
-        private void increaseWeight() {
-            this.weight += 1;
-        }
+        return SkillWeightNormalizer.normalizeToOne(rawWeights);
     }
 }
