@@ -2,6 +2,8 @@ package com.hlinks.domain.course.dto;
 
 import lombok.*;
 
+import com.hlinks.domain.quiz.type.QuizBuildStatus;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -122,6 +124,21 @@ public class CourseDetailResponseDto {
 
         LocalDate today = LocalDate.now();
         return !today.isBefore(applyStartDate) && !today.isAfter(applyEndDate);
+    }
+
+    public boolean isOnlineQuizBuildCompleted() {
+        if (!isOnline()) {
+            return false;
+        }
+        if (chapters == null || chapters.isEmpty()) {
+            return true;
+        }
+        return chapters.stream()
+                .allMatch(chapter -> QuizBuildStatus.COMPLETED.equals(chapter.getQuizBuildStatus()));
+    }
+
+    public String getOnlineApplyUnavailableMessage() {
+        return "퀴즈 생성 완료 후 신청 가능";
     }
 
     public String getLearningCompletionLabel() {

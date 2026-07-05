@@ -295,6 +295,13 @@ public class CourseService {
             throw new BaseException(CourseErrorCode.COURSE_NOT_OPEN);
         }
 
+        if (CourseType.ONLINE.name().equals(target.getCourseType())) {
+            if (target.getIncompleteQuizBuildCount() == null || target.getIncompleteQuizBuildCount() > 0) {
+                throw new BaseException(CourseErrorCode.COURSE_QUIZ_NOT_READY);
+            }
+            return;
+        }
+
         if (!CourseType.OFFLINE.name().equals(target.getCourseType())) {
             return;
         }

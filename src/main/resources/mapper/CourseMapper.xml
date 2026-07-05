@@ -399,7 +399,14 @@
             ofc.apply_start_date AS apply_start_date,
             ofc.apply_end_date AS apply_end_date,
             ofc.capacity AS capacity,
-            ofc.current_applicant_count AS current_applicant_count
+            ofc.current_applicant_count AS current_applicant_count,
+            (
+                SELECT COUNT(1)
+                FROM COURSE_CHAPTER cc
+                WHERE cc.course_id = c.course_id
+                  AND cc.use_yn = 'Y'
+                  AND NVL(cc.quiz_build_status, 'PENDING') != 'COMPLETED'
+            ) AS incomplete_quiz_build_count
         FROM COURSE c
         LEFT OUTER JOIN ONLINE_COURSE onc
             ON c.course_id = onc.course_id

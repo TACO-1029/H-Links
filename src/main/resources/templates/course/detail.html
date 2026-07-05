@@ -425,6 +425,15 @@
         }
         .btn-apply { background: #10B981; color: #FFFFFF; } /* 초록색 */
         .btn-apply:hover { background: #059669; }
+        .action-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.72;
+        }
+        .btn-apply:disabled,
+        .btn-apply:disabled:hover {
+            background: #CBD5E1;
+            color: #475569;
+        }
         .btn-continue { background: #0F172A; color: #FFFFFF; } /* 검은색 */
         .btn-continue:hover { background: #1E293B; }
         .text-offline-only { background: transparent; color: #475569; font-size: 14px; text-align: center; font-weight: 600; padding: 8px 0; }
@@ -562,7 +571,7 @@
                                 <span sec:authorize="hasAuthority('ROLE_HR')"
                                       class="quiz-build-badge"
                                       th:classappend="${chapter.quizBuildStatus != null and chapter.quizBuildStatus.name() == 'COMPLETED'} ? ' quiz-build-badge--completed' : (${chapter.quizBuildStatus != null and chapter.quizBuildStatus.name() == 'FAILED'} ? ' quiz-build-badge--failed' : (${chapter.quizBuildStatus != null and chapter.quizBuildStatus.name() == 'PROCESSING'} ? ' quiz-build-badge--processing' : ''))"
-                                      th:text="'퀴즈 ' + ${chapter.quizBuildStatusLabel}">퀴즈 생성 대기</span>
+                                      th:text="${chapter.quizBuildStatusLabel}">퀴즈 생성 대기</span>
                             </div>
 
                             <div class="ch-right">
@@ -619,7 +628,12 @@
                             <button class="action-btn btn-apply"
                                     type="button"
                                     data-course-action="apply"
-                                    th:unless="${isApplied}">수강 신청하기</button>
+                                    th:if="${!isApplied and course.onlineQuizBuildCompleted}">수강 신청하기</button>
+                            <button class="action-btn btn-apply"
+                                    type="button"
+                                    th:if="${!isApplied and !course.onlineQuizBuildCompleted}"
+                                    disabled
+                                    th:text="${course.onlineApplyUnavailableMessage}">퀴즈 생성 완료 후 신청 가능</button>
                             <th:block th:if="${isApplied}">
                                 <button class="action-btn btn-continue"
                                         type="button"

@@ -22,4 +22,5 @@ public class CourseApplyTargetDto {
     private LocalDateTime applyEndDate;
     private Integer capacity;
     private Integer currentApplicantCount;
+    private Integer incompleteQuizBuildCount;
 }
