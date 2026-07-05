@@ -207,4 +207,188 @@
         ORDER BY OPTION_NO
     </select>
 
+    <select id="findQuizAttemptTarget"
+            resultType="com.hlinks.domain.quiz.dto.QuizAttemptTargetDto">
+        SELECT
+            cls.course_learning_id  AS courseLearningId,
+            chs.chapter_learning_id AS chapterLearningId,
+            c.course_id             AS courseId,
+            cc.chapter_id           AS chapterId,
+            c.course_title          AS courseTitle,
+            cc.chapter_title        AS chapterTitle,
+            NVL(chs.progress_rate, 0) AS progressRate,
+            chs.status              AS learningStatus,
+            chs.quiz_attempt_id     AS quizAttemptId
+        FROM COURSE_APPLICATION ca
+        JOIN COURSE c
+          ON c.course_id = ca.course_id
+        JOIN ONLINE_COURSE oc
+          ON oc.course_id = c.course_id
+        JOIN COURSE_LEARNING_STATUS cls
+          ON cls.application_id = ca.application_id
+        JOIN COURSE_CHAPTER cc
+          ON cc.course_id = c.course_id
+         AND cc.chapter_id = #{chapterId}
+        JOIN CHAPTER_LEARNING_STATUS chs
+          ON chs.course_learning_id = cls.course_learning_id
+         AND chs.chapter_id = cc.chapter_id
+        WHERE ca.user_id = #{userId}
+          AND ca.course_id = #{courseId}
+          AND ca.application_status = 'APPROVED'
+          AND cls.status != 'CANCELED'
+          AND c.course_type = 'ONLINE'
+          AND NVL(oc.status, 'OPEN') = 'OPEN'
+          AND cc.use_yn = 'Y'
+    </select>
+
+    <select id="findAttemptIdByUserAndChapter" resultType="long">
+        SELECT attempt_id
+        FROM QUIZ_ATTEMPT
+        WHERE user_id = #{userId}
+          AND course_id = #{courseId}
+          AND chapter_id = #{chapterId}
+    </select>
+
+    <select id="findAttemptOwnerUserId" resultType="long">
+        SELECT user_id
+        FROM QUIZ_ATTEMPT
+        WHERE attempt_id = #{attemptId}
+    </select>
+
+    <select id="nextQuizAttemptId" resultType="long">
+        SELECT QUIZ_ATTEMPT_SEQ.NEXTVAL
+        FROM DUAL
+    </select>
+
+    <insert id="insertQuizAttempt">
+        INSERT INTO QUIZ_ATTEMPT (
+            attempt_id,
+            user_id,
+            course_id,
+            chapter_id,
+            submitted_at
+        ) VALUES (
+            #{attemptId},
+            #{userId},
+            #{courseId},
+            #{chapterId},
+            SYSDATE
+        )
+    </insert>
+
+    <insert id="insertQuizAttemptAnswer">
+        INSERT INTO QUIZ_ATTEMPT_ANSWER (
+            attempt_answer_id,
+            attempt_id,
+            quiz_id,
+            selected_option_id,
+            answer_text,
+            correct_yn
+        ) VALUES (
+            QUIZ_ATTEMPT_ANSWER_SEQ.NEXTVAL,
+            #{attemptId},
+            #{quizId},
+            #{selectedOptionId},
+            NULL,
+            #{correctYn}
+        )
+    </insert>
+
+    <select id="findAttemptAnswerResults"
+            resultType="com.hlinks.domain.quiz.dto.QuizAnswerResultRow">
+        SELECT
+            q.quiz_id AS quizId,
+            DBMS_LOB.SUBSTR(q.question_text, 4000, 1) AS questionText,
+            DBMS_LOB.SUBSTR(q.explanation, 4000, 1) AS explanation,
+            selected.option_id AS selectedOptionId,
+            DBMS_LOB.SUBSTR(selected.option_text, 4000, 1) AS selectedOptionText,
+            correct.option_id AS correctOptionId,
+            DBMS_LOB.SUBSTR(correct.option_text, 4000, 1) AS correctOptionText,
+            qaa.correct_yn AS correctYn
+        FROM QUIZ_ATTEMPT_ANSWER qaa
+        JOIN QUIZ q
+          ON q.quiz_id = qaa.quiz_id
+        LEFT JOIN QUIZ_OPTION selected
+          ON selected.option_id = qaa.selected_option_id
+        LEFT JOIN QUIZ_OPTION correct
+          ON correct.quiz_id = q.quiz_id
+         AND correct.correct_yn = 'Y'
+        WHERE qaa.attempt_id = #{attemptId}
+        ORDER BY q.quiz_id
+    </select>
+
+    <select id="findAttemptResult"
+            resultType="com.hlinks.domain.quiz.dto.QuizAttemptResultRow">
+        SELECT
+            qa.attempt_id AS attemptId,
+            qa.course_id AS courseId,
+            qa.chapter_id AS chapterId,
+            c.course_title AS courseTitle,
+            cc.chapter_title AS chapterTitle,
+            qa.submitted_at AS submittedAt,
+            q.quiz_id AS quizId,
+            DBMS_LOB.SUBSTR(q.question_text, 4000, 1) AS questionText,
+            DBMS_LOB.SUBSTR(q.explanation, 4000, 1) AS explanation,
+            selected.option_id AS selectedOptionId,
+            DBMS_LOB.SUBSTR(selected.option_text, 4000, 1) AS selectedOptionText,
+            correct.option_id AS correctOptionId,
+            DBMS_LOB.SUBSTR(correct.option_text, 4000, 1) AS correctOptionText,
+            qaa.correct_yn AS correctYn
+        FROM QUIZ_ATTEMPT qa
+        JOIN COURSE c
+          ON c.course_id = qa.course_id
+        JOIN COURSE_CHAPTER cc
+          ON cc.chapter_id = qa.chapter_id
+        JOIN QUIZ_ATTEMPT_ANSWER qaa
+          ON qaa.attempt_id = qa.attempt_id
+        JOIN QUIZ q
+          ON q.quiz_id = qaa.quiz_id
+        LEFT JOIN QUIZ_OPTION selected
+          ON selected.option_id = qaa.selected_option_id
+        LEFT JOIN QUIZ_OPTION correct
+          ON correct.quiz_id = q.quiz_id
+         AND correct.correct_yn = 'Y'
+        WHERE qa.attempt_id = #{attemptId}
+        ORDER BY q.quiz_id
+    </select>
+
+    <select id="findWrongAnswerNotes"
+            resultType="com.hlinks.domain.quiz.dto.WrongAnswerNoteResponse">
+        SELECT
+            qaa.attempt_answer_id AS wrongNoteId,
+            qa.course_id AS courseId,
+            qa.chapter_id AS chapterId,
+            q.quiz_id AS quizId,
+            c.course_title AS courseTitle,
+            cc.chapter_title AS chapterTitle,
+            DBMS_LOB.SUBSTR(q.question_text, 4000, 1) AS questionText,
+            DBMS_LOB.SUBSTR(selected.option_text, 4000, 1) AS selectedOptionText,
+            DBMS_LOB.SUBSTR(correct.option_text, 4000, 1) AS correctOptionText,
+            DBMS_LOB.SUBSTR(q.explanation, 4000, 1) AS explanation,
+            qa.submitted_at AS createdAt
+        FROM QUIZ_ATTEMPT qa
+        JOIN COURSE c
+          ON c.course_id = qa.course_id
+        JOIN COURSE_CHAPTER cc
+          ON cc.chapter_id = qa.chapter_id
+        JOIN QUIZ_ATTEMPT_ANSWER qaa
+          ON qaa.attempt_id = qa.attempt_id
+        JOIN QUIZ q
+          ON q.quiz_id = qaa.quiz_id
+        LEFT JOIN QUIZ_OPTION selected
+          ON selected.option_id = qaa.selected_option_id
+        LEFT JOIN QUIZ_OPTION correct
+          ON correct.quiz_id = q.quiz_id
+         AND correct.correct_yn = 'Y'
+        WHERE qa.user_id = #{userId}
+          AND qaa.correct_yn = 'N'
+        <if test="courseId != null">
+          AND qa.course_id = #{courseId}
+        </if>
+        <if test="chapterId != null">
+          AND qa.chapter_id = #{chapterId}
+        </if>
+        ORDER BY qa.submitted_at DESC, qaa.attempt_answer_id DESC
+    </select>
+
 </mapper>

@@ -26,6 +26,7 @@ public class ChapterResponseDto {
     private Integer lastPlaySeconds;
     private Integer maxPlaySeconds;
     private String learningStatus;
+    private Long quizAttemptId;
 
     public String getPlayableVideoUrl() {
         String source = hasText(videoUrl) ? videoUrl : videoPath;
