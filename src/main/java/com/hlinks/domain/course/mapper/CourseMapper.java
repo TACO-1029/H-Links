@@ -5,6 +5,7 @@ import com.hlinks.domain.course.dto.CourseApplicationCancelTargetDto;
 import com.hlinks.domain.course.dto.ChapterResponseDto;
 import com.hlinks.domain.course.dto.CourseDetailResponseDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
+import com.hlinks.domain.course.dto.OnlineChapterAccessTargetDto;
 import com.hlinks.domain.course.entity.Course;
 import com.hlinks.domain.course.entity.CourseChapter;
 import com.hlinks.domain.course.dto.LearningProgressTargetDto;
@@ -198,6 +199,12 @@ public interface CourseMapper {
     );
 
     Long findLatestLearningChapterId(@Param("courseLearningId") Long courseLearningId);
+
+    OnlineChapterAccessTargetDto findOnlineChapterAccessTarget(
+            @Param("courseId") Long courseId,
+            @Param("chapterId") Long chapterId,
+            @Param("userId") Long userId
+    );
 
     /**
      * [이슈 #31] 3. 특정 강의에서 다루는 핵심 기술 스킬명(Tags) 목록 조회

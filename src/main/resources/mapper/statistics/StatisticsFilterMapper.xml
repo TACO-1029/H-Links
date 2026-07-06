@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.statistics.mapper.StatisticsFilterMapper">
+
+    <select id="selectDepartmentOptions" resultType="com.hlinks.domain.statistics.dto.FilterOptionDto">
+        SELECT DEPARTMENT_ID AS id,
+               DEPARTMENT_NAME AS name
+        FROM DEPARTMENT
+        WHERE USE_YN = 'Y'
+        ORDER BY DEPARTMENT_NAME
+    </select>
+
+    <select id="selectDepartmentTreeOptions" resultType="com.hlinks.domain.statistics.dto.DepartmentFilterNodeDto">
+        SELECT DEPARTMENT_ID AS id,
+               PARENT_DEPARTMENT_ID AS parentId,
+               DEPARTMENT_NAME AS name,
+               LEVEL AS depth
+        FROM DEPARTMENT
+        WHERE USE_YN = 'Y'
+        START WITH PARENT_DEPARTMENT_ID IS NULL
+        CONNECT BY PRIOR DEPARTMENT_ID = PARENT_DEPARTMENT_ID
+        ORDER SIBLINGS BY DEPARTMENT_NAME
+    </select>
+
+    <select id="selectDefaultOrganizationDepartmentIds" resultType="long">
+        SELECT department_id
+        FROM (
+            SELECT department_id
+            FROM (
+                SELECT child.DEPARTMENT_ID AS department_id,
+                       child.DEPARTMENT_NAME AS department_name,
+                       1 AS sort_order
+                FROM DEPARTMENT parent
+                JOIN DEPARTMENT child ON child.PARENT_DEPARTMENT_ID = parent.DEPARTMENT_ID
+                WHERE parent.USE_YN = 'Y'
+                  AND child.USE_YN = 'Y'
+                  AND parent.DEPARTMENT_NAME = 'IT사업본부'
+                UNION ALL
+                SELECT d.DEPARTMENT_ID AS department_id,
+                       d.DEPARTMENT_NAME AS department_name,
+                       2 AS sort_order
+                FROM DEPARTMENT d
+                WHERE d.USE_YN = 'Y'
+                  AND d.PARENT_DEPARTMENT_ID IS NULL
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM DEPARTMENT parent
+                      JOIN DEPARTMENT child ON child.PARENT_DEPARTMENT_ID = parent.DEPARTMENT_ID
+                      WHERE parent.USE_YN = 'Y'
+                        AND child.USE_YN = 'Y'
+                        AND parent.DEPARTMENT_NAME = 'IT사업본부'
+                  )
+                ORDER BY sort_order, department_name
+            )
+            WHERE ROWNUM &lt;= 5
+        )
+    </select>
+
+    <select id="selectPositionOptions" resultType="com.hlinks.domain.statistics.dto.FilterOptionDto">
+        SELECT POSITION_ID AS id,
+               POSITION_NAME AS name
+        FROM POSITION
+        WHERE USE_YN = 'Y'
+        ORDER BY NVL(SORT_ORDER, POSITION_ID), POSITION_NAME
+    </select>
+</mapper>

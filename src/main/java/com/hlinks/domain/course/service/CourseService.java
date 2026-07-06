@@ -174,33 +174,59 @@ public class CourseService {
 
     @Transactional
     public CourseDetailResponseDto getOnlineChapterPage(Long courseId, Long chapterId, Long userId) {
-        CourseDetailResponseDto courseDetail = getCourseDetail(courseId, userId);
+        OnlineChapterAccessTargetDto target = ensureOnlineChapterLearningAccess(courseId, chapterId, userId);
+        Long courseLearningId = target.getCourseLearningId();
 
-        if (!courseDetail.isOnline() || !ApplicationStatus.APPROVED.name().equals(courseDetail.getApplicationStatus())) {
-            throw new BaseException(ErrorResponseCode.FORBIDDEN);
-        }
-
-        boolean chapterExists = courseDetail.getChapters().stream()
-                .anyMatch(chapter -> chapter.getChapterId().equals(chapterId));
-        if (!chapterExists) {
-            throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "강의에 포함되지 않은 챕터입니다.");
-        }
-
-        Long courseLearningId = courseMapper.findCourseLearningId(userId, courseId);
-        if (courseLearningId == null) {
-            throw new BaseException(ErrorResponseCode.FORBIDDEN);
-        }
-
-        courseMapper.insertChapterLearningStatus(
-                courseLearningId,
-                userId,
-                courseId,
-                chapterId,
-                LearningStatus.NOT_STARTED.name()
-        );
+        CourseDetailResponseDto courseDetail = courseMapper.findCourseDetailById(courseId);
         courseDetail.setChapters(courseMapper.findChaptersByCourseIdWithLearning(courseId, courseLearningId));
 
         return courseDetail;
+    }
+
+    @Transactional
+    public OnlineChapterAccessTargetDto ensureOnlineChapterLearningAccess(Long courseId, Long chapterId, Long userId) {
+        validateOnlineChapterPageRequest(courseId, chapterId, userId);
+
+        OnlineChapterAccessTargetDto target =
+                courseMapper.findOnlineChapterAccessTarget(courseId, chapterId, userId);
+        validateOnlineChapterAccess(target);
+
+        if (target.getChapterLearningStatusId() == null) {
+            courseMapper.insertChapterLearningStatus(
+                    target.getCourseLearningId(),
+                    userId,
+                    courseId,
+                    chapterId,
+                    LearningStatus.NOT_STARTED.name()
+            );
+        }
+
+        return target;
+    }
+
+    private void validateOnlineChapterPageRequest(Long courseId, Long chapterId, Long userId) {
+        if (courseId == null || courseId <= 0 || chapterId == null || chapterId <= 0 || userId == null || userId <= 0) {
+            throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER);
+        }
+    }
+
+    private void validateOnlineChapterAccess(OnlineChapterAccessTargetDto target) {
+        if (target == null) {
+            throw new BaseException(ErrorResponseCode.COURSE_NOT_FOUND);
+        }
+        if (!CourseType.ONLINE.name().equals(target.getCourseType())) {
+            throw new BaseException(ErrorResponseCode.FORBIDDEN);
+        }
+        if (!CourseStatus.OPEN.name().equals(target.getOnlineStatus())) {
+            throw new BaseException(ErrorResponseCode.FORBIDDEN);
+        }
+        if (!ApplicationStatus.APPROVED.name().equals(target.getApplicationStatus())
+                || target.getCourseLearningId() == null) {
+            throw new BaseException(ErrorResponseCode.FORBIDDEN);
+        }
+        if (target.getChapterId() == null) {
+            throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "강의에 포함되지 않은 챕터입니다.");
+        }
     }
 
     @Transactional

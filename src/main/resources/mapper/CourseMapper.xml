@@ -306,6 +306,40 @@
         WHERE ROWNUM = 1
     </select>
 
+    <select id="findOnlineChapterAccessTarget"
+            resultType="com.hlinks.domain.course.dto.OnlineChapterAccessTargetDto">
+        SELECT
+            c.course_id             AS courseId,
+            c.course_type           AS courseType,
+            oc.status               AS onlineStatus,
+            ca.application_status   AS applicationStatus,
+            cls.course_learning_id  AS courseLearningId,
+            cc.chapter_id           AS chapterId,
+            chs.chapter_learning_id AS chapterLearningStatusId
+        FROM COURSE c
+        LEFT JOIN ONLINE_COURSE oc
+          ON oc.course_id = c.course_id
+        LEFT JOIN COURSE_CHAPTER cc
+          ON cc.course_id = c.course_id
+         AND cc.chapter_id = #{chapterId}
+         AND cc.use_yn = 'Y'
+        LEFT JOIN COURSE_APPLICATION ca
+          ON ca.application_id = (
+              SELECT MAX(application_id)
+              FROM COURSE_APPLICATION
+              WHERE user_id = #{userId}
+                AND course_id = #{courseId}
+                AND application_status = 'APPROVED'
+          )
+        LEFT JOIN COURSE_LEARNING_STATUS cls
+          ON cls.application_id = ca.application_id
+         AND cls.status != 'CANCELED'
+        LEFT JOIN CHAPTER_LEARNING_STATUS chs
+          ON chs.course_learning_id = cls.course_learning_id
+         AND chs.chapter_id = cc.chapter_id
+        WHERE c.course_id = #{courseId}
+    </select>
+
     <!-- 강의의 COURSE_SKILL을 싹 다 모아서 PARENT_SKILL_ID에 따라 대분류 Skill(ex: 백엔드, 인프라)만 반환하는 쿼리 -->
     <select id="findSkillNamesByCourseId" resultType="string">
         SELECT PS.SKILL_NAME
