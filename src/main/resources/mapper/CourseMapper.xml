@@ -769,12 +769,12 @@
             c.COURSE_TYPE as courseType,
             c.CATEGORY_TYPE as categoryType,
             ca.APPLICATION_ID as applicationId,
-            NVL(TO_CHAR(ca.APPLIED_AT, 'YYYYMM') || '-' || LPAD(TO_CHAR(ca.APPLICATION_ID), 3, '0'), '-') as applicationNo,
+            NVL(TO_CHAR(ca.APPLIED_AT, 'YYYYMM') || '-' || TO_CHAR(ca.APPLICATION_ID), '-') as applicationNo,
             cls.PROGRESS_RATE as progressRate,
             NVL(cls.STATUS, 'NOT_STARTED') as learningStatus,
             CASE WHEN cls.STATUS = 'COMPLETED' THEN '완료' ELSE '미완료' END as completionStatus,
             NVL(
-                (SELECT TRUNC(LAST_PLAY_SECONDS / 60) || '분 ' || MOD(LAST_PLAY_SECONDS, 60) || '초'
+                (SELECT LPAD(TO_CHAR(TRUNC(LAST_PLAY_SECONDS / 60)), 2, '0') || '분 ' || LPAD(TO_CHAR(MOD(LAST_PLAY_SECONDS, 60)), 2, '0') || '초'
                  FROM (
                      SELECT LAST_PLAY_SECONDS
                      FROM CHAPTER_LEARNING_STATUS

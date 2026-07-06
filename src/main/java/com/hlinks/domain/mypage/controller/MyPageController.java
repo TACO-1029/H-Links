@@ -78,14 +78,14 @@ public class MyPageController {
         Long userId = userDetails.getUserId();
         log.info("마이페이지 내 수강현황 화면 요청 - 유저 ID: {}", userId);
 
-        // 1. 사이드바 내 서브메뉴 활성화 상태값 설정
-        model.addAttribute("activeMenu", "mypage");
-        model.addAttribute("activeSubMenu", "myCourses");
-        addMyPageHeroModel(userDetails, model);
-
-        // 2. 대시보드 리치 데이터 조회 및 바인딩
+        // 1. 대시보드 리치 데이터 조회 및 바인딩
         MyCourseStatusResponseDto statusDto = courseService.getMyCourseStatus(userId);
         model.addAttribute("statusDto", statusDto);
+
+        // 2. 사이드바 내 서브메뉴 활성화 상태값 설정 및 조회한 카운트값 재사용
+        model.addAttribute("activeMenu", "mypage");
+        model.addAttribute("activeSubMenu", "myCourses");
+        addMyPageHeroModel(userDetails, model, statusDto.getInProgressCount(), statusDto.getCompletedCount());
 
         // 3. templates/mypage/courses.html 렌더링
         return "mypage/courses";
@@ -129,12 +129,18 @@ public class MyPageController {
     }
 
     private void addMyPageHeroModel(CustomUserDetails userDetails, Model model) {
+        addMyPageHeroModel(userDetails, model, 
+                courseService.getMyInProgressCourseCount(userDetails.getUserId()), 
+                courseService.getMyCompletedCourseCount(userDetails.getUserId()));
+    }
+
+    private void addMyPageHeroModel(CustomUserDetails userDetails, Model model, int inProgressCount, int completedCount) {
         model.addAttribute("loginId", userDetails.getUsername());
         model.addAttribute("name", userDetails.getName());
         model.addAttribute("departmentName", userDetails.getDepartmentName());
         model.addAttribute("jobName", userDetails.getJobName());
         model.addAttribute("positionName", userDetails.getPositionName());
-        model.addAttribute("inProgressCount", courseService.getMyInProgressCourseCount(userDetails.getUserId()));
-        model.addAttribute("completedCount", courseService.getMyCompletedCourseCount(userDetails.getUserId()));
+        model.addAttribute("inProgressCount", inProgressCount);
+        model.addAttribute("completedCount", completedCount);
     }
 }
