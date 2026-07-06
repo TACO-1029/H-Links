@@ -48,6 +48,9 @@ public class AiLevelTestService {
         );
 
         try {
+            if (skillIds == null || skillIds.isEmpty() || skillIds.size() > 3) {
+                throw new BaseException(CareerErrorCode.INVALID_SKILL_COUNT);
+            }
             int skillCount = skillIds.size();
 
             for (int i = 0; i < skillCount; i++) {
@@ -199,7 +202,14 @@ public class AiLevelTestService {
             question.setSkillId(skillId);
             question.setQuestionText(genQ.getQuestionText());
             question.setQuestionType("MULTIPLE_CHOICE");
-            question.setDifficulty(genQ.getDifficulty() != null ? genQ.getDifficulty().toUpperCase() : "MEDIUM");
+            String diffVal = "MEDIUM";
+            if (genQ.getDifficulty() != null) {
+                String rawDiff = genQ.getDifficulty().trim().toUpperCase();
+                if ("LOW".equals(rawDiff) || "MEDIUM".equals(rawDiff) || "HIGH".equals(rawDiff)) {
+                    diffVal = rawDiff;
+                }
+            }
+            question.setDifficulty(diffVal);
             question.setExplanation(genQ.getExplanation());
             
             careerMapper.insertLevelTestQuestion(question);

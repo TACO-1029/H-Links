@@ -235,12 +235,14 @@
     </select>
 
     <select id="getCategoryNameByDiagnosisId" resultType="string">
-        SELECT DISTINCT p.SKILL_NAME 
-        FROM CAREER_TARGET_SKILL cts
-        JOIN SKILL s ON cts.SKILL_ID = s.SKILL_ID
-        JOIN SKILL p ON s.PARENT_SKILL_ID = p.SKILL_ID
-        WHERE cts.DIAGNOSIS_ID = #{diagnosisId}
-          AND ROWNUM = 1
+        SELECT SKILL_NAME FROM (
+            SELECT DISTINCT p.SKILL_NAME 
+            FROM CAREER_TARGET_SKILL cts
+            JOIN SKILL s ON cts.SKILL_ID = s.SKILL_ID
+            JOIN SKILL p ON s.PARENT_SKILL_ID = p.SKILL_ID
+            WHERE cts.DIAGNOSIS_ID = #{diagnosisId}
+            ORDER BY p.SKILL_NAME
+        ) WHERE ROWNUM = 1
     </select>
 
 </mapper>

@@ -711,37 +711,7 @@
     cursor: not-allowed;
 }
 
-/* Status Badge Modifiers */
-.status-badge--pending {
-    background: #e2e8f0;
-    color: #475569;
-}
 
-.status-badge--processing {
-    background: #dbeafe;
-    color: #2563eb;
-}
-
-.status-badge--ready {
-    background: #e6f7f0;
-    color: var(--color-brand);
-    border: 1px solid var(--color-border-brand);
-}
-
-.status-badge--progress {
-    background: #fef3c7;
-    color: #d97706;
-}
-
-.status-badge--completed {
-    background: #ccfbf1;
-    color: #0d9488;
-}
-
-.status-badge--failed {
-    background: #fee2e2;
-    color: #ef4444;
-}
 
 
 /* ==========================================

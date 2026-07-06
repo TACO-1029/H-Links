@@ -73,6 +73,9 @@ public class CareerServiceImpl implements CareerService {
         if (skillIds == null || skillIds.isEmpty()) {
             throw new BaseException(CareerErrorCode.SKILL_REQUIRED);
         }
+        if (userSetSkillLevels == null || userSetSkillLevels.isEmpty() || userSetSkillLevels.size() != skillIds.size()) {
+            throw new IllegalArgumentException("스킬 개수와 난이도 개수가 일치하지 않습니다.");
+        }
 
         // 기존 매핑이 있다면 삭제하거나 그냥 바로 다중 등록 (처음 등록하는 것이므로)
         for (int  j = 0; j < skillIds.size(); j++) {
@@ -124,6 +127,11 @@ public class CareerServiceImpl implements CareerService {
     @Override
     @Transactional
     public void submitAnswers(Long diagnosisId, Long userId, List<Long> questionIds, List<Long> selectedOptionIds) {
+        CareerDiagnosis diagnosis = careerMapper.findDiagnosisById(diagnosisId);
+        if (diagnosis == null || !diagnosis.getUserId().equals(userId)) {
+            throw new BaseException(CareerErrorCode.DIAGNOSIS_NOT_FOUND);
+        }
+
         if (questionIds == null || selectedOptionIds == null || questionIds.size() != selectedOptionIds.size()) {
             throw new IllegalArgumentException("제출된 문항과 답안의 개수가 일치하지 않습니다.");
         }
@@ -250,6 +258,7 @@ public class CareerServiceImpl implements CareerService {
             careerMapper.updateLlmSummary(diagnosisId, resultJson);
         } catch (Exception e) {
             log.error("Failed to serialize scoring result JSON", e);
+            throw new RuntimeException("결과 데이터 저장 중 오류가 발생했습니다.", e);
         }
     }
 }

@@ -4,6 +4,8 @@ import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.service.CareerService;
 import com.hlinks.domain.interest.service.InterestService;
 import com.hlinks.global.security.CustomUserDetails;
+import com.hlinks.global.exception.BaseException;
+import com.hlinks.domain.career.exception.CareerErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -119,18 +121,27 @@ public class CareerController {
 
     @org.springframework.web.bind.annotation.ResponseBody
     @GetMapping("/build-status")
-    public Map<String, String> getBuildStatus(@RequestParam("diagnosisId") Long diagnosisId) {
+    public Map<String, String> getBuildStatus(
+            @RequestParam("diagnosisId") Long diagnosisId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
         CareerDiagnosis diagnosis = careerService.findDiagnosisById(diagnosisId);
-        return Map.of("status", diagnosis != null ? diagnosis.getLevelTestBuildStatus() : "PENDING");
+        if (diagnosis == null || !diagnosis.getUserId().equals(userDetails.getUserId())) {
+            return Map.of("status", "FAILED");
+        }
+        return Map.of("status", diagnosis.getLevelTestBuildStatus());
     }
 
     @GetMapping("/level-test")
     public String levelTest(
+            @RequestParam(value = "diagnosisId", required = false) Long diagnosisId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model
     ) {
         setActiveMenu(model);
-        Long diagnosisId = (Long) model.asMap().get("diagnosisId");
+        if (diagnosisId == null) {
+            diagnosisId = (Long) model.asMap().get("diagnosisId");
+        }
         if (diagnosisId == null) {
             diagnosisId = careerService.findLatestDiagnosisId(userDetails.getUserId());
         }
@@ -147,6 +158,10 @@ public class CareerController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes
     ) {
+        CareerDiagnosis diagnosis = careerService.findDiagnosisById(diagnosisId);
+        if (diagnosis == null || !diagnosis.getUserId().equals(userDetails.getUserId())) {
+            throw new BaseException(CareerErrorCode.DIAGNOSIS_NOT_FOUND);
+        }
         careerService.submitAnswers(diagnosisId, userDetails.getUserId(), questionIds, selectedOptionIds);
         redirectAttributes.addFlashAttribute("diagnosisId", diagnosisId);
         return "redirect:/courses/career-path/result";
@@ -163,6 +178,9 @@ public class CareerController {
             diagnosisId = careerService.findLatestDiagnosisId(userDetails.getUserId());
         }
         CareerDiagnosis diagnosis = careerService.findDiagnosisById(diagnosisId);
+        if (diagnosis == null || !diagnosis.getUserId().equals(userDetails.getUserId())) {
+            return "redirect:/courses/career-path/dashboard";
+        }
 
         String rawJson = diagnosis.getLlmSummary();
         String category = "IT 기술";
@@ -171,12 +189,18 @@ public class CareerController {
         int avgScore = 0;
         String lowestSkillName = "";
 
+        List<com.hlinks.domain.career.dto.CareerSkillDto> allSkills = careerService.getAllActiveSkills();
+
         try {
             if (rawJson != null && rawJson.trim().startsWith("{")) {
                 Map<String, Object> jsonMap = objectMapper.readValue(rawJson, Map.class);
-                category = (String) jsonMap.get("category");
-                aiSummary = (String) jsonMap.get("aiSummary");
+                String tempCategory = (String) jsonMap.get("category");
+                String tempAiSummary = (String) jsonMap.get("aiSummary");
                 List<Map<String, Object>> rawResults = (List<Map<String, Object>>) jsonMap.get("results");
+                List<Map<String, Object>> tempResultsList = new ArrayList<>();
+                int tempAvgScore = 0;
+                String tempLowestSkillName = "";
+
                 if (rawResults != null) {
                     double sum = 0;
                     int count = 0;
@@ -185,29 +209,38 @@ public class CareerController {
                         Map<String, Object> enriched = new HashMap<>(res);
                         Long skillId = ((Number) res.get("skillId")).longValue();
 
-                        String skillName = careerService.getAllActiveSkills().stream()
+                        String skillName = allSkills.stream()
                             .filter(s -> s.getSkillId().equals(skillId))
                             .map(s -> s.getSkillName())
                             .findFirst().orElse("세부 기술");
 
                         enriched.put("skillName", skillName);
-                        resultsList.add(enriched);
+                        tempResultsList.add(enriched);
 
                         int scoreVal = ((Number) res.get("score")).intValue();
                         sum += scoreVal;
                         count++;
                         if (scoreVal < lowestScore) {
                             lowestScore = scoreVal;
-                            lowestSkillName = skillName;
+                            tempLowestSkillName = skillName;
                         }
                     }
                     if (count > 0) {
-                        avgScore = (int) Math.round(sum / count);
+                        tempAvgScore = (int) Math.round(sum / count);
                     }
                 }
+
+                category = tempCategory != null ? tempCategory : "IT 기술";
+                aiSummary = tempAiSummary;
+                resultsList = tempResultsList;
+                avgScore = tempAvgScore;
+                lowestSkillName = tempLowestSkillName;
             }
         } catch (Exception e) {
             log.error("Failed to parse scoring JSON on result page", e);
+            resultsList.clear();
+            avgScore = 0;
+            lowestSkillName = "";
         }
 
         model.addAttribute("diagnosisId", diagnosisId);

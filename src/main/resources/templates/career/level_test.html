@@ -55,8 +55,13 @@
             <input type="hidden" name="questionIds" th:value="${q.levelQuestionId}">
             <input type="hidden" th:id="'selected-option-input-' + ${q.levelQuestionId}" name="selectedOptionIds" value="">
 
-            <div class="options-list">
-                <div th:each="opt : ${q.options}" class="option-item" th:data-opt-id="${opt.levelOptionId}" th:data-q-id="${q.levelQuestionId}">
+            <div class="options-list" role="radiogroup">
+                <div th:each="opt : ${q.options}" class="option-item" 
+                     th:data-opt-id="${opt.levelOptionId}" 
+                     th:data-q-id="${q.levelQuestionId}" 
+                     tabindex="0" 
+                     role="radio" 
+                     aria-checked="false">
                     <span class="option-text-val" th:text="${opt.optionNo} + '. ' + ${opt.optionText}">1. 보기 옵션 내용</span>
                     <span class="option-circle"></span>
                 </div>
