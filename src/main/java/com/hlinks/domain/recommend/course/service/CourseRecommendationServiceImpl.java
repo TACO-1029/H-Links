@@ -84,6 +84,10 @@ public class CourseRecommendationServiceImpl implements CourseRecommendationServ
         if (request.getResults() == null || request.getResults().isEmpty()) {
             throw new BaseException(ErrorResponseCode.BAD_REQUEST, "레벨테스트 결과는 최소 1개 이상 필요합니다.");
         }
+
+        if (request.getResults().stream().anyMatch(result -> result == null)) {
+            throw new BaseException(ErrorResponseCode.BAD_REQUEST, "레벨테스트 결과 항목은 비어 있을 수 없습니다.");
+        }
     }
 
     private SkillResult toSkillResult(LevelTestSkillResultRequest result) {
