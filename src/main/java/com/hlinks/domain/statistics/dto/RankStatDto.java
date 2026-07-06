@@ -18,6 +18,6 @@ public record RankStatDto(
     }
 
     public boolean hasCourseDetails() {
-        return categoryName != null;
+        return categoryName != null || courseTypeName != null || completionRate != null;
     }
 }

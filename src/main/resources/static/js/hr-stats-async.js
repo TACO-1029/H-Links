@@ -161,8 +161,8 @@
 
   function renderRankBlock(block, spanClass) {
     const ranks = normalizeArray(block.ranks);
-    const detailed = Boolean(ranks[0]?.categoryName);
-    const rows = block.rankTable ? renderRankMatrixTable(block.rankTable) : detailed ? renderRankTable(ranks) : renderRankList(ranks);
+    const detailed = Boolean(ranks[0]?.categoryName || ranks[0]?.courseTypeName || ranks[0]?.completionRate);
+    const rows = block.rankTable ? renderRankMatrixTable(block.rankTable) : detailed ? renderRankTable(ranks, block) : renderRankList(ranks);
     const emptyState = !block.rankTable && ranks.length === 0 ? renderRankEmptyState() : '';
 
     return `
@@ -183,7 +183,7 @@
     const rows = ranks.map((rank) => `
       <li>
         <span class="hr-stats-rank__meta">${escapeHtml(rank.rank)}</span>
-        <span class="hr-stats-rank__badge badge rounded-pill ${escapeAttribute(rank.badgeTone || '')}">${escapeHtml(rank.badgeText)}</span>
+        ${rank.badgeText ? `<span class="hr-stats-rank__badge badge rounded-pill ${escapeAttribute(rank.badgeTone || '')}">${escapeHtml(rank.badgeText)}</span>` : ''}
         <span class="hr-stats-rank__label">${escapeHtml(rank.label)}</span>
         <strong>${escapeHtml(rank.value)}</strong>
       </li>
@@ -229,39 +229,42 @@
     `;
   }
 
-  function renderRankTable(ranks) {
+  function renderRankTable(ranks, block) {
+    const countLabel = String(block.rankTitle || '').includes('미수료') ? '미수료/이탈' : '신청 수';
     const rows = ranks.map((rank) => `
       <tr>
         <td>${escapeHtml(rank.rank)}</td>
         <td class="hr-stats-table__title">${escapeHtml(rank.label)}</td>
-        <td>${escapeHtml(rank.categoryName)}</td>
-        <td>${escapeHtml(rank.courseTypeName)}</td>
+        <td>${renderCourseType(rank)}</td>
         <td>${escapeHtml(rank.applicationCount)}</td>
         <td>${escapeHtml(rank.completionRate)}</td>
-        <td>${escapeHtml(rank.averageProgressRate)}</td>
-        <td>${escapeHtml(rank.quizCorrectRate)}</td>
       </tr>
     `).join('');
 
     return `
       <div class="hr-stats-table-wrap">
-        <table class="hr-stats-table">
+        <table class="hr-stats-table hr-stats-table--compact">
           <thead>
             <tr>
               <th>순위</th>
               <th>강의명</th>
-              <th>카테고리</th>
-              <th>강의 유형</th>
-              <th>수강 신청 수</th>
+              <th>유형</th>
+              <th>${countLabel}</th>
               <th>수료율</th>
-              <th>평균 진도율</th>
-              <th>퀴즈 정답률</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
     `;
+  }
+
+  function renderCourseType(rank) {
+    if (rank.badgeText) {
+      return `<span class="hr-stats-table__type badge rounded-pill ${escapeAttribute(rank.badgeTone || '')}">${escapeHtml(rank.badgeText)}</span>`;
+    }
+
+    return `<span class="hr-stats-table__type-text">${escapeHtml(rank.courseTypeName)}</span>`;
   }
 
   function setLoading(button, loading) {

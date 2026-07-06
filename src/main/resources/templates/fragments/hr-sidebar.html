@@ -2,14 +2,18 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <body>
 <aside class="hr-sidebar" aria-label="HR 관리 메뉴" th:fragment="sidebar(activeMenu)">
-  <a class="hr-sidebar__title"
-     th:classappend="${activeMenu == 'dashboard'} ? ' is-active'"
-     th:href="@{/hr}">Dashboard</a>
+  <p class="hr-sidebar__title">Dashboard</p>
   <nav class="hr-nav">
+    <div class="hr-nav__group">
+      <a class="hr-nav__link"
+         th:classappend="${activeMenu == 'dashboard'} ? ' is-active'"
+         th:href="@{/hr}">요약 대시보드</a>
+    </div>
+    <div class="hr-nav__divider" aria-hidden="true"></div>
     <div class="hr-nav__group">
       <p class="hr-nav__heading">
         <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
-        <span>통계</span>
+        <span>통계 분석</span>
       </p>
       <a class="hr-nav__link"
          th:classappend="${activeMenu == 'stats-learning'} ? ' is-active'"

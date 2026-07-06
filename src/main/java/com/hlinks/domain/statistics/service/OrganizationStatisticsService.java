@@ -57,8 +57,8 @@ public class OrganizationStatisticsService {
                                 StatisticsBlockDto.chart(2, departmentGrowthLine(organizationStatisticsMapper.selectDepartmentGrowthRates(DepartmentGrowthQuery.from(filter))))
                         )),
                         new StatisticsSectionDto("교육 성과", List.of(
-                                StatisticsBlockDto.rank(1, "참여 우수 부서 TOP5", "참여율 기준", StatisticsChartFactory.ranks(organizationStatisticsMapper.selectTopParticipationDepartments(filter), "%")),
-                                StatisticsBlockDto.rankTable(3, "부서별 인기 강의 TOP 5", "강의 신청 수 기준", departmentCourseRankTable(organizationStatisticsMapper.selectPopularCoursesByDepartment(filter), filter))
+                                StatisticsBlockDto.rank(1, "참여 우수 부서 랭킹", "참여율 기준", StatisticsChartFactory.ranks(organizationStatisticsMapper.selectTopParticipationDepartments(filter), "%")),
+                                StatisticsBlockDto.rankTable(3, "부서별 인기 강의 랭킹", "강의 신청 수 기준", departmentCourseRankTable(organizationStatisticsMapper.selectPopularCoursesByDepartment(filter), filter))
                         ))
                 )
         );

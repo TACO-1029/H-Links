@@ -3,6 +3,7 @@
 
   const optionBuilders = {
     bar: buildBarOption,
+    stackedBar: buildStackedBarOption,
     horizontalBar: buildHorizontalBarOption,
     line: buildLineOption,
     growthFactors: buildGrowthFactorsOption,
@@ -152,17 +153,114 @@
     };
   }
 
-  function buildHorizontalBarOption(chart) {
+  function buildStackedBarOption(chart) {
     const series = normalizeSeries(chart);
-    const labels = extractLabels(series);
+    const labels = uniqueLabels(series);
 
     return {
       ...buildBaseOption(chart),
+      tooltip: {
+        trigger: 'axis',
+        confine: true,
+        backgroundColor: '#0F172A',
+        borderWidth: 0,
+        textStyle: {
+          color: '#FFFFFF',
+          fontSize: 12,
+        },
+        axisPointer: {
+          type: 'shadow',
+        },
+        formatter: (params) => {
+          const items = Array.isArray(params) ? params : [params];
+          const title = items[0]?.axisValue || '';
+          const lines = items
+            .map((item) => `${item.marker || ''}${escapeHtml(item.seriesName)}: ${escapeHtml(formatValue(item.value, chart.unit))}`);
+
+          return [escapeHtml(title), ...lines].join('<br>');
+        },
+      },
+      legend: {
+        bottom: 0,
+        left: 'center',
+        itemWidth: 14,
+        itemHeight: 10,
+        textStyle: {
+          color: '#475569',
+          fontSize: 12,
+        },
+      },
+      grid: {
+        top: 28,
+        right: 24,
+        bottom: 48,
+        left: 48,
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        data: labels,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: '#CBD5E1' } },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+          interval: 0,
+        },
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+          formatter: (value) => formatAxisValue(value, chart.unit),
+        },
+      },
+      series: series.map((item) => ({
+        name: item.name,
+        type: 'bar',
+        stack: 'total',
+        data: alignPoints(labels, normalizePoints(item)).map((point) => ({
+          value: numericValue(point.value),
+          displayValue: point.displayValue,
+        })),
+        barWidth: 28,
+        emphasis: {
+          focus: 'series',
+        },
+      })),
+    };
+  }
+
+  function buildHorizontalBarOption(chart) {
+    const series = normalizeSeries(chart);
+    const labels = extractLabels(series);
+    const kcyParticipationChart = isKcyParticipationChart(chart);
+
+    return {
+      ...buildBaseOption(chart),
+      tooltip: kcyParticipationChart ? {
+        trigger: 'item',
+        confine: true,
+        backgroundColor: '#0F172A',
+        borderWidth: 0,
+        textStyle: {
+          color: '#FFFFFF',
+          fontSize: 12,
+        },
+        formatter: (params) => {
+          const data = params.data || {};
+          return `${escapeHtml(data.label || params.name)}<br>` +
+            `참여자 수: ${Number(data.participantCount || 0).toLocaleString()}명<br>` +
+            `참여자 비중: ${escapeHtml(data.displayValue || formatValue(params.value, chart.unit))}`;
+        },
+      } : buildBaseOption(chart).tooltip,
       grid: {
         top: 24,
-        right: 22,
+        right: kcyParticipationChart ? 34 : 22,
         bottom: 18,
-        left: 110,
+        left: kcyParticipationChart ? 42 : 110,
         containLabel: true,
       },
       xAxis: {
@@ -192,7 +290,9 @@
         type: 'bar',
         data: normalizePoints(item).map((point) => ({
           value: numericValue(point.value),
+          label: point.label,
           displayValue: point.displayValue,
+          participantCount: point.participantCount,
           itemStyle: horizontalBarItemStyle(chart, point),
         })),
         barWidth: 14,
@@ -216,6 +316,10 @@
   function buildLineOption(chart) {
     if (chart.id === 'organization-department-growth-rate') {
       return buildDepartmentGrowthBumpOption(chart);
+    }
+
+    if (chart.id === 'learning-weekly-hours') {
+      return buildWeeklyHoursMovingAverageOption(chart);
     }
 
     const series = normalizeSeries(chart);
@@ -261,6 +365,110 @@
           formatter: (params) => params.data.displayValue || formatValue(params.value, chart.unit),
         },
       })),
+    };
+  }
+
+  function buildWeeklyHoursMovingAverageOption(chart) {
+    const series = normalizeSeries(chart);
+    const firstSeries = series[0] || { name: '', points: [] };
+    const points = normalizePoints(firstSeries);
+    const labels = points.map((point) => point.label);
+    const values = points.map((point) => numericValue(point.value));
+    const movingAveragePoints = movingAverage(values, 3);
+
+    return {
+      ...buildBaseOption(chart),
+      color: ['#009E7A', '#F1A400'],
+      tooltip: {
+        trigger: 'axis',
+        confine: true,
+        backgroundColor: '#0F172A',
+        borderWidth: 0,
+        textStyle: {
+          color: '#FFFFFF',
+          fontSize: 12,
+        },
+        axisPointer: {
+          type: 'shadow',
+        },
+        valueFormatter: (value) => formatValue(value, chart.unit),
+      },
+      legend: {
+        bottom: 0,
+        left: 'center',
+        itemWidth: 14,
+        itemHeight: 10,
+        textStyle: {
+          color: '#475569',
+          fontSize: 12,
+        },
+      },
+      grid: {
+        top: 28,
+        right: 24,
+        bottom: 48,
+        left: 48,
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        data: labels,
+        boundaryGap: true,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: '#CBD5E1' } },
+        axisLabel: { color: '#475569', fontSize: 12 },
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+          formatter: (value) => formatAxisValue(value, chart.unit),
+        },
+      },
+      series: [
+        {
+          name: firstSeries.name || '평균 학습 시간',
+          type: 'bar',
+          data: points.map((point) => ({
+            value: numericValue(point.value),
+            displayValue: point.displayValue,
+          })),
+          barWidth: 22,
+          itemStyle: {
+            borderRadius: [5, 5, 0, 0],
+          },
+          label: {
+            show: true,
+            position: 'top',
+            color: '#334155',
+            fontSize: 11,
+            formatter: (params) => params.data.displayValue || formatValue(params.value, chart.unit),
+          },
+        },
+        {
+          name: '이동평균',
+          type: 'line',
+          data: movingAveragePoints.map((value) => ({
+            value,
+            displayValue: formatValue(value, chart.unit),
+          })),
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 7,
+          lineStyle: {
+            width: 3,
+            color: '#F1A400',
+          },
+          itemStyle: {
+            color: '#F1A400',
+          },
+          label: {
+            show: false,
+          },
+        },
+      ],
     };
   }
 
@@ -457,13 +665,18 @@
   }
 
   function horizontalBarItemStyle(chart, point) {
-    if (chart.id !== 'learning-kcy-participation') {
+    if (!isKcyParticipationChart(chart)) {
       return undefined;
     }
 
     return {
-      color: point.label === '기타' ? '#E2E8F0' : '#009E7A',
+      color: '#009E7A',
     };
+  }
+
+  function isKcyParticipationChart(chart) {
+    return chart.id === 'learning-online-kcy-participation' ||
+      chart.id === 'learning-offline-kcy-participation';
   }
 
   function buildGrowthFactorsOption(chart) {
@@ -537,7 +750,6 @@
         },
         {
           type: 'value',
-          name: '수료 강의 수(건)',
           nameTextStyle: {
             color: '#2563EB',
             fontSize: 12,
@@ -877,7 +1089,7 @@
         top: useTopCompetencyLabels ? 52 : 22,
         right: 28,
         bottom: useTopCompetencyLabels ? 22 : 30,
-        left: 112,
+        left: 12,
         containLabel: true,
       },
       xAxis: {
@@ -983,9 +1195,29 @@
     return labels;
   }
 
+  function alignPoints(labels, points) {
+    const pointByLabel = new Map(points.map((point) => [point.label, point]));
+
+    return labels.map((label) => pointByLabel.get(label) || {
+      label,
+      value: 0,
+      displayValue: formatValue(0, ''),
+    });
+  }
+
   function numericValue(value) {
     const number = Number(value);
     return Number.isFinite(number) ? number : 0;
+  }
+
+  function movingAverage(values, windowSize) {
+    return values.map((_, index) => {
+      const start = Math.max(0, index - windowSize + 1);
+      const windowValues = values.slice(start, index + 1);
+      const total = windowValues.reduce((sum, value) => sum + value, 0);
+
+      return Number((total / windowValues.length).toFixed(1));
+    });
   }
 
   function formatValue(value, unit) {

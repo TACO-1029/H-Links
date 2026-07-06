@@ -162,12 +162,13 @@
         ORDER BY rn
     </select>
 
-    <select id="selectIncompleteCourses" resultType="com.hlinks.domain.statistics.dto.StatisticsRankRow">
+    <select id="selectIncompleteCourses" resultType="com.hlinks.domain.statistics.dto.IncompleteCourseRow">
         SELECT rn AS rank,
-               course_type_name AS badgeText,
+               course_title AS courseTitle,
+               course_type_name AS courseTypeName,
                badge_tone AS badgeTone,
-               course_title AS label,
-               incomplete_count AS value
+               incomplete_count AS incompleteCount,
+               completion_rate AS completionRate
         FROM (
             SELECT ROW_NUMBER() OVER (
                        ORDER BY
@@ -203,7 +204,11 @@
                    COUNT(DISTINCT CASE
                        WHEN NVL(cls.STATUS, 'NOT_STARTED') IN ('NOT_STARTED', 'IN_PROGRESS')
                        THEN ca.APPLICATION_ID
-                   END) AS incomplete_count
+                   END) AS incomplete_count,
+                   NVL(ROUND(COUNT(DISTINCT CASE
+                       WHEN cls.STATUS = 'COMPLETED'
+                       THEN ca.APPLICATION_ID
+                   END) / NULLIF(COUNT(DISTINCT ca.APPLICATION_ID), 0) * 100, 1), 0) AS completion_rate
             FROM COURSE_APPLICATION ca
             JOIN COURSE c ON c.COURSE_ID = ca.COURSE_ID
             LEFT JOIN COURSE_LEARNING_STATUS cls ON cls.APPLICATION_ID = ca.APPLICATION_ID
@@ -308,75 +313,58 @@
         ORDER BY increase_count DESC, increase_rate DESC, skill_name
     </select>
 
-    <select id="selectApplicationCompletionConversionTrend" resultType="com.hlinks.domain.statistics.dto.StatisticsPointRow">
-        WITH periods AS (
-            SELECT period_start,
-                   CASE #{periodUnit}
-                       WHEN 'DAY' THEN period_start + 1
-                       WHEN 'WEEK' THEN period_start + 7
-                       WHEN 'MONTH' THEN ADD_MONTHS(period_start, 1)
-                       ELSE ADD_MONTHS(period_start, 3)
-                   END AS period_end,
-                   CASE #{periodUnit}
-                       WHEN 'DAY' THEN TO_CHAR(period_start, 'MM/DD')
-                       WHEN 'WEEK' THEN TO_CHAR(period_start, 'MM/DD') || '주'
-                       WHEN 'MONTH' THEN TO_CHAR(period_start, 'YYYY-MM')
-                       ELSE TO_CHAR(period_start, 'YYYY') || ' Q' || TO_CHAR(period_start, 'Q')
-                   END AS period_label
+    <select id="selectMonthlyLearningStatusComposition" resultType="com.hlinks.domain.statistics.dto.CourseStatusMonthlyRow">
+        WITH months AS (
+            SELECT month_start,
+                   ADD_MONTHS(month_start, 1) AS month_end,
+                   TO_CHAR(month_start, 'YYYY-MM') AS month_label
             FROM (
-                SELECT CASE #{periodUnit}
-                           WHEN 'DAY' THEN #{startDate} + LEVEL - 1
-                           WHEN 'WEEK' THEN TRUNC(#{startDate}, 'IW') + ((LEVEL - 1) * 7)
-                           WHEN 'MONTH' THEN ADD_MONTHS(TRUNC(#{startDate}, 'MM'), LEVEL - 1)
-                           ELSE ADD_MONTHS(TRUNC(#{startDate}, 'Q'), (LEVEL - 1) * 3)
-                       END AS period_start
+                SELECT ADD_MONTHS(TRUNC(#{startDate}, 'MM'), LEVEL - 1) AS month_start
                 FROM DUAL
-                CONNECT BY LEVEL &lt;= CASE #{periodUnit}
-                    WHEN 'DAY' THEN TRUNC(#{endDate}) - TRUNC(#{startDate}) + 1
-                    WHEN 'WEEK' THEN CEIL((TRUNC(#{endDate}) - TRUNC(#{startDate}, 'IW') + 1) / 7)
-                    WHEN 'MONTH' THEN FLOOR(MONTHS_BETWEEN(TRUNC(#{endDate}, 'MM'), TRUNC(#{startDate}, 'MM'))) + 1
-                    ELSE FLOOR(MONTHS_BETWEEN(TRUNC(#{endDate}, 'Q'), TRUNC(#{startDate}, 'Q')) / 3) + 1
-                END
+                CONNECT BY LEVEL &lt;= FLOOR(MONTHS_BETWEEN(TRUNC(#{endDate}, 'MM'), TRUNC(#{startDate}, 'MM'))) + 1
             )
-            WHERE period_start &lt; #{endDate} + 1
+            WHERE month_start &lt; #{endDate} + 1
         ),
-        filtered_courses AS (
-            SELECT c.COURSE_ID
-            FROM COURSE c
-            WHERE 1 = 1
+        statuses AS (
+            SELECT 1 AS status_order, 'NOT_STARTED' AS status_code, '미시작' AS status_label FROM DUAL
+            UNION ALL SELECT 2, 'IN_PROGRESS', '수강중' FROM DUAL
+            UNION ALL SELECT 3, 'COMPLETED', '수료' FROM DUAL
+            UNION ALL SELECT 4, 'CANCELED', '미수료/이탈' FROM DUAL
+        ),
+        status_counts AS (
+            SELECT m.month_start,
+                   CASE
+                       WHEN NVL(cls.STATUS, 'NOT_STARTED') = 'NOT_STARTED' THEN 'NOT_STARTED'
+                       WHEN cls.STATUS = 'IN_PROGRESS' THEN 'IN_PROGRESS'
+                       WHEN cls.STATUS = 'COMPLETED' THEN 'COMPLETED'
+                       ELSE 'CANCELED'
+                   END AS status_code,
+                   COUNT(DISTINCT cls.COURSE_LEARNING_ID) AS status_count
+            FROM months m
+            JOIN COURSE_LEARNING_STATUS cls
+              ON cls.UPDATED_AT &gt;= m.month_start
+             AND cls.UPDATED_AT &lt; m.month_end
+            JOIN COURSE c ON c.COURSE_ID = cls.COURSE_ID
+            WHERE cls.UPDATED_AT &gt;= #{startDate}
+              AND cls.UPDATED_AT &lt; #{endDate} + 1
             <include refid="courseFilter"/>
-        ),
-        application_counts AS (
-            SELECT p.period_start,
-                   COUNT(ca.APPLICATION_ID) AS application_count
-            FROM periods p
-            LEFT JOIN COURSE_APPLICATION ca
-              ON ca.APPLICATION_STATUS IN ('WAITING', 'APPROVED')
-             AND ca.APPLIED_AT &gt;= p.period_start
-             AND ca.APPLIED_AT &lt; p.period_end
-             AND ca.APPLIED_AT &gt;= #{startDate}
-             AND ca.APPLIED_AT &lt; #{endDate} + 1
-             AND ca.COURSE_ID IN (SELECT COURSE_ID FROM filtered_courses)
-            GROUP BY p.period_start
-        ),
-        completion_counts AS (
-            SELECT p.period_start,
-                   COUNT(cls.COURSE_LEARNING_ID) AS completion_count
-            FROM periods p
-            LEFT JOIN COURSE_LEARNING_STATUS cls
-              ON cls.STATUS = 'COMPLETED'
-             AND cls.UPDATED_AT &gt;= p.period_start
-             AND cls.UPDATED_AT &lt; p.period_end
-             AND cls.UPDATED_AT &gt;= #{startDate}
-             AND cls.UPDATED_AT &lt; #{endDate} + 1
-             AND cls.COURSE_ID IN (SELECT COURSE_ID FROM filtered_courses)
-            GROUP BY p.period_start
+            GROUP BY m.month_start,
+                     CASE
+                         WHEN NVL(cls.STATUS, 'NOT_STARTED') = 'NOT_STARTED' THEN 'NOT_STARTED'
+                         WHEN cls.STATUS = 'IN_PROGRESS' THEN 'IN_PROGRESS'
+                         WHEN cls.STATUS = 'COMPLETED' THEN 'COMPLETED'
+                         ELSE 'CANCELED'
+                     END
         )
-        SELECT p.period_label AS label,
-               NVL(ROUND(cc.completion_count / NULLIF(ac.application_count, 0) * 100, 1), 0) AS value
-        FROM periods p
-        JOIN application_counts ac ON ac.period_start = p.period_start
-        JOIN completion_counts cc ON cc.period_start = p.period_start
-        ORDER BY p.period_start
+        SELECT m.month_label AS monthLabel,
+               s.status_label AS statusLabel,
+               s.status_order AS statusOrder,
+               NVL(sc.status_count, 0) AS statusCount
+        FROM months m
+        CROSS JOIN statuses s
+        LEFT JOIN status_counts sc
+          ON sc.month_start = m.month_start
+         AND sc.status_code = s.status_code
+        ORDER BY m.month_start, s.status_order
     </select>
 </mapper>
