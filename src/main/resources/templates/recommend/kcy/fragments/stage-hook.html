@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="stage-hook">
+    <!-- Stage 1: IDE Hook Highlighter -->
+    <article id="stage-hook" class="kcy-question" style="display:block;">
+        <h2>아래 코드에서 가장 "킹받는(불편한)" 부분을 마우스로 드래그하여 하이라이트 해주세요.</h2>
+        <div class="kcy-ide-editor" id="ide-editor">
+            <div class="kcy-ide-line">
+                <span class="line-num">1</span> <span class="token comment" data-type="PROMPTER">// 🚀✨ 유저가 관리자인지 체크해주는 짱짱 함수! ✨🚀</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">2</span> <span class="token keyword" data-type="CORPORATE">public</span> <span class="token type" data-type="CORPORATE">boolean</span> <span class="token function" data-type="CORPORATE">check_Admin</span><span class="token" data-type="CORPORATE">(</span><span class="token type" data-type="CORPORATE">String</span> <span class="token" data-type="CORPORATE">Id) {</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">3</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="token type" data-type="OUTLINE">List&lt;User&gt;</span> <span class="token" data-type="OUTLINE">users = repository.findAll();</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">4</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">5</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="token keyword">for</span> <span class="token">(</span><span class="token type">int</span> <span class="token">i = 0; i &lt; users.size(); i++) {</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">6</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="token keyword" data-type="MANUAL">if</span> <span class="token" data-type="MANUAL">(users.get(i).getId() == Id) {</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">7</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="token keyword">if</span> <span class="token">(users.get(i).getRole().equals(</span><span class="token string">"ADMIN"</span><span class="token">)) {</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">8</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="token keyword">return</span> <span class="token keyword">true</span><span class="token">;</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">9</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="token">}</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">10</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="token">}</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">11</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="token">}</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">12</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="token keyword">return</span> <span class="token keyword">false</span><span class="token">;</span>
+            </div>
+            <div class="kcy-ide-line">
+                <span class="line-num">13</span> <span class="token">}</span>
+            </div>
+        </div>
+        <div class="kcy-test-card__footer">
+            <div></div>
+            <button class="teams-quick-reply-btn" type="button" onclick="submitHook()">다음 문항</button>
+        </div>
+    </article>
+</th:block>
+</html>

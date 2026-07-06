@@ -60,7 +60,7 @@
             </span>
             <span class="kcy-persona-card__face kcy-persona-card__face--back">
                 <strong>자율형 학습</strong>
-                <span>빠른 탐색과 독립적인 실험에 강한 유형</span>
+                <span>빠른 탐색 및 독립적인 실험에 강한 유형</span>
             </span>
         </span>
             </button>
@@ -150,73 +150,128 @@
             <button class="kcy-button kcy-button--primary" type="button" data-kcy-start>
                 성향 테스트 시작하기
             </button>
-            <button class="kcy-button kcy-button--secondary" type="button" data-kcy-random>
-                랜덤 응답 테스트
-            </button>
         </div>
     </section>
 
+    <!-- SPA MS Teams Layout Section -->
     <section class="kcy-test" data-kcy-test hidden>
         <form th:action="@{/kcy}"
               th:object="${kcySubmitRequest}"
               method="post"
-              data-kcy-form
-              class="kcy-test-card">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+              id="kcyAdaptiveForm"
+              style="width: 100%; max-width: 2560px; margin: 0 auto; display: block;">
+            <input type="hidden" id="csrfToken" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
-            <div class="kcy-progress">
-                <div class="kcy-progress__top">
-                    <span>성향 진단 진행 중</span>
-                    <strong>
-                        <span data-kcy-current>1</span>
-                        <span aria-hidden="true">/</span>
-                        <span th:text="${#lists.size(questions)}" data-kcy-total>11</span>
-                    </strong>
+            <!-- MS Teams Workspace Web Shell -->
+            <div class="teams-layout">
+                <!-- 1. MS Teams Vertical App Bar -->
+                <div class="teams-app-bar" style="display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 12px; height: 100%;">
+                    <div class="teams-app-bar-top" style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%;">
+                        <div class="teams-app-item" title="활동">
+                            <div class="teams-app-icon">
+                                <svg class="teams-app-svg" viewBox="0 0 24 24"><path d="M12 2a4.95 4.95 0 014.9 4.36L17 7v4.67l1.7 1.7a1 1 0 01.3.7v1.43a1 1 0 01-1 1H6a1 1 0 01-1-1v-1.43a1 1 0 01.3-.7L7 11.67V7a4.95 4.95 0 015-5zm0 17a2.5 2.5 0 01-2.42-1.92l-.08-.08h5a2.5 2.5 0 01-2.5 2.5z" fill="currentColor"/></svg>
+                            </div>
+                            <span>활동</span>
+                        </div>
+                        <div class="teams-app-item active" title="채팅">
+                            <div class="teams-app-icon" style="position: relative;">
+                                <svg class="teams-app-svg" viewBox="0 0 24 24"><path d="M12 3c5.52 0 10 3.58 10 8a6.93 6.93 0 01-1.8 4.6l1.75 3.32a.75.75 0 01-1.07 1l-3.8-2A11 11 0 0112 19c-5.52 0-10-3.58-10-8s4.48-8 10-8zm0 1.5c-4.69 0-8.5 2.91-8.5 6.5s3.81 6.5 8.5 6.5c1.47 0 2.87-.29 4.1-.8a.75.75 0 01.76.08l2.67 1.41-1.22-2.31a.75.75 0 01.07-.84A5.43 5.43 0 0020.5 11c0-3.59-3.81-6.5-8.5-6.5z" fill="currentColor"/></svg>
+                                <span class="teams-badge" style="position: absolute; top: -2px; right: -2px; background: #e81123; color: #fff; border-radius: 50%; width: 14px; height: 14px; font-size: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold;">2</span>
+                            </div>
+                            <span>채팅</span>
+                        </div>
+                        <div class="teams-app-item" title="팀">
+                            <div class="teams-app-icon">
+                                <svg class="teams-app-svg" viewBox="0 0 24 24"><path d="M12.25 15.5H19a2.25 2.25 0 002.25-2.25V9A2.25 2.25 0 0019 6.75h-6.75A2.25 2.25 0 0010 9v4.25a2.25 2.25 0 002.25 2.25zm.25-7.25h6a.75.75 0 01.75.75v3.5a.75.75 0 01-.75.75h-6a.75.75 0 01-.75-.75V9a.75.75 0 01.75-.75zm-6.25 9.5c-1.38 0-2.5-1.12-2.5-2.5V9.5a.75.75 0 00-1.5 0V15.25a4 4 0 004 4h7a.75.75 0 000-1.5H6.25z" fill="currentColor"/></svg>
+                            </div>
+                            <span>팀</span>
+                        </div>
+                        <div class="teams-app-item" title="일정">
+                            <div class="teams-app-icon">
+                                <svg class="teams-app-svg" viewBox="0 0 24 24"><path d="M19 4h-1V2.75a.75.75 0 00-1.5 0V4H8.5V2.75a.75.75 0 00-1.5 0V4H6a3 3 0 00-3 3v12a3 3 0 003 3h13a3 3 0 003-3V7a3 3 0 00-3-3zm1.5 15a1.5 1.5 0 01-1.5 1.5H6A1.5 1.5 0 014.5 19V9.5h15V19zm0-11h-15V7A1.5 1.5 0 016 5.5h1v.75a.75.75 0 001.5 0V5.5h7v.75a.75.75 0 001.5 0V5.5h1A1.5 1.5 0 0120.5 7v1z" fill="currentColor"/></svg>
+                            </div>
+                            <span>일정</span>
+                        </div>
+                        <div class="teams-app-item" title="통화">
+                            <div class="teams-app-icon">
+                                <svg class="teams-app-svg" viewBox="0 0 24 24"><path d="M2.5 5.5A3 3 0 015.5 2.5h2.56a1 1 0 01.96.72l1.07 4.29a1 1 0 01-.58 1.15L8.14 9.38a13 13 0 006.48 6.48l.72-1.37a1 1 0 011.15-.58l4.29 1.07a1 1 0 01.72.96v2.56a3 3 0 01-3 3h-.5C10.16 21.5 2.5 13.84 2.5 6.5v-.5zM5.5 4a1.5 1.5 0 00-1.5 1.5c0 6.07 6.43 12.5 12.5 12.5a1.5 1.5 0 001.5-1.5v-1.84l-3.32-.83-.8 1.51a.75.75 0 01-.89.37 14.5 14.5 0 01-8.2-8.2.75.75 0 01.37-.89l1.51-.8-.83-3.32H5.5z" fill="currentColor"/></svg>
+                            </div>
+                            <span>통화</span>
+                        </div>
+                        <div class="teams-app-item" title="파일">
+                            <div class="teams-app-icon">
+                                <svg class="teams-app-svg" viewBox="0 0 24 24"><path d="M19.5 21a1.5 1.5 0 001.5-1.5v-12A1.5 1.5 0 0019.5 6h-6.2l-2-2H4.5A1.5 1.5 0 003 5.5v14A1.5 1.5 0 004.5 21h15zM4.5 7.5h15v12h-15v-12zM12.5 5l1.5 1.5h5.5V6H14L12.5 4.5H4.5V6h6.8l1.2-1z" fill="currentColor"/></svg>
+                            </div>
+                            <span>파일</span>
+                        </div>
+                        <div class="teams-app-item" title="더보기">
+                            <div class="teams-app-icon" style="font-size: 14px; font-weight: bold; line-height: 12px; height: 20px; display: flex; align-items: center;">...</div>
+                        </div>
+                    </div>
+                    <div class="teams-app-bar-bottom" style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%;">
+                        <div class="teams-app-item" title="앱">
+                            <div class="teams-app-icon">
+                                <svg class="teams-app-svg" viewBox="0 0 24 24"><path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z" fill="currentColor"/></svg>
+                            </div>
+                            <span>앱</span>
+                        </div>
+                        <div class="teams-app-item" title="도움말">
+                            <div class="teams-app-icon">
+                                <svg class="teams-app-svg" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18.5a8.5 8.5 0 110-17 8.5 8.5 0 010 17zm0-13a2.5 2.5 0 00-2.5 2.5.75.75 0 01-1.5 0A4 4 0 1112 12a1 1 0 00-1 1 .75.75 0 01-1.5 0 2.5 2.5 0 012.5-2.5 2.5 2.5 0 002.5-2.5c0-1.38-1.12-2.5-2.5-2.5zm0 10.5a1 1 0 110-2 1 1 0 010 2z" fill="currentColor"/></svg>
+                            </div>
+                            <span>도움말</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="kcy-progress__track" aria-hidden="true">
-                    <span data-kcy-progress-bar></span>
+
+                <!-- 2. Left Sidebar -->
+                <div class="teams-sidebar">
+                    <div class="teams-sidebar-header">
+                        <span class="teams-sidebar-title">H-Links Workspace</span>
+                    </div>
+                    <div class="teams-sidebar-sections">
+                        <div class="teams-sidebar-section">
+                            <div class="teams-section-title">채널</div>
+                            <div class="teams-item active">
+                                <span style="font-weight: bold;">#</span>
+                                <span>kcy-성향-진단</span>
+                            </div>
+                        </div>
+                        <div class="teams-sidebar-section">
+                            <div class="teams-section-title font-bold">다이렉트 메시지</div>
+                            <div class="teams-item">
+                                <div class="teams-status-dot"></div>
+                                <span style="margin-left: 4px;">흰디 매니저</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <p class="kcy-form-error"
-               th:if="${#fields.hasErrors('selectedOptionIds')}"
-               th:errors="*{selectedOptionIds}">
-                모든 문항에 응답해주세요.
-            </p>
+                <!-- 3. Main Chat Area -->
+                <div class="teams-main">
+                    <div class="teams-chat-header-wrap">
+                        <div class="teams-chat-header">
+                            <span class="teams-chat-title">#kcy-성향-진단</span>
+                        </div>
+                        <!-- MS Teams style Header Progress Bar -->
+                        <div class="teams-header-progress-bar-container" style="width: 100%; height: 3px; background: #e0e0e0; position: relative;">
+                            <div id="teams-header-progress-bar" style="width: 0%; height: 100%; background: #009E7A; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                    <div class="teams-chat-area">
+                        <!-- Scrollable Message Stream -->
+                        <div class="teams-messages" id="chat-messages">
+                            <!-- Messages appended here dynamically -->
+                        </div>
 
-            <article class="kcy-question"
-                     th:each="question, questionStat : ${questions}"
-                     th:attr="data-kcy-question=${questionStat.index}"
-                     th:hidden="${!questionStat.first}">
-                <span class="kcy-question__tag">성향 진단</span>
-                <h2 th:text="${question.questionText}">
-                    새로운 업무 이슈를 배정받았다. 요구사항을 대략 확인한 뒤 가장 먼저 할 행동은?
-                </h2>
-
-                <div class="kcy-options">
-                    <label class="kcy-option"
-                           th:each="option : ${question.options}">
-                        <input type="radio"
-                               th:name="${'selectedOptionIds[' + questionStat.index + ']'}"
-                               th:value="${option.kcyOptionId}">
-                        <span class="kcy-option__mark" th:text="${option.optionNo}">A</span>
-                        <span class="kcy-option__text" th:text="${option.optionText}">
-                            요구사항, 예외 케이스, 영향 범위를 먼저 정리한다.
-                        </span>
-                    </label>
+                        <!-- Chat Bottom Controls -->
+                        <div class="teams-input-area" style="padding: 0; border: none; background: transparent;">
+                            <div class="teams-options-container" id="chat-options-container">
+                                <!-- MCQ option buttons & Undo buttons injected here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </article>
-
-            <div class="kcy-test-card__footer">
-                <button class="kcy-button kcy-button--ghost" type="button" data-kcy-prev disabled>
-                    이전 문항
-                </button>
-                <button class="kcy-button kcy-button--primary" type="button" data-kcy-next>
-                    다음 문항
-                </button>
-                <button class="kcy-button kcy-button--primary" type="submit" data-kcy-submit disabled hidden>
-                    결과 보기
-                </button>
             </div>
         </form>
     </section>
@@ -224,118 +279,687 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
+<!-- Templates for Inline Attachment Blocks -->
+<template id="template-stage-attachment">
+    <th:block th:replace="recommend/kcy/fragments/template-stage-attachment :: stage-attachment"></th:block>
+</template>
+
+<template id="template-stage-hook">
+    <th:block th:replace="recommend/kcy/fragments/stage-hook :: stage-hook"></th:block>
+</template>
+
+<template id="template-stage-mcq">
+    <th:block th:replace="recommend/kcy/fragments/stage-mcq :: stage-mcq"></th:block>
+</template>
+
+<template id="template-stage-tetris">
+    <th:block th:replace="recommend/kcy/fragments/stage-tetris :: stage-tetris"></th:block>
+</template>
+
 <script>
-    (() => {
-        const intro = document.querySelector("[data-kcy-intro]");
-        const test = document.querySelector("[data-kcy-test]");
-        const startButton = document.querySelector("[data-kcy-start]");
-        const randomButton = document.querySelector("[data-kcy-random]");
-        const form = document.querySelector("[data-kcy-form]");
-        const questions = Array.from(document.querySelectorAll("[data-kcy-question]"));
-        const prevButton = document.querySelector("[data-kcy-prev]");
-        const nextButton = document.querySelector("[data-kcy-next]");
-        const submitButton = document.querySelector("[data-kcy-submit]");
-        const currentText = document.querySelector("[data-kcy-current]");
-        const progressBar = document.querySelector("[data-kcy-progress-bar]");
-        const hasServerError = Boolean(document.querySelector(".kcy-form-error"));
-        let currentIndex = 0;
+    let state = {
+        selectedOptionIds: [],
+        angerScoreTypes: [],
+        tiebreakerBlocks: [],
+        timeTaken: 0,
+        fillRate: 0,
+        history: [],        // State history snapshots for Undo
+        questionHistory: [] // MCQ question DTO history snapshots for Undo
+    };
+    let tetrisStartTime = 0;
+    let isDelayEnabled = true;
 
-        if (!intro || !test || questions.length === 0) {
-            return;
-        }
+    const intro = document.querySelector("[data-kcy-intro]");
+    const test = document.querySelector("[data-kcy-test]");
+    const startButton = document.querySelector("[data-kcy-start]");
+    
+    startButton.addEventListener("click", () => {
+        intro.hidden = true;
+        test.hidden = false;
+        initChatFlow();
+    });
 
-        const showTest = () => {
-            intro.hidden = true;
-            test.hidden = false;
-            window.scrollTo({ top: 0, behavior: "smooth" });
-            updateQuestion();
-        };
-
-        const updateQuestion = () => {
-            questions.forEach((question, index) => {
-                question.hidden = index !== currentIndex;
-            });
-
-            currentText.textContent = String(currentIndex + 1);
-            progressBar.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
-            prevButton.disabled = currentIndex === 0;
-            nextButton.hidden = currentIndex === questions.length - 1;
-            submitButton.hidden = currentIndex !== questions.length - 1 || !currentQuestionAnswered();
-            submitButton.disabled = submitButton.hidden;
-        };
-
-        const currentQuestionAnswered = () => {
-            const currentQuestion = questions[currentIndex];
-            return Boolean(currentQuestion.querySelector("input[type='radio']:checked"));
-        };
-
-        const firstUnansweredQuestionIndex = () => {
-            return questions.findIndex((question) => {
-                return !question.querySelector("input[type='radio']:checked");
-            });
-        };
-
-        const highlightCurrentQuestion = () => {
-            const currentQuestion = questions[currentIndex];
-            currentQuestion.classList.remove("is-shaking");
-            window.requestAnimationFrame(() => currentQuestion.classList.add("is-shaking"));
-        };
-
-        startButton.addEventListener("click", showTest);
-
-        randomButton.addEventListener("click", () => {
-            questions.forEach((question) => {
-                const options = Array.from(question.querySelectorAll("input[type='radio']"));
-                const selected = options[Math.floor(Math.random() * options.length)];
-                if (selected) {
-                    selected.checked = true;
+    // 개발자 편의용: 왼쪽 앱바 '활동' 버튼 클릭 시 딜레이 모드 토글
+    document.addEventListener("DOMContentLoaded", () => {
+        const activityBtn = document.querySelector('.teams-app-item[title="활동"]');
+        if (activityBtn) {
+            activityBtn.style.cursor = 'pointer';
+            activityBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                isDelayEnabled = !isDelayEnabled;
+                if (isDelayEnabled) {
+                    activityBtn.style.color = '';
+                    activityBtn.style.background = '';
+                    alert("개발자 딜레이 모드: ON (일반 딜레이 작동)");
+                } else {
+                    activityBtn.style.color = '#e81123';
+                    activityBtn.style.background = 'rgba(232, 17, 35, 0.1)';
+                    alert("개발자 딜레이 모드: OFF (딜레이 없이 즉시 로드)");
                 }
             });
-            showTest();
-        });
+        }
+    });
 
-        nextButton.addEventListener("click", () => {
-            if (!currentQuestionAnswered()) {
-                highlightCurrentQuestion();
-                return;
-            }
+    /* ============================================================= */
+    /* MS Teams Conversation Message Utilities                       */
+    /* ============================================================= */
+    const userName = "[[${#authentication.principal.name}]]" || '개발자';
+    const botAvatar = '/images/kcy/awcp.webp';
+    const userAvatar = '/images/kcy/odcp.webp';
 
-            currentIndex = Math.min(currentIndex + 1, questions.length - 1);
-            updateQuestion();
-        });
+    function appendBotMessage(text, stepIndex, immediateAnimate) {
+        const chatMessages = document.getElementById('chat-messages');
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const animClass = immediateAnimate ? 'fade-in-init' : '';
+        const html = `
+            <div class="teams-message incoming step-${stepIndex} ${animClass}">
+                <div class="teams-avatar">
+                    <img src="${botAvatar}" alt="흰디 매니저">
+                </div>
+                <div class="teams-msg-content">
+                    <div class="teams-msg-header">
+                        <span class="teams-sender">흰디 매니저</span>
+                        <span class="teams-time">${timeStr}</span>
+                    </div>
+                    <div class="teams-msg-bubble">${text}</div>
+                </div>
+            </div>
+        `;
+        chatMessages.insertAdjacentHTML('beforeend', html);
+        
+        if (immediateAnimate) {
+            const lastMsg = chatMessages.lastElementChild;
+            // Force reflow
+            lastMsg.getBoundingClientRect();
+            lastMsg.classList.add('fade-in-active');
+        }
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
-        prevButton.addEventListener("click", () => {
-            currentIndex = Math.max(currentIndex - 1, 0);
-            updateQuestion();
-        });
+    function appendUserMessage(text, stepIndex) {
+        const chatMessages = document.getElementById('chat-messages');
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const html = `
+            <div class="teams-message outgoing step-${stepIndex}">
+                <div class="teams-avatar">
+                    <img src="${userAvatar}" alt="나">
+                </div>
+                <div class="teams-msg-content">
+                    <div class="teams-msg-header">
+                        <span class="teams-sender">나</span>
+                        <span class="teams-time">${timeStr}</span>
+                    </div>
+                    <div class="teams-msg-bubble">${text}</div>
+                </div>
+            </div>
+        `;
+        chatMessages.insertAdjacentHTML('beforeend', html);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
-        form.addEventListener("submit", (event) => {
-            const unansweredIndex = firstUnansweredQuestionIndex();
+    function showTypingIndicator(stepIndex) {
+        const chatMessages = document.getElementById('chat-messages');
+        const html = `
+            <div class="teams-message incoming teams-typing-indicator step-${stepIndex}">
+                <div class="teams-avatar">
+                    <img src="${botAvatar}" alt="흰디 매니저">
+                </div>
+                <div class="teams-msg-content">
+                    <div class="teams-msg-bubble">
+                        <div class="teams-typing">
+                            <span class="teams-typing-dot"></span>
+                            <span class="teams-typing-dot"></span>
+                            <span class="teams-typing-dot"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        chatMessages.insertAdjacentHTML('beforeend', html);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
-            if (unansweredIndex !== -1) {
-                event.preventDefault();
-                currentIndex = unansweredIndex;
-                updateQuestion();
-                highlightCurrentQuestion();
-            }
-        });
+    function removeTypingIndicator() {
+        const indicator = document.querySelector('.teams-typing-indicator');
+        if (indicator) indicator.remove();
+    }
 
-        questions.forEach((question) => {
-            question.addEventListener("change", (event) => {
-                if (event.target.matches("input[type='radio']")) {
-                    question.classList.remove("is-shaking");
-                    updateQuestion();
-                }
+    /* ============================================================= */
+    /* Sequential Message Flow Engine with Text-Length Based Delay   */
+    /* ============================================================= */
+    function enqueueMessages(messagesList, onComplete) {
+        let chain = Promise.resolve();
+        messagesList.forEach(m => {
+            chain = chain.then(() => {
+                return new Promise((resolve) => {
+                    const text = m.text || '';
+                    
+                    // 개발자 딜레이 꺼짐 모드
+                    if (!isDelayEnabled) {
+                        if (text) {
+                            appendBotMessage(text, m.stepIndex, true);
+                        }
+                        if (m.isHookCard) {
+                            appendAttachment('hook', m.stepIndex);
+                        } else if (m.isTetrisCard) {
+                            appendAttachment('tetris', m.stepIndex, m.blocks);
+                        } else if (m.isMcqCard) {
+                            appendAttachment('mcq', m.stepIndex, m.question);
+                        }
+                        resolve();
+                        return;
+                    }
+
+                    // 10자 이하 단문은 타이핑 인디케이터 없이 600ms 대기 후 즉시 노출
+                    const isShort = text.length <= 10;
+                    const delay = isShort ? 600 : Math.max(1800, Math.min(6000, text.length * 36));
+
+                    if (isShort) {
+                        setTimeout(() => {
+                            if (text) {
+                                appendBotMessage(text, m.stepIndex, true);
+                            }
+                            if (m.isHookCard) {
+                                appendAttachment('hook', m.stepIndex);
+                            } else if (m.isTetrisCard) {
+                                appendAttachment('tetris', m.stepIndex, m.blocks);
+                            } else if (m.isMcqCard) {
+                                appendAttachment('mcq', m.stepIndex, m.question);
+                            }
+                            resolve();
+                        }, delay);
+                    } else {
+                        showTypingIndicator(m.stepIndex);
+                        setTimeout(() => {
+                            removeTypingIndicator();
+                            if (text) {
+                                appendBotMessage(text, m.stepIndex, false);
+                            }
+                            if (m.isHookCard) {
+                                appendAttachment('hook', m.stepIndex);
+                            } else if (m.isTetrisCard) {
+                                appendAttachment('tetris', m.stepIndex, m.blocks);
+                            } else if (m.isMcqCard) {
+                                appendAttachment('mcq', m.stepIndex, m.question);
+                            }
+                            resolve();
+                        }, delay);
+                    }
+                });
             });
         });
 
-        if (hasServerError) {
-            showTest();
-            return;
+        if (onComplete) {
+            chain.then(onComplete);
+        }
+    }
+
+    /* ============================================================= */
+    /* Step 1: Initial Hook Setup                                    */
+    /* ============================================================= */
+    function initChatFlow() {
+        updateHeaderProgress();
+        // Enqueue welcome dialogue sequences with dynamic delays
+        enqueueMessages([
+            { text: "안녕하세요! H-Links 커리어 진단 워크스페이스에 오신 것을 환영합니다. 👋", stepIndex: 0 },
+            { text: "OOO님! 방금 신입 직원분께서 코드리뷰를 요청하셨어요. 어떤 부분들을 중점적으로 피드백주시겠나요?", stepIndex: 0 },
+            { isHookCard: true, stepIndex: 0 }
+        ]);
+    }
+
+    function appendAttachment(type, stepIndex, extraData) {
+        const chatMessages = document.getElementById('chat-messages');
+        const template = document.getElementById('template-stage-attachment');
+        if (!template) return;
+        const clone = document.importNode(template.content, true);
+        const wrapper = clone.querySelector('.teams-msg-attachment');
+        wrapper.classList.add('attachment-' + type);
+        wrapper.className += ` step-${stepIndex}`;
+        
+        // 타입별 콘텐츠 주입
+        const innerTemplate = document.getElementById('template-stage-' + type);
+        if (innerTemplate) {
+            const innerClone = document.importNode(innerTemplate.content, true);
+            const innerContainer = wrapper.querySelector('.attachment-inner');
+            if (innerContainer) {
+                innerContainer.appendChild(innerClone);
+            }
+        }
+        
+        if (type === 'hook') {
+            // "Same Bubble" 처리: 직전의 봇 메시지 말풍선(teams-msg-bubble) 내부로 삽입
+            const incomingMsgs = chatMessages.querySelectorAll('.teams-message.incoming');
+            const lastBotMsg = incomingMsgs[incomingMsgs.length - 1];
+            if (lastBotMsg) {
+                const msgBubble = lastBotMsg.querySelector('.teams-msg-bubble');
+                if (msgBubble) {
+                    msgBubble.appendChild(wrapper);
+                }
+            } else {
+                chatMessages.appendChild(clone);
+            }
+            bindHookListeners();
+        } else if (type === 'mcq') {
+            // MCQ도 Same Bubble로 삽입하여 봇 텍스트 바로 아래에 위치시킴
+            const incomingMsgs = chatMessages.querySelectorAll('.teams-message.incoming');
+            const lastBotMsg = incomingMsgs[incomingMsgs.length - 1];
+            if (lastBotMsg) {
+                const msgBubble = lastBotMsg.querySelector('.teams-msg-bubble');
+                if (msgBubble) {
+                    msgBubble.appendChild(wrapper);
+                }
+            } else {
+                chatMessages.appendChild(clone);
+            }
+            renderMcqCardContent(wrapper, extraData);
+        } else if (type === 'tetris') {
+            // "Full Overlay" 처리: overlay 클래스 추가 및 상태값 초기화
+            wrapper.classList.add('tetris-full-overlay');
+            const tetrisArticle = wrapper.querySelector('#stage-tetris');
+            if (tetrisArticle) {
+                tetrisArticle.style.display = 'block';
+            }
+            
+            // 전역 테트리스 변수 리셋
+            occupied = Array(4).fill(null).map(() => Array(4).fill(false));
+            blockStates = {};
+            tetrisStartTime = Date.now();
+            
+            chatMessages.appendChild(clone);
+            renderTetrisBlocks(extraData);
+        } else {
+            chatMessages.appendChild(clone);
+        }
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function renderMcqCardContent(cardWrapper, question) {
+        const text = cardWrapper.querySelector('#mcq-question-text');
+        const optionsContainer = cardWrapper.querySelector('#mcq-options-container');
+        
+        text.textContent = question.questionText;
+        
+        optionsContainer.innerHTML = '';
+        question.options.forEach(opt => {
+            optionsContainer.innerHTML += `
+                <label class="teams-mcq-option" style="padding: 10px 16px; border-radius: 6px; border: 1px solid #e0e0e0; display: block; cursor: pointer; transition: background 0.15s, border-color 0.15s; margin-bottom: 2px;">
+                    <input type="radio" name="mcq-question-${question.kcyQuestionId}" value="${opt.kcyOptionId}" data-text="${opt.optionText}" onclick="handleMcqSelect(this)" style="display: none;">
+                    <span class="teams-mcq-option-text" style="font-size: 13.5px; color: #242424; font-weight: 500;">${opt.optionText}</span>
+                </label>
+            `;
+        });
+        
+        // 이전으로 버튼 활성화 상태 처리 (Q1에서는 비활성화, Q2부터 활성화)
+        const undoBtn = cardWrapper.querySelector('.teams-undo-btn');
+        if (undoBtn) {
+            undoBtn.disabled = (state.selectedOptionIds.length === 0);
         }
 
-        updateQuestion();
-    })();
+        // 전역 프로그레스 바 동시 갱신
+        updateHeaderProgress();
+    }
+
+    function handleMcqSelect(radioInput) {
+        const optionId = parseInt(radioInput.value);
+        const optionText = radioInput.getAttribute('data-text');
+        
+        // 즉시 비활성화 (더블 탭 방지)
+        const container = radioInput.closest('#mcq-options-container');
+        if (container) {
+            container.querySelectorAll('input').forEach(i => i.disabled = true);
+        }
+        
+        // 푸터(이전으로 버튼 영역) 숨기기
+        const card = radioInput.closest('.teams-mcq-card');
+        if (card) {
+            const footer = card.querySelector('.kcy-test-card__footer');
+            if (footer) footer.style.display = 'none';
+        }
+        
+        // 즉시 제출
+        submitQuickReply(optionId, optionText);
+    }
+
+    function updateHeaderProgress() {
+        const progressBar = document.getElementById('teams-header-progress-bar');
+        if (!progressBar) return;
+        
+        // 총 10단계(코드리뷰 1단계 + 9개 문항 = 10단계) 기준으로 진행도 계산
+        const totalSteps = 10;
+        const currentStep = state.selectedOptionIds.length + (state.angerScoreTypes.length > 0 ? 1 : 0);
+        const progressPercentage = Math.min(100, Math.round((currentStep / totalSteps) * 100));
+        
+        progressBar.style.width = `${progressPercentage}%`;
+    }
+
+    /* Paintbrush Highlighter Logic */
+    let isMouseDown = false;
+    document.addEventListener('mousedown', () => { isMouseDown = true; });
+    document.addEventListener('mouseup', () => { isMouseDown = false; });
+
+    function bindHookListeners() {
+        const tokens = document.querySelectorAll('.token');
+        tokens.forEach(tok => {
+            tok.style.cursor = 'pointer';
+            tok.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                tok.classList.toggle('is-highlighted');
+            });
+            tok.addEventListener('mouseenter', () => {
+                if (isMouseDown) {
+                    tok.classList.add('is-highlighted');
+                }
+            });
+        });
+    }
+
+    function submitHook() {
+        // Push initial state snapshot for Undo support at Q1
+        state.history.push({
+            selectedOptionIds: [...state.selectedOptionIds],
+            angerScoreTypes: [...state.angerScoreTypes]
+        });
+
+        const lines = document.querySelectorAll('.token.is-highlighted');
+        state.angerScoreTypes = []; // reset to avoid duplicate score accumulation on re-submit
+        lines.forEach(l => state.angerScoreTypes.push(l.getAttribute('data-type')));
+        
+        // Hide review button area entirely to lock selection (consistent with MCQ cards)
+        const footer = document.querySelector('#stage-hook .kcy-test-card__footer');
+        if (footer) footer.style.display = 'none';
+
+        appendUserMessage(`[코드 리뷰 완료] ${lines.length}개의 불편한 코드 라인을 식별하여 피드백을 전달했습니다.`, 1);
+        updateHeaderProgress();
+        requestNextAdaptive();
+    }
+
+    /* ============================================================= */
+    /* Step 2: Adaptive MCQ and Undo Handling                       */
+    /* ============================================================= */
+    function submitQuickReply(optionId, optionText) {
+        const nextStep = state.selectedOptionIds.length + 2;
+
+        // Push current states to history snapshots for Undo
+        state.history.push({
+            selectedOptionIds: [...state.selectedOptionIds],
+            angerScoreTypes: [...state.angerScoreTypes]
+        });
+
+        // Add user response to flow
+        state.selectedOptionIds.push(optionId);
+        appendUserMessage(optionText, nextStep);
+
+        requestNextAdaptive();
+    }
+
+    function undoPreviousStep() {
+        if (state.history.length === 0) return;
+
+        const undoneStep = state.selectedOptionIds.length + 1;
+
+        // Remove DOM nodes added during the undone step
+        document.querySelectorAll(`.step-${undoneStep}`).forEach(el => el.remove());
+
+        // Restore state values
+        const lastState = state.history.pop();
+        state.selectedOptionIds = lastState.selectedOptionIds;
+        state.angerScoreTypes = lastState.angerScoreTypes;
+
+        // Pop last question from question history
+        state.questionHistory.pop();
+
+        // 이전 카드(step-(undoneStep - 1)) 복구 및 활성화
+        const prevStepIndex = undoneStep - 1;
+        const prevCard = document.querySelector(`.teams-msg-attachment.step-${prevStepIndex}`);
+        if (prevCard) {
+            const footer = prevCard.querySelector('.kcy-test-card__footer');
+            if (footer) footer.style.display = 'flex';
+            
+            // 라디오 버튼 및 체크 활성화 복구
+            prevCard.querySelectorAll('input').forEach(i => {
+                i.disabled = false;
+                i.checked = false; // 라디오 선택 상태를 풀어서 사용자가 다시 선택하게 유도
+            });
+
+            // "이전으로" 버튼의 활성화 여부 재평가
+            const undoBtn = prevCard.querySelector('.teams-undo-btn');
+            if (undoBtn) {
+                undoBtn.disabled = (state.selectedOptionIds.length === 0);
+            }
+        }
+
+        // 전역 진행도 동시 갱신
+        updateHeaderProgress();
+    }
+
+    function requestNextAdaptive() {
+        const nextStep = state.selectedOptionIds.length + 1;
+        
+        // Clear previous buttons
+        document.getElementById('chat-options-container').innerHTML = '';
+
+        fetch('/kcy/adaptive-flow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.getElementById('csrfToken').value
+            },
+            body: JSON.stringify({
+                selectedOptionIds: state.selectedOptionIds,
+                angerScoreTypes: state.angerScoreTypes
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'TETRIS_PHASE') {
+                state.questionHistory.push(null); // Align index
+                
+                enqueueMessages([
+                    { text: `${userName}님! 지금 막 ${userName}님을 위한 맞춤형 프로젝트 제안서가 도착했어요. 📋`, stepIndex: nextStep },
+                    { isTetrisCard: true, blocks: data.blocks, stepIndex: nextStep }
+                ]);
+
+            } else if (data.status === 'IN_PROGRESS_MCQ') {
+                state.questionHistory.push(data.nextQuestion);
+                
+                enqueueMessages([
+                    { text: "다음 문항입니다. 📝", stepIndex: nextStep, isMcqCard: true, question: data.nextQuestion }
+                ]);
+            } else {
+                finalizeSubmission();
+            }
+        });
+    }
+
+
+
+    /* ============================================================= */
+    /* Step 3: Tetris Simulation and Snapping Logic                  */
+    /* ============================================================= */
+    function renderTetrisBlocks(blocks) {
+        let shelfHtml = '';
+        blocks.forEach(b => {
+            let cellsHtml = '';
+            for(let y=0; y<b.height; y++){
+                for(let x=0; x<b.width; x++){
+                    if(b.layout[y][x] === 1) {
+                        cellsHtml += `<div class="shape-cell" style="left: ${x*56}px; top: ${y*56}px;"></div>`;
+                    }
+                }
+            }
+            shelfHtml += `
+                <div class="draggable-block block-${b.theme.toLowerCase()}" id="${b.id}" data-w="${b.width}" data-h="${b.height}" data-type="${b.type.toLowerCase()}" data-block="${b.type.toUpperCase()}" data-layout='${JSON.stringify(b.layout)}' style="width: ${b.width * 56}px; height: ${b.height * 56}px;">
+                    ${cellsHtml}
+                    <div class="block-label" style="line-height: 1.2;">${b.name.replace(' ', '<br>')}</div>
+                </div>
+            `;
+        });
+        document.getElementById('shelf').innerHTML = shelfHtml;
+        initDraggables();
+    }
+
+    const cellSize = 56;
+    let occupied = Array(4).fill(null).map(() => Array(4).fill(false));
+    let blockStates = {};
+    let activeDrag = null;
+    let dragOffset = { x: 0, y: 0 };
+
+    function initDraggables() {
+        const draggables = document.querySelectorAll('.draggable-block');
+        draggables.forEach(block => {
+            blockStates[block.id] = { x: -1, y: -1, isPlaced: false };
+            block.style.position = 'relative';
+            block.addEventListener('mousedown', startDrag);
+            block.addEventListener('touchstart', startDrag, { passive: false });
+        });
+    }
+
+    function startDrag(e) {
+        e.preventDefault();
+        activeDrag = e.currentTarget;
+        
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        const rect = activeDrag.getBoundingClientRect();
+        dragOffset.x = clientX - rect.left;
+        dragOffset.y = clientY - rect.top;
+
+        const state = blockStates[activeDrag.id];
+        if (state.isPlaced) {
+            const w = parseInt(activeDrag.getAttribute('data-w'));
+            const h = parseInt(activeDrag.getAttribute('data-h'));
+            const layout = JSON.parse(activeDrag.getAttribute('data-layout'));
+            setOccupied(state.x, state.y, w, h, layout, false);
+            state.isPlaced = false;
+        }
+
+        activeDrag.style.position = 'fixed';
+        activeDrag.style.left = `${clientX - dragOffset.x}px`;
+        activeDrag.style.top = `${clientY - dragOffset.y}px`;
+        activeDrag.style.zIndex = '1000';
+        activeDrag.style.transform = 'scale(1.05) rotate(2deg)';
+        activeDrag.style.opacity = '0.85';
+
+        document.addEventListener('mousemove', dragMove);
+        document.addEventListener('touchmove', dragMove, { passive: false });
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+    }
+
+    function dragMove(e) {
+        if (!activeDrag) return;
+        e.preventDefault();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        activeDrag.style.left = `${clientX - dragOffset.x}px`;
+        activeDrag.style.top = `${clientY - dragOffset.y}px`;
+    }
+
+    function endDrag(e) {
+        if (!activeDrag) return;
+        document.removeEventListener('mousemove', dragMove);
+        document.removeEventListener('touchmove', dragMove);
+        document.removeEventListener('mouseup', endDrag);
+        document.removeEventListener('touchend', endDrag);
+
+        const block = activeDrag;
+        activeDrag = null;
+        block.style.transform = '';
+        block.style.opacity = '';
+        block.style.zIndex = '15';
+
+        const gridBoard = document.getElementById('grid-board');
+        const shelf = document.getElementById('shelf');
+
+        const boardRect = gridBoard.getBoundingClientRect();
+        const blockRect = block.getBoundingClientRect();
+        const leftDiff = blockRect.left - boardRect.left - 2;
+        const topDiff = blockRect.top - boardRect.top - 2;
+
+        const x = Math.round(leftDiff / cellSize);
+        const y = Math.round(topDiff / cellSize);
+        const w = parseInt(block.getAttribute('data-w'));
+        const h = parseInt(block.getAttribute('data-h'));
+        const layout = JSON.parse(block.getAttribute('data-layout'));
+
+        if (canPlace(x, y, w, h, layout)) {
+            setOccupied(x, y, w, h, layout, true);
+            blockStates[block.id] = { x, y, isPlaced: true };
+            gridBoard.appendChild(block);
+            block.style.position = 'absolute';
+            block.style.left = `${x * cellSize + 2}px`;
+            block.style.top = `${y * cellSize + 2}px`;
+        } else {
+            shelf.appendChild(block);
+            block.style.position = 'relative';
+            block.style.left = '';
+            block.style.top = '';
+            blockStates[block.id] = { x: -1, y: -1, isPlaced: false };
+        }
+    }
+
+    function canPlace(x, y, w, h, layout) {
+        for (let i = 0; i < w; i++) {
+            for (let j = 0; j < h; j++) {
+                if (layout[j][i] === 1) { // y, x
+                    let targetX = x + i;
+                    let targetY = y + j;
+                    if (targetX < 0 || targetY < 0 || targetX >= 4 || targetY >= 4) return false;
+                    if (occupied[targetX][targetY]) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function setOccupied(x, y, w, h, layout, val) {
+        for (let i = 0; i < w; i++) {
+            for (let j = 0; j < h; j++) {
+                if (layout[j][i] === 1) {
+                    occupied[x + i][y + j] = val;
+                }
+            }
+        }
+    }
+
+    function deploySprint() {
+        let occupiedCells = 0;
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                if (occupied[i][j]) occupiedCells++;
+            }
+        }
+        state.fillRate = Math.round((occupiedCells / 16) * 100);
+        state.timeTaken = Math.round((Date.now() - tetrisStartTime) / 1000);
+        
+        Object.keys(blockStates).forEach(id => {
+            const s = blockStates[id];
+            if (s.isPlaced) {
+                state.tiebreakerBlocks.push(id);
+            }
+        });
+
+        finalizeSubmission();
+    }
+
+    function finalizeSubmission() {
+        const form = document.getElementById('kcyAdaptiveForm');
+        state.selectedOptionIds.forEach(id => {
+            form.innerHTML += `<input type="hidden" name="selectedOptionIds" value="${id}">`;
+        });
+        state.angerScoreTypes.forEach(type => {
+            form.innerHTML += `<input type="hidden" name="angerScoreTypes" value="${type}">`;
+        });
+        state.tiebreakerBlocks.forEach(b => {
+            form.innerHTML += `<input type="hidden" name="tiebreakerBlocks" value="${b}">`;
+        });
+        form.innerHTML += `<input type="hidden" name="timeTaken" value="${state.timeTaken}">`;
+        form.innerHTML += `<input type="hidden" name="fillRate" value="${state.fillRate}">`;
+        form.submit();
+    }
 </script>
 </body>
 </html>

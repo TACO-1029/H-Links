@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="stage-mcq">
+    <!-- Stage 2: Teams style MCQ Card -->
+    <div id="stage-mcq" class="teams-mcq-card">
+        <div class="teams-mcq-header">
+            <h3 id="mcq-question-text" style="margin: 8px 0; font-size: 15px; font-weight: 700; color: #242424;">문항 로딩중...</h3>
+        </div>
+        <div class="kcy-options" id="mcq-options-container" style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+            <!-- Dynamic Radio Options Injected Here -->
+        </div>
+        <div class="kcy-test-card__footer" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #e0e0e0; display: flex; justify-content: flex-start;">
+            <button class="teams-quick-reply-btn teams-undo-btn" type="button" onclick="undoPreviousStep()" style="width: auto; margin: 0; padding: 6px 20px; font-size: 13px;" disabled>이전으로</button>
+        </div>
+    </div>
+</th:block>
+</html>

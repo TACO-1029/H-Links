@@ -10,7 +10,9 @@ public interface KcyService {
 
     List<KcyQuestionDto> getQuestions();
 
-    KcyScoreDto submit(Long userId, List<Long> selectedOptionIds);
+    com.hlinks.domain.recommend.kcy.dto.KcyAdaptiveResponse getNextAdaptiveQuestion(com.hlinks.domain.recommend.kcy.dto.KcyAdaptiveRequest request);
+
+    KcyScoreDto submit(Long userId, com.hlinks.domain.recommend.kcy.dto.KcySubmitRequest request);
 
     KcyType getResult(Long userId);
 }

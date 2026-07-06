@@ -10,6 +10,9 @@ import java.util.List;
 @Setter
 public class KcySubmitRequest {
 
-    @NotEmpty(message = "모든 문항에 응답해주세요.")
     private List<Long> selectedOptionIds;
+    private List<String> angerScoreTypes;
+    private List<String> tiebreakerBlocks;
+    private Integer timeTaken;
+    private Integer fillRate;
 }
