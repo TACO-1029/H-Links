@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>레벨 테스트 - H-Link</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/career.css}">
+    
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 상단 스텝 프로그레스 바 -->
+<div class="career-progress-bar">
+    <div class="progress-step completed">
+        <span class="step-num">✓</span>
+        <span class="step-label">목표/스택 설정</span>
+    </div>
+    <div class="progress-line active"></div>
+    <div class="progress-step completed">
+        <span class="step-num">✓</span>
+        <span class="step-label">AI 시험지 생성</span>
+    </div>
+    <div class="progress-line active"></div>
+    <div class="progress-step active">
+        <span class="step-num">3</span>
+        <span class="step-label">레벨 테스트</span>
+    </div>
+    <div class="progress-line"></div>
+    <div class="progress-step">
+        <span class="step-num">4</span>
+        <span class="step-label">역량 & 강의 분석</span>
+    </div>
+</div>
+
+<main class="level-test-container">
+    <header class="level-test-header">
+        <span class="step-tag">STEP 3</span>
+        <h1>레벨 테스트</h1>
+        <p>선택하신 분야와 관련 핵심 실무 역할을 정확히 확인하기 위한 맞춤형 객관식 테스트 입니다.</p>
+    </header>
+
+    <form id="levelTestForm" th:action="@{/courses/career-path/level-test/submit}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <input type="hidden" name="diagnosisId" th:value="${diagnosisId}">
+
+        <div th:each="q, iterStat : ${questions}" class="question-card" th:data-q-id="${q.levelQuestionId}">
+            <span class="question-num-badge" th:text="'Q ' + ${iterStat.count}">Q 1</span>
+            <div class="question-text" th:text="${q.questionText}">질문 텍스트</div>
+
+            <!-- hidden inputs to submit questionIds and selectedOptionIds in matched pairs -->
+            <input type="hidden" name="questionIds" th:value="${q.levelQuestionId}">
+            <input type="hidden" th:id="'selected-option-input-' + ${q.levelQuestionId}" name="selectedOptionIds" value="">
+
+            <div class="options-list">
+                <div th:each="opt : ${q.options}" class="option-item" th:data-opt-id="${opt.levelOptionId}" th:data-q-id="${q.levelQuestionId}">
+                    <span class="option-text-val" th:text="${opt.optionNo} + '. ' + ${opt.optionText}">1. 보기 옵션 내용</span>
+                    <span class="option-circle"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="submit-wrap">
+            <button type="submit" class="btn-submit-test">답안 제출 및 실시간 분석 ></button>
+        </div>
+    </form>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:src="@{/js/career-test.js}"></script>
+</body>
+</html>

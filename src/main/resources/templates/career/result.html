@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>분석 보고서 및 맞춤 로드맵 - H-Link</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/career.css}">
+    <style>
+        .result-container {
+            max-width: 960px;
+            margin: 40px auto 100px;
+            padding: 0 24px;
+        }
+        .result-card {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-md);
+        }
+        .result-title {
+            font-size: 22px;
+            font-weight: var(--font-bold);
+            color: var(--color-text-primary);
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--color-border-brand);
+            padding-bottom: 12px;
+        }
+        .score-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px dashed var(--color-border-default);
+        }
+        .skill-name-label {
+            font-size: var(--text-base);
+            font-weight: var(--font-semibold);
+            color: var(--color-text-primary);
+        }
+        .skill-score-val {
+            font-size: 20px;
+            font-weight: var(--font-bold);
+            color: var(--color-brand);
+        }
+        .json-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin-top: 20px;
+            font-size: var(--text-xs);
+        }
+        .action-wrap {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        .btn-to-dashboard {
+            padding: 14px 40px;
+            background: var(--color-brand);
+            color: white;
+            font-size: var(--text-sm);
+            font-weight: var(--font-bold);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-to-dashboard:hover {
+            background: var(--color-brand-hover);
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 상단 스텝 프로그레스 바 -->
+<div class="career-progress-bar">
+    <div class="progress-step completed">
+        <span class="step-num">✓</span>
+        <span class="step-label">목표/스택 설정</span>
+    </div>
+    <div class="progress-line active"></div>
+    <div class="progress-step completed">
+        <span class="step-num">✓</span>
+        <span class="step-label">AI 시험지 생성</span>
+    </div>
+    <div class="progress-line active"></div>
+    <div class="progress-step completed">
+        <span class="step-num">✓</span>
+        <span class="step-label">레벨 테스트</span>
+    </div>
+    <div class="progress-line active"></div>
+    <div class="progress-step active">
+        <span class="step-num">4</span>
+        <span class="step-label">역량 & 강의 분석</span>
+    </div>
+</div>
+
+<main class="result-container">
+    <div class="result-card">
+        <h2 class="result-title">🎯 AI 진단 결과 리포트</h2>
+        <p class="status-text" style="margin-bottom: 24px;">
+            레벨 테스트 채점이 완료되었습니다. 도출된 기술별 점수 결과입니다.
+        </p>
+
+        <!-- Display category -->
+        <div style="margin-bottom: 24px;">
+            <strong>핵심 기술 분야:</strong> <span th:text="${category}" style="color: var(--color-brand); font-weight: bold;">백엔드</span>
+        </div>
+
+        <!-- Loop results -->
+        <div th:each="res : ${results}" class="score-row">
+            <span class="skill-name-label" th:text="${res.skillName} + ' (' + ${res.selectedDifficulty} + ')'">Java (MEDIUM)</span>
+            <span class="skill-score-val" th:text="${res.score} + '점'">80점</span>
+        </div>
+
+        <h3 style="margin-top: 40px; font-weight: bold;">📋 백엔드 전달용 도출 JSON 규격</h3>
+        <div class="json-box" th:text="${rawJson}">
+            { "results": [] }
+        </div>
+    </div>
+
+    <div class="action-wrap">
+        <a th:href="@{/courses/career-path/dashboard}" class="btn-to-dashboard">커리어패스 대시보드로 이동</a>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
