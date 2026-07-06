@@ -20,6 +20,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
@@ -37,12 +38,14 @@ public class AiLevelTestService {
     private final AiQuizProperties properties; // Reusing teammate's AI properties
     private final CareerMapper careerMapper;
     private final ObjectMapper objectMapper;
+    private final TransactionTemplate transactionTemplate;
 
     @Async
-    @Transactional
     public void buildLevelTestAsync(Long diagnosisId, List<Long> skillIds, List<String> difficulties) {
         log.info("Starting level test generation in background. DiagnosisId: {}, Skills: {}", diagnosisId, skillIds);
-        careerMapper.updateLevelTestBuildStatus(diagnosisId, "PROCESSING");
+        transactionTemplate.executeWithoutResult(status -> 
+            careerMapper.updateLevelTestBuildStatus(diagnosisId, "PROCESSING")
+        );
 
         try {
             int skillCount = skillIds.size();
@@ -86,18 +89,28 @@ public class AiLevelTestService {
                 }
 
                 String prompt = promptBuilder.build(skillName, lowCount + mediumCount + highCount, lowCount, mediumCount, highCount);
+                
+                // HTTP API Call to OpenAI is executed outside the transaction boundary
                 AiLevelTestGenerateResponse response = requestAiLevelTestGeneration(prompt);
 
-                validateAndSaveQuestions(diagnosisId, skillId, response, lowCount + mediumCount + highCount);
+                // Question validation and DB insertion is committed in a short, separate transaction per skill
+                final int expectedCount = lowCount + mediumCount + highCount;
+                transactionTemplate.executeWithoutResult(status -> 
+                    validateAndSaveQuestions(diagnosisId, skillId, response, expectedCount)
+                );
             }
 
-            careerMapper.updateLevelTestBuildStatus(diagnosisId, "COMPLETED");
+            transactionTemplate.executeWithoutResult(status -> 
+                careerMapper.updateLevelTestBuildStatus(diagnosisId, "COMPLETED")
+            );
             log.info("Level test generation completed successfully for DiagnosisId: {}", diagnosisId);
 
         } catch (Exception e) {
             log.error("Failed to build level test for DiagnosisId: {}", diagnosisId, e);
-            careerMapper.updateLevelTestBuildStatus(diagnosisId, "FAILED");
-            careerMapper.updateLlmSummary(diagnosisId, "AI 레벨 테스트 생성 도중 오류가 발생했습니다: " + e.getMessage());
+            transactionTemplate.executeWithoutResult(status -> {
+                careerMapper.updateLevelTestBuildStatus(diagnosisId, "FAILED");
+                careerMapper.updateLlmSummary(diagnosisId, "AI 레벨 테스트 생성 도중 오류가 발생했습니다: " + e.getMessage());
+            });
         }
     }
 
