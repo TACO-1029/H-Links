@@ -49,9 +49,9 @@ public interface CourseStatisticsMapper {
     // 이전 동일 기간 대비 신청 수 증가가 큰 급상승 세부 스킬 TOP5 데이터를 조회합니다.
     List<StatisticsPointRow> selectRisingSkills(SkillPopularityChangeQuery query);
 
-    // 강의 생성일을 월별로 집계해 신규 강의 등록 추이 데이터를 조회합니다.
-    List<StatisticsPointRow> selectMonthlyNewCourses(StatisticsFilter filter);
-
     // 기간 단위별 수강 신청 및 수료 추이 데이터를 조회합니다.
     List<CoursePeriodSeriesRow> selectApplicationCompletionTrend(CoursePeriodQuery query);
+
+    // 기간 단위별 수강 신청 대비 수료 전환율 추이 데이터를 조회합니다.
+    List<StatisticsPointRow> selectApplicationCompletionConversionTrend(CoursePeriodQuery query);
 }
