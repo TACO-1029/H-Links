@@ -10,6 +10,7 @@ import com.hlinks.domain.course.type.CourseType;
 import com.hlinks.domain.course.type.LearningStatus;
 import com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto;
 import com.hlinks.global.exception.BaseException;
+import com.hlinks.global.response.SliceResponse;
 import com.hlinks.global.response.code.ErrorResponseCode;
 import com.hlinks.global.type.ApplicationStatus;
 import lombok.RequiredArgsConstructor;
@@ -47,17 +48,7 @@ public class CourseService {
     public List<CourseListResponseDto> getCourseList(String categoryType, List<String> courseTypes, List<Long> skillIds, String sort) {
         log.info("강의 목록 조회 요청 - 카테고리 필터: {}", categoryType != null ? categoryType : "전체(ALL)");
 
-        // ==========================================
-        // [수정된 부분] BaseException 활용 방어 로직
-        // ==========================================
-        if (categoryType != null && !categoryType.trim().isEmpty()) {
-            if (!categoryType.equals("CAREER_HIGH") && !categoryType.equals("CAREER_PATH")) {
-                log.warn("유효하지 않은 카테고리 파라미터 접근: {}", categoryType);
-                // 잘못된 파라미터가 들어오면 커스텀 예외를 던집니다.
-                // (GlobalExceptionHandler가 이를 낚아채어 ErrorResponse로 프론트에 전달해 줍니다)
-                throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER);
-            }
-        }
+        validateCategoryType(categoryType);
 
         String normalizedSort = "popular".equals(sort) ? "popular" : "latest";
         List<CourseListResponseDto> courses = courseMapper.findAllCourses(categoryType, courseTypes, skillIds, normalizedSort);
@@ -67,6 +58,80 @@ public class CourseService {
 
         log.info("강의 목록 조회 완료 - 조회된 강의 수: {}건", courses.size());
         return courses;
+    }
+
+    public SliceResponse<CourseListResponseDto> getCourseSlice(
+            String categoryType,
+            List<String> courseTypes,
+            List<Long> skillIds,
+            String keyword,
+            String difficulty,
+            Boolean availableOnly,
+            String sort,
+            int page,
+            int size
+    ) {
+        validateCategoryType(categoryType);
+
+        int normalizedPage = Math.max(page, 0);
+        int normalizedSize = normalizeSliceSize(size);
+        int limitPlusOne = normalizedSize + 1;
+        int offset = normalizedPage * normalizedSize;
+        String normalizedSort = "popular".equals(sort) ? "popular" : "latest";
+
+        List<CourseListResponseDto> rows = courseMapper.findCourseSlice(
+                categoryType,
+                courseTypes != null ? courseTypes : List.of(),
+                skillIds != null ? skillIds : List.of(),
+                normalizeKeyword(keyword),
+                difficulty,
+                availableOnly,
+                normalizedSort,
+                offset,
+                limitPlusOne
+        );
+
+        return toSliceResponse(rows, normalizedPage, normalizedSize);
+    }
+
+    public SliceResponse<CourseListResponseDto> getCareerHighCourseSlice(
+            String keyword,
+            Long categoryId,
+            Boolean availableOnly,
+            int page,
+            int size
+    ) {
+        List<Long> skillIds = categoryId == null ? List.of() : List.of(categoryId);
+        return getCourseSlice("CAREER_HIGH", List.of(), skillIds, keyword, null, availableOnly, "latest", page, size);
+    }
+
+    private void validateCategoryType(String categoryType) {
+        if (categoryType != null && !categoryType.trim().isEmpty()
+                && !categoryType.equals("CAREER_HIGH")
+                && !categoryType.equals("CAREER_PATH")) {
+            log.warn("유효하지 않은 카테고리 파라미터 접근: {}", categoryType);
+            throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER);
+        }
+    }
+
+    private int normalizeSliceSize(int size) {
+        if (size <= 0) {
+            return 12;
+        }
+        return Math.min(size, 50);
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
+        return keyword.trim();
+    }
+
+    private SliceResponse<CourseListResponseDto> toSliceResponse(List<CourseListResponseDto> rows, int page, int size) {
+        boolean hasNext = rows.size() > size;
+        List<CourseListResponseDto> content = hasNext ? rows.subList(0, size) : rows;
+        return SliceResponse.of(content, page, size, hasNext);
     }
 
     public List<SkillFilterGroupDto> getSkillFilterGroups() {
@@ -479,4 +544,3 @@ public class CourseService {
         }
     }
 }
-

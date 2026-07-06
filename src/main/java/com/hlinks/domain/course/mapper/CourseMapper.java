@@ -59,6 +59,18 @@ public interface CourseMapper {
             @Param("sort") String sort
     );
 
+    List<CourseListResponseDto> findCourseSlice(
+            @Param("categoryType") String categoryType,
+            @Param("courseTypes") List<String> courseTypes,
+            @Param("skillIds") List<Long> skillIds,
+            @Param("keyword") String keyword,
+            @Param("difficulty") String difficulty,
+            @Param("availableOnly") Boolean availableOnly,
+            @Param("sort") String sort,
+            @Param("offset") int offset,
+            @Param("limitPlusOne") int limitPlusOne
+    );
+
     CourseApplyTargetDto findCourseApplyTarget(@Param("courseId") Long courseId);
 
     CourseApplyTargetDto findOfflineCourseApplyTargetForUpdate(@Param("courseId") Long courseId);
@@ -281,4 +293,3 @@ public interface CourseMapper {
      */
     boolean hasLearningLogs(@Param("userId") Long userId);
 }
-

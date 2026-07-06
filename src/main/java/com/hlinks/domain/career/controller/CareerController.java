@@ -2,7 +2,9 @@ package com.hlinks.domain.career.controller;
 
 import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.service.CareerService;
+import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.domain.interest.service.InterestService;
+import com.hlinks.global.response.SliceResponse;
 import com.hlinks.domain.recommend.course.dto.CourseRecommendationRequest;
 import com.hlinks.domain.recommend.course.dto.CourseRecommendationResponse;
 import com.hlinks.domain.recommend.course.dto.LevelTestSkillResultRequest;
@@ -338,6 +340,21 @@ public class CareerController {
 
         model.addAttribute("status", status);
         model.addAttribute("diagnosis", latestDiagnosis);
+        if (latestDiagnosis != null) {
+            try {
+                SliceResponse<CourseListResponseDto> recommendationSlice =
+                        careerService.getRecommendationCourseSlice(userId, latestDiagnosis.getDiagnosisId(), 0, 12);
+                model.addAttribute("recommendedCourses", recommendationSlice.getContent());
+                model.addAttribute("recommendationHasNext", recommendationSlice.isHasNext());
+                model.addAttribute("recommendationDiagnosisId", latestDiagnosis.getDiagnosisId());
+            } catch (Exception e) {
+                log.warn("Failed to load initial career recommendation courses - userId={}, diagnosisId={}",
+                        userId, latestDiagnosis.getDiagnosisId(), e);
+                model.addAttribute("recommendedCourses", List.of());
+                model.addAttribute("recommendationHasNext", false);
+                model.addAttribute("recommendationDiagnosisId", latestDiagnosis.getDiagnosisId());
+            }
+        }
         return "career/dashboard";
     }
 
