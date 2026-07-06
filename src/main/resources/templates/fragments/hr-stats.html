@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<form class="hr-stats-filter" aria-label="통계 필터" th:fragment="filter" method="get">
+  <div class="hr-stats-filter__date" data-date-range>
+    <span class="hr-stats-filter__label">기간</span>
+    <button class="hr-stats-filter__date-toggle" type="button" data-date-range-toggle aria-expanded="false">
+      <i class="bi bi-calendar3" aria-hidden="true"></i>
+      <span data-date-range-label th:text="|${filter.startDate} ~ ${filter.endDate}|">2026-01-01 ~ 2026-01-31</span>
+      <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    </button>
+    <div class="hr-stats-filter__date-panel" data-date-range-panel>
+      <div class="hr-stats-filter__date-inputs">
+        <label class="hr-stats-filter__field">
+          <span class="hr-stats-filter__label">시작일</span>
+          <input class="hr-stats-filter__control form-control" type="date" name="startDate" th:value="${filter.startDate}">
+        </label>
+        <span class="hr-stats-filter__date-separator" aria-hidden="true">~</span>
+        <label class="hr-stats-filter__field">
+          <span class="hr-stats-filter__label">종료일</span>
+          <input class="hr-stats-filter__control form-control" type="date" name="endDate" th:value="${filter.endDate}">
+        </label>
+      </div>
+      <div class="hr-stats-filter__presets" aria-label="기간 빠른 선택">
+        <button type="button" class="hr-stats-filter__preset" data-period-days="7">지난 7일</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-current-month>이번달</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-months="3">지난 3개월</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-months="6">지난 6개월</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-current-year>올해</button>
+      </div>
+    </div>
+  </div>
+  <label class="hr-stats-filter__field">
+    <span class="hr-stats-filter__label">부서</span>
+    <select class="hr-stats-filter__control form-select" name="departmentId">
+      <option value="" th:selected="${filter.departmentId == null}">전체</option>
+      <option th:each="department : ${departments}"
+              th:value="${department.id}"
+              th:text="${department.name}"
+              th:selected="${filter.departmentId == department.id}">부서</option>
+    </select>
+  </label>
+  <label class="hr-stats-filter__field">
+    <span class="hr-stats-filter__label">직급</span>
+    <select class="hr-stats-filter__control form-select" name="positionId">
+      <option value="" th:selected="${filter.positionId == null}">전체</option>
+      <option th:each="position : ${positions}"
+              th:value="${position.id}"
+              th:text="${position.name}"
+              th:selected="${filter.positionId == position.id}">직급</option>
+    </select>
+  </label>
+  <button class="hr-stats-filter__submit btn btn-success" type="submit">조회</button>
+  <button class="hr-stats-filter__reset btn btn-outline-secondary" type="button" onclick="window.location.href = window.location.pathname">
+    <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+    <span>초기화</span>
+  </button>
+</form>
+
+<form class="hr-stats-filter" aria-label="강의 통계 필터" th:fragment="courseFilter" method="get">
+  <div class="hr-stats-filter__date" data-date-range>
+    <span class="hr-stats-filter__label">기간</span>
+    <button class="hr-stats-filter__date-toggle" type="button" data-date-range-toggle aria-expanded="false">
+      <i class="bi bi-calendar3" aria-hidden="true"></i>
+      <span data-date-range-label th:text="|${filter.startDate} ~ ${filter.endDate}|">2026-01-01 ~ 2026-01-31</span>
+      <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    </button>
+    <div class="hr-stats-filter__date-panel" data-date-range-panel>
+      <div class="hr-stats-filter__date-inputs">
+        <label class="hr-stats-filter__field">
+          <span class="hr-stats-filter__label">시작일</span>
+          <input class="hr-stats-filter__control form-control" type="date" name="startDate" th:value="${filter.startDate}">
+        </label>
+        <span class="hr-stats-filter__date-separator" aria-hidden="true">~</span>
+        <label class="hr-stats-filter__field">
+          <span class="hr-stats-filter__label">종료일</span>
+          <input class="hr-stats-filter__control form-control" type="date" name="endDate" th:value="${filter.endDate}">
+        </label>
+      </div>
+      <div class="hr-stats-filter__presets" aria-label="기간 빠른 선택">
+        <button type="button" class="hr-stats-filter__preset" data-period-days="7">지난 7일</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-current-month>이번달</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-months="3">지난 3개월</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-months="6">지난 6개월</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-current-year>올해</button>
+      </div>
+    </div>
+  </div>
+  <label class="hr-stats-filter__field">
+    <span class="hr-stats-filter__label">카테고리</span>
+    <select class="hr-stats-filter__control form-select" name="category">
+      <option value="all" th:selected="${filter.category == 'all'}">전체</option>
+      <option value="technical" th:selected="${filter.category == 'technical'}">기술 역량</option>
+      <option value="job" th:selected="${filter.category == 'job'}">직무 역량</option>
+      <option value="leadership" th:selected="${filter.category == 'leadership'}">리더십</option>
+      <option value="common" th:selected="${filter.category == 'common'}">공통 역량</option>
+    </select>
+  </label>
+  <label class="hr-stats-filter__field">
+    <span class="hr-stats-filter__label">강의 유형</span>
+    <select class="hr-stats-filter__control form-select" name="courseType">
+      <option value="all" th:selected="${filter.courseType == 'all'}">전체</option>
+      <option value="online" th:selected="${filter.courseType == 'online'}">온라인</option>
+      <option value="offline" th:selected="${filter.courseType == 'offline'}">오프라인</option>
+    </select>
+  </label>
+  <button class="hr-stats-filter__submit btn btn-success" type="submit">조회</button>
+  <button class="hr-stats-filter__reset btn btn-outline-secondary" type="button" onclick="window.location.href = window.location.pathname">
+    <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+    <span>초기화</span>
+  </button>
+</form>
+
+<form class="hr-stats-filter hr-stats-filter--compact" aria-label="조직 비교 통계 필터" th:fragment="organizationFilter" method="get">
+  <div class="hr-stats-filter__date" data-date-range>
+    <span class="hr-stats-filter__label">기간</span>
+    <button class="hr-stats-filter__date-toggle" type="button" data-date-range-toggle aria-expanded="false">
+      <i class="bi bi-calendar3" aria-hidden="true"></i>
+      <span data-date-range-label th:text="|${filter.startDate} ~ ${filter.endDate}|">2026-01-01 ~ 2026-01-31</span>
+      <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    </button>
+    <div class="hr-stats-filter__date-panel" data-date-range-panel>
+      <div class="hr-stats-filter__date-inputs">
+        <label class="hr-stats-filter__field">
+          <span class="hr-stats-filter__label">시작일</span>
+          <input class="hr-stats-filter__control form-control" type="date" name="startDate" th:value="${filter.startDate}">
+        </label>
+        <span class="hr-stats-filter__date-separator" aria-hidden="true">~</span>
+        <label class="hr-stats-filter__field">
+          <span class="hr-stats-filter__label">종료일</span>
+          <input class="hr-stats-filter__control form-control" type="date" name="endDate" th:value="${filter.endDate}">
+        </label>
+      </div>
+      <div class="hr-stats-filter__presets" aria-label="기간 빠른 선택">
+        <button type="button" class="hr-stats-filter__preset" data-period-days="7">지난 7일</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-current-month>이번달</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-months="3">지난 3개월</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-months="6">지난 6개월</button>
+        <button type="button" class="hr-stats-filter__preset" data-period-current-year>올해</button>
+      </div>
+    </div>
+  </div>
+  <div class="hr-stats-filter__field hr-stats-org-picker" data-org-filter data-max-selection="5">
+    <span class="hr-stats-filter__label">비교 조직</span>
+    <button class="hr-stats-org-picker__toggle" type="button" data-org-filter-toggle aria-expanded="false">
+      <i class="bi bi-diagram-3" aria-hidden="true"></i>
+      <span data-org-filter-label>조직 선택</span>
+      <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    </button>
+    <div class="hr-stats-org-picker__panel" data-org-filter-panel>
+      <div class="hr-stats-org-picker__header">
+        <strong>비교 조직</strong>
+        <span>최대 5개</span>
+      </div>
+      <div class="hr-stats-org-tree">
+        <label class="hr-stats-org-tree__item"
+               th:each="department : ${departmentTree}"
+               th:style="|--depth:${department.depth - 1}|"
+               th:attr="data-department-id=${department.id},data-parent-id=${department.parentId}">
+          <input type="checkbox"
+                 name="departmentIds"
+                 th:value="${department.id}"
+                 th:checked="${#lists.contains(filter.departmentIds, department.id)}">
+          <span class="hr-stats-org-tree__box" aria-hidden="true"></span>
+          <span class="hr-stats-org-tree__name" th:text="${department.name}">조직</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <label class="hr-stats-filter__field">
+    <span class="hr-stats-filter__label">직급</span>
+    <select class="hr-stats-filter__control form-select" name="positionId">
+      <option value="" th:selected="${filter.positionId == null}">전체</option>
+      <option th:each="position : ${positions}"
+              th:value="${position.id}"
+              th:text="${position.name}"
+              th:selected="${filter.positionId == position.id}">직급</option>
+    </select>
+  </label>
+  <button class="hr-stats-filter__submit btn btn-success" type="submit">조회</button>
+  <button class="hr-stats-filter__reset btn btn-outline-secondary" type="button" onclick="window.location.href = window.location.pathname">
+    <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+    <span>초기화</span>
+  </button>
+</form>
+
+<article class="hr-stats-kpi" th:fragment="kpi">
+  <span class="hr-stats-kpi__icon" th:classappend="${block.kpi.tone}" aria-hidden="true">
+    <i th:class="${block.kpi.icon}"></i>
+  </span>
+  <div class="hr-stats-kpi__body">
+    <p class="hr-stats-kpi__label" th:text="${block.kpi.label}">KPI</p>
+    <p class="hr-stats-kpi__value" th:text="${block.kpi.value}">0</p>
+    <p class="hr-stats-kpi__hint" th:text="${block.kpi.hint}">선택 기간 기준</p>
+  </div>
+</article>
+
+<article class="hr-stats-card" th:fragment="chartCard">
+  <div class="hr-stats-card__header">
+    <h2 class="hr-stats-card__title" th:text="${block.chart.title}">차트 제목</h2>
+    <p class="hr-stats-card__caption" th:text="${block.chart.caption}">기준</p>
+  </div>
+  <div class="hr-stats-chart"
+       th:id="${block.chart.id}"
+       th:classappend="${block.chart.type}"
+       th:attr="data-chart-id=${block.chart.id},data-chart-type=${block.chart.type}"
+       role="img"
+       th:aria-label="${block.chart.title}">
+  </div>
+</article>
+
+<article class="hr-stats-card" th:fragment="listCard">
+  <div class="hr-stats-card__header">
+    <h2 class="hr-stats-card__title" th:text="${block.rankTitle}">목록 제목</h2>
+    <p class="hr-stats-card__caption" th:text="${block.rankCaption}">기준</p>
+  </div>
+  <div class="hr-stats-table-wrap"
+       th:if="${!#lists.isEmpty(block.ranks) and block.ranks[0].hasCourseDetails()}">
+    <table class="hr-stats-table">
+      <thead>
+      <tr>
+        <th>순위</th>
+        <th>강의명</th>
+        <th>카테고리</th>
+        <th>강의 유형</th>
+        <th>수강 신청 수</th>
+        <th>수료율</th>
+        <th>평균 진도율</th>
+        <th>퀴즈 정답률</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="rank : ${block.ranks}">
+        <td th:text="${rank.rank}">1</td>
+        <td class="hr-stats-table__title" th:text="${rank.label}">Spring Boot 입문</td>
+        <td th:text="${rank.categoryName}">기술 역량</td>
+        <td th:text="${rank.courseTypeName}">온라인</td>
+        <td th:text="${rank.applicationCount}">0명</td>
+        <td th:text="${rank.completionRate}">0%</td>
+        <td th:text="${rank.averageProgressRate}">0%</td>
+        <td th:text="${rank.quizCorrectRate}">0%</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <ol class="hr-stats-rank"
+      th:if="${#lists.isEmpty(block.ranks) or !block.ranks[0].hasCourseDetails()}">
+    <li th:each="rank : ${block.ranks}">
+      <span class="hr-stats-rank__meta" th:text="${rank.rank}">1</span>
+      <span class="hr-stats-rank__badge badge rounded-pill"
+            th:classappend="${rank.badgeTone}"
+            th:text="${rank.badgeText}">Backend</span>
+      <span class="hr-stats-rank__label" th:text="${rank.label}">Spring Boot 입문</span>
+      <strong th:text="${rank.value}">0명</strong>
+    </li>
+  </ol>
+  <div class="hr-stats-empty" th:if="${#lists.isEmpty(block.ranks)}">
+    <i class="bi bi-database-slash" aria-hidden="true"></i>
+    <p>표시할 인기 강의가 없습니다.</p>
+  </div>
+</article>
+</body>
+</html>
