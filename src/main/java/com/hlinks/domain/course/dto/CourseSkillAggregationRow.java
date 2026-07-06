@@ -12,5 +12,7 @@ public class CourseSkillAggregationRow {
     private Long chapterId;
     private Long skillId;
     private BigDecimal weight;
+    private String coverageLevel;
+    private String coverageReason;
     private Integer durationSeconds;
 }

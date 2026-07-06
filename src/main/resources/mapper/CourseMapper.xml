@@ -249,6 +249,7 @@
         0                  AS progressRate,
         0                  AS lastPlaySeconds,
         0                  AS maxPlaySeconds,
+        NULL               AS quizAttemptId,
         NULL               AS learningStatus,
         AI_GENERATED_YN    AS aiGeneratedYn,
         QUIZ_BUILD_STATUS  AS quizBuildStatus
@@ -275,6 +276,7 @@
         NVL(cls.PROGRESS_RATE, 0)      AS progressRate,
         NVL(cls.LAST_PLAY_SECONDS, 0)  AS lastPlaySeconds,
         NVL(cls.MAX_PLAY_SECONDS, 0)   AS maxPlaySeconds,
+        cls.QUIZ_ATTEMPT_ID            AS quizAttemptId,
         cls.STATUS                     AS learningStatus,
         cc.AI_GENERATED_YN             AS aiGeneratedYn,
         cc.QUIZ_BUILD_STATUS           AS quizBuildStatus
@@ -373,6 +375,8 @@
         CC.CHAPTER_ID       AS chapterId,
         CS.SKILL_ID         AS skillId,
         CS.WEIGHT           AS weight,
+        CS.COVERAGE_LEVEL   AS coverageLevel,
+        CS.COVERAGE_REASON  AS coverageReason,
         CC.DURATION_SECONDS AS durationSeconds
         FROM COURSE_CHAPTER CC
         JOIN CHAPTER_SKILL CS
@@ -401,13 +405,17 @@
         COURSE_SKILL_ID,
         COURSE_ID,
         SKILL_ID,
-        WEIGHT
+        WEIGHT,
+        COVERAGE_LEVEL,
+        COVERAGE_REASON
         )
         VALUES (
         COURSE_SKILL_SEQ.NEXTVAL,
         #{courseId},
         #{skillId},
-        #{weight}
+        #{weight},
+        #{coverageLevel},
+        #{coverageReason}
         )
     </insert>
 
@@ -666,6 +674,16 @@
         WHERE chapter_learning_id = #{chapterLearningId}
     </update>
 
+    <update id="completeChapterLearningByQuizAttempt">
+        UPDATE CHAPTER_LEARNING_STATUS
+        SET quiz_attempt_id = NVL(quiz_attempt_id, #{quizAttemptId}),
+            progress_rate = 100,
+            status = #{status},
+            completed_at = NVL(completed_at, SYSDATE),
+            updated_at = SYSDATE
+        WHERE chapter_learning_id = #{chapterLearningId}
+    </update>
+
     <update id="updateCourseLearningProgress">
         UPDATE COURSE_LEARNING_STATUS cls
         SET progress_rate = (
@@ -778,6 +796,154 @@
         FROM COURSE_LEARNING_STATUS
         WHERE user_id = #{userId}
           AND status = #{status}
+    </select>
+
+    <!--
+        [이슈 #65] 마이페이지/내 수강현황 관련 추가 쿼리들
+    -->
+
+    <select id="selectMyCoursesWithProgress" resultType="com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto$MyCourseDto">
+        SELECT
+            c.COURSE_ID as courseId,
+            c.COURSE_TITLE as courseTitle,
+            c.COURSE_TYPE as courseType,
+            c.CATEGORY_TYPE as categoryType,
+            ca.APPLICATION_ID as applicationId,
+            NVL(TO_CHAR(ca.APPLIED_AT, 'YYYYMM') || '-' || TO_CHAR(ca.APPLICATION_ID), '-') as applicationNo,
+            cls.PROGRESS_RATE as progressRate,
+            NVL(cls.STATUS, 'NOT_STARTED') as learningStatus,
+            CASE WHEN cls.STATUS = 'COMPLETED' THEN '완료' ELSE '미완료' END as completionStatus,
+            NVL(
+                (SELECT LPAD(TO_CHAR(TRUNC(LAST_PLAY_SECONDS / 60)), 2, '0') || '분 ' || LPAD(TO_CHAR(MOD(LAST_PLAY_SECONDS, 60)), 2, '0') || '초'
+                 FROM (
+                     SELECT LAST_PLAY_SECONDS
+                     FROM CHAPTER_LEARNING_STATUS
+                     WHERE COURSE_LEARNING_ID = cls.COURSE_LEARNING_ID
+                     ORDER BY UPDATED_AT DESC NULLS LAST, STARTED_AT DESC
+                 ) WHERE ROWNUM = 1),
+                '0분 0초'
+            ) as lastPlayTimeStr,
+            NVL(
+                (SELECT CHAPTER_ID
+                 FROM (
+                     SELECT CHAPTER_ID
+                     FROM CHAPTER_LEARNING_STATUS
+                     WHERE COURSE_LEARNING_ID = cls.COURSE_LEARNING_ID
+                     ORDER BY UPDATED_AT DESC NULLS LAST, STARTED_AT DESC
+                 ) WHERE ROWNUM = 1),
+                (SELECT CHAPTER_ID
+                 FROM (
+                     SELECT CHAPTER_ID
+                     FROM COURSE_CHAPTER
+                     WHERE COURSE_ID = c.COURSE_ID
+                       AND USE_YN = 'Y'
+                     ORDER BY CHAPTER_ORDER ASC
+                 ) WHERE ROWNUM = 1)
+            ) as nextChapterId
+        FROM COURSE_LEARNING_STATUS cls
+        JOIN COURSE c ON cls.COURSE_ID = c.COURSE_ID
+        LEFT JOIN COURSE_APPLICATION ca ON cls.APPLICATION_ID = ca.APPLICATION_ID
+        WHERE cls.USER_ID = #{userId}
+          AND cls.STATUS IN ('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED')
+        ORDER BY cls.STARTED_AT DESC, cls.COURSE_LEARNING_ID DESC
+    </select>
+
+    <select id="selectRecentCompletedCourse" resultType="com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto$RecentCompletedCourseDto">
+        SELECT * FROM (
+            SELECT
+                c.COURSE_ID as courseId,
+                c.COURSE_TITLE as courseTitle,
+                TO_CHAR(cls.COMPLETED_AT, 'YYYY.MM.DD') as completedAtStr
+            FROM COURSE_LEARNING_STATUS cls
+            JOIN COURSE c ON cls.COURSE_ID = c.COURSE_ID
+            WHERE cls.USER_ID = #{userId}
+              AND cls.STATUS = 'COMPLETED'
+            ORDER BY cls.COMPLETED_AT DESC NULLS LAST
+        ) WHERE ROWNUM = 1
+    </select>
+
+    <select id="selectLearningActivities" resultType="com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto$LearningActivityDto">
+        SELECT * FROM (
+            SELECT
+                c.COURSE_TITLE as courseTitle,
+                cc.CHAPTER_TITLE as chapterTitle,
+                cc.CHAPTER_ORDER as chapterOrder,
+                ll.EVENT_TYPE as eventType,
+                ll.PROGRESS_RATE as progressRate,
+                TO_CHAR(ll.EVENT_AT, 'YYYY.MM.DD HH24:MI') as eventAtStr
+            FROM LEARNING_LOG ll
+            JOIN COURSE c ON ll.COURSE_ID = c.COURSE_ID
+            LEFT JOIN COURSE_CHAPTER cc ON ll.CHAPTER_ID = cc.CHAPTER_ID
+            WHERE ll.USER_ID = #{userId}
+            ORDER BY ll.EVENT_AT DESC, ll.LOG_ID DESC
+        ) WHERE ROWNUM &lt;= 5
+    </select>
+
+    <select id="selectQuizWrongNotes" resultType="com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto$QuizWrongNoteDto">
+        SELECT
+            qa.ATTEMPT_ID as attemptId,
+            qaa.QUIZ_ID as quizId,
+            qa.COURSE_ID as courseId,
+            c.COURSE_TITLE as courseTitle,
+            qa.CHAPTER_ID as chapterId,
+            cc.CHAPTER_TITLE as chapterTitle,
+            NVL((
+                SELECT TRUNC(COUNT(CASE WHEN qa2.CORRECT_YN = 'Y' THEN 1 END) * 100 / NULLIF(COUNT(*), 0))
+                FROM QUIZ_ATTEMPT_ANSWER qa2
+                WHERE qa2.ATTEMPT_ID = qa.ATTEMPT_ID
+            ), 0) as score,
+            q.QUESTION_TEXT as questionText,
+            q.EXPLANATION as explanation,
+            qo_sub.OPTION_TEXT as submittedOptionText,
+            (SELECT qo_cor.OPTION_TEXT
+             FROM QUIZ_OPTION qo_cor
+             WHERE qo_cor.QUIZ_ID = q.QUIZ_ID
+               AND qo_cor.CORRECT_YN = 'Y'
+               AND ROWNUM = 1) as correctOptionText,
+            TO_CHAR(qa.SUBMITTED_AT, 'YYYY.MM.DD') as submittedAtStr
+        FROM QUIZ_ATTEMPT qa
+        JOIN QUIZ_ATTEMPT_ANSWER qaa ON qa.ATTEMPT_ID = qaa.ATTEMPT_ID
+        JOIN QUIZ q ON qaa.QUIZ_ID = q.QUIZ_ID
+        JOIN COURSE c ON qa.COURSE_ID = c.COURSE_ID
+        JOIN COURSE_CHAPTER cc ON qa.CHAPTER_ID = cc.CHAPTER_ID
+        LEFT JOIN QUIZ_OPTION qo_sub ON qaa.SELECTED_OPTION_ID = qo_sub.OPTION_ID
+        WHERE qa.USER_ID = #{userId}
+          AND qaa.CORRECT_YN = 'N'
+        ORDER BY qa.SUBMITTED_AT DESC, qaa.ATTEMPT_ANSWER_ID DESC
+    </select>
+
+    <select id="countReinforcementCourses" resultType="int">
+        SELECT COUNT(DISTINCT COURSE_ID)
+        FROM (
+            SELECT qa.COURSE_ID
+            FROM QUIZ_ATTEMPT qa
+            JOIN QUIZ_ATTEMPT_ANSWER qaa ON qa.ATTEMPT_ID = qaa.ATTEMPT_ID
+            WHERE qa.USER_ID = #{userId}
+            GROUP BY qa.ATTEMPT_ID, qa.COURSE_ID
+            HAVING (COUNT(CASE WHEN qaa.CORRECT_YN = 'Y' THEN 1 END) * 100 / COUNT(*)) &lt; 80
+        )
+    </select>
+
+    <select id="hasCourseLearnings" resultType="boolean">
+        SELECT COUNT(*)
+        FROM COURSE_LEARNING_STATUS
+        WHERE user_id = #{userId}
+          AND status IN ('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED')
+          AND ROWNUM = 1
+    </select>
+
+    <select id="hasQuizAttempts" resultType="boolean">
+        SELECT COUNT(*)
+        FROM QUIZ_ATTEMPT
+        WHERE user_id = #{userId}
+          AND ROWNUM = 1
+    </select>
+
+    <select id="hasLearningLogs" resultType="boolean">
+        SELECT COUNT(*)
+        FROM LEARNING_LOG
+        WHERE user_id = #{userId}
+          AND ROWNUM = 1
     </select>
 
 </mapper>

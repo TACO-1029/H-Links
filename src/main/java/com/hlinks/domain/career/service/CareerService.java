@@ -2,6 +2,7 @@ package com.hlinks.domain.career.service;
 
 import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.dto.CareerSkillDto;
+import com.hlinks.domain.career.entity.LevelTestQuestion;
 import java.util.List;
 
 public interface CareerService {
@@ -19,7 +20,7 @@ public interface CareerService {
     Long createDiagnosis(Long userId);
 
     // 목표 학습 스킬을 저장
-    void saveTargetSkills(Long diagnosisId, List<Long> skillIds);
+    void saveTargetSkills(Long diagnosisId, List<Long> skillIds, List<String> userSetSkillLevels);
 
     // 진단에 등록된 목표 스킬 수 조회
     int getTargetSkillCount(Long diagnosisId);
@@ -35,4 +36,16 @@ public interface CareerService {
 
     // 전체 활성 스킬 목록 조회
     List<CareerSkillDto> getAllActiveSkills();
+
+    // 비동기로 레벨 테스트 생성
+    void buildLevelTestAsync(Long diagnosisId, List<Long> skillIds, List<String> difficulties);
+
+    // 레벨 테스트 문제 목록 조회 (정답 여부 제외)
+    List<LevelTestQuestion> getLevelTestQuestions(Long diagnosisId);
+
+    // 답안 제출 및 채점
+    void submitAnswers(Long diagnosisId, Long userId, List<Long> questionIds, List<Long> selectedOptionIds);
+
+    // 진단 상세 조회
+    CareerDiagnosis findDiagnosisById(Long diagnosisId);
 }

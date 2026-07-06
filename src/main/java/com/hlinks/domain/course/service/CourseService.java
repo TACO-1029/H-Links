@@ -8,6 +8,7 @@ import com.hlinks.domain.course.type.ApplicationType;
 import com.hlinks.domain.course.type.CourseStatus;
 import com.hlinks.domain.course.type.CourseType;
 import com.hlinks.domain.course.type.LearningStatus;
+import com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto;
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.global.response.code.ErrorResponseCode;
 import com.hlinks.global.type.ApplicationStatus;
@@ -410,9 +411,72 @@ public class CourseService {
         return courseMapper.countCourseLearningByStatus(userId, LearningStatus.COMPLETED.name());
     }
 
+    /**
+     * [이슈 #65] 마이페이지 내 수강 현황 대시보드 데이터를 조회합니다. (마이페이지/내 수강현황)
+     */
+    public MyCourseStatusResponseDto getMyCourseStatus(Long userId) {
+        log.info("마이페이지 내 수강 현황 대시보드 데이터 조회 요청 - 유저 ID: {}", userId);
+        validateUserId(userId);
+
+        // 1. 테이블 내 데이터 존재 여부 판별 (이슈 #65 리팩터링)
+        boolean hasLearnings = courseMapper.hasCourseLearnings(userId);
+        boolean hasQuizAttempts = courseMapper.hasQuizAttempts(userId);
+        boolean hasLearningLogs = courseMapper.hasLearningLogs(userId);
+
+        // 2. 각 영역별 조건부 쿼리 실행 및 분기 처리
+        int inProgressCount = hasLearnings ? getMyInProgressCourseCount(userId) : 0;
+        int completedCount = hasLearnings ? getMyCompletedCourseCount(userId) : 0;
+        int reinforcementCount = hasQuizAttempts ? courseMapper.countReinforcementCourses(userId) : 0;
+
+        List<MyCourseStatusResponseDto.MyCourseDto> inProgressCourses = hasLearnings
+                ? new ArrayList<>(courseMapper.selectMyCoursesWithProgress(userId))
+                : List.of();
+
+        if (hasLearnings && !inProgressCourses.isEmpty()) {
+            inProgressCourses.sort((c1, c2) -> {
+                int p1 = getStatusPriority(c1.getLearningStatus());
+                int p2 = getStatusPriority(c2.getLearningStatus());
+                return Integer.compare(p1, p2);
+            });
+        }
+
+        MyCourseStatusResponseDto.RecentCompletedCourseDto recentCompletedCourse = (hasLearnings && completedCount > 0)
+                ? courseMapper.selectRecentCompletedCourse(userId)
+                : null;
+
+        List<MyCourseStatusResponseDto.LearningActivityDto> learningActivities = hasLearningLogs
+                ? courseMapper.selectLearningActivities(userId)
+                : List.of();
+
+        List<MyCourseStatusResponseDto.QuizWrongNoteDto> quizWrongNotes = hasQuizAttempts
+                ? courseMapper.selectQuizWrongNotes(userId)
+                : List.of();
+
+        return MyCourseStatusResponseDto.builder()
+                .inProgressCount(inProgressCount)
+                .completedCount(completedCount)
+                .reinforcementCount(reinforcementCount)
+                .inProgressCourses(inProgressCourses)
+                .recentCompletedCourse(recentCompletedCourse)
+                .learningActivities(learningActivities)
+                .quizWrongNotes(quizWrongNotes)
+                .build();
+    }
+
+    private int getStatusPriority(String status) {
+        if (status == null) return 4;
+        switch (status) {
+            case "NOT_STARTED": return 1;
+            case "IN_PROGRESS": return 2;
+            case "COMPLETED": return 3;
+            default: return 4;
+        }
+    }
+
     private void validateUserId(Long userId) {
         if (userId == null || userId <= 0) {
             throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER);
         }
     }
 }
+

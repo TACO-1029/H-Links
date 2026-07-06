@@ -2,11 +2,13 @@ package com.hlinks.domain.course.service;
 
 import com.hlinks.domain.course.dto.CourseSkillAggregationRow;
 import com.hlinks.domain.course.mapper.CourseMapper;
+import com.hlinks.domain.course.type.CourseSkillCoverageLevel;
 import com.hlinks.domain.course.util.SkillWeightNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -47,15 +49,24 @@ public class CourseSkillAggregationService {
         }
 
         Map<Long, BigDecimal> weights = calculateCourseSkillWeights(chapterSkills);
+        Map<Long, AggregatedCoverage> coverages = calculateCourseSkillCoverages(chapterSkills);
 
         if (weights.isEmpty()) {
             log.info("강의 스킬 집계 생략. 집계 가능한 스킬이 없습니다. courseId={}", courseId);
             return;
         }
 
-        weights.forEach((skillId, weight) ->
-                courseMapper.insertCourseSkill(courseId, skillId, weight)
-        );
+        weights.forEach((skillId, weight) -> {
+            AggregatedCoverage coverage = coverages.getOrDefault(skillId, AggregatedCoverage.defaultValue());
+
+            courseMapper.insertCourseSkill(
+                    courseId,
+                    skillId,
+                    weight,
+                    coverage.level().name(),
+                    coverage.reason()
+            );
+        });
     }
 
     private Map<Long, BigDecimal> calculateCourseSkillWeights(List<CourseSkillAggregationRow> chapterSkills) {
@@ -142,5 +153,112 @@ public class CourseSkillAggregationService {
         }
 
         return SkillWeightNormalizer.normalizeToOne(rawWeights);
+    }
+
+    private Map<Long, AggregatedCoverage> calculateCourseSkillCoverages(List<CourseSkillAggregationRow> chapterSkills) {
+        Map<Long, Map<CourseSkillCoverageLevel, BigDecimal>> coverageScores = new LinkedHashMap<>();
+        Map<Long, Map<CourseSkillCoverageLevel, CoverageReasonCandidate>> coverageReasons = new LinkedHashMap<>();
+
+        for (CourseSkillAggregationRow row : chapterSkills) {
+            if (row.getSkillId() == null) {
+                continue;
+            }
+
+            BigDecimal weight = SkillWeightNormalizer.resolveRawWeight(row.getWeight());
+
+            if (weight == null) {
+                continue;
+            }
+
+            CourseSkillCoverageLevel coverageLevel = CourseSkillCoverageLevel.from(row.getCoverageLevel());
+            coverageScores
+                    .computeIfAbsent(row.getSkillId(), key -> new LinkedHashMap<>())
+                    .merge(coverageLevel, weight, BigDecimal::add);
+            mergeCoverageReason(
+                    coverageReasons,
+                    row.getSkillId(),
+                    coverageLevel,
+                    weight,
+                    row.getCoverageReason()
+            );
+        }
+
+        Map<Long, AggregatedCoverage> coverages = new LinkedHashMap<>();
+
+        for (Map.Entry<Long, Map<CourseSkillCoverageLevel, BigDecimal>> entry : coverageScores.entrySet()) {
+            Long skillId = entry.getKey();
+            CourseSkillCoverageLevel selectedLevel = selectCoverageLevel(entry.getValue());
+            String reason = resolveCoverageReason(coverageReasons.get(skillId), selectedLevel);
+
+            coverages.put(skillId, new AggregatedCoverage(selectedLevel, reason));
+        }
+
+        return coverages;
+    }
+
+    private CourseSkillCoverageLevel selectCoverageLevel(Map<CourseSkillCoverageLevel, BigDecimal> scores) {
+        CourseSkillCoverageLevel selectedLevel = CourseSkillCoverageLevel.BASIC;
+        BigDecimal selectedScore = BigDecimal.ZERO;
+
+        for (Map.Entry<CourseSkillCoverageLevel, BigDecimal> entry : scores.entrySet()) {
+            CourseSkillCoverageLevel level = entry.getKey();
+            BigDecimal score = entry.getValue();
+
+            if (score == null) {
+                continue;
+            }
+
+            if (score.compareTo(selectedScore) > 0
+                    || (score.compareTo(selectedScore) == 0 && level.getRank() > selectedLevel.getRank())) {
+                selectedLevel = level;
+                selectedScore = score;
+            }
+        }
+
+        return selectedLevel;
+    }
+
+    private void mergeCoverageReason(
+            Map<Long, Map<CourseSkillCoverageLevel, CoverageReasonCandidate>> coverageReasons,
+            Long skillId,
+            CourseSkillCoverageLevel coverageLevel,
+            BigDecimal weight,
+            String coverageReason
+    ) {
+        if (!StringUtils.hasText(coverageReason)) {
+            return;
+        }
+
+        Map<CourseSkillCoverageLevel, CoverageReasonCandidate> reasonByLevel = coverageReasons
+                .computeIfAbsent(skillId, key -> new LinkedHashMap<>());
+        CoverageReasonCandidate current = reasonByLevel.get(coverageLevel);
+
+        if (current == null || weight.compareTo(current.weight()) > 0) {
+            reasonByLevel.put(coverageLevel, new CoverageReasonCandidate(weight, coverageReason.trim()));
+        }
+    }
+
+    private String resolveCoverageReason(
+            Map<CourseSkillCoverageLevel, CoverageReasonCandidate> reasons,
+            CourseSkillCoverageLevel selectedLevel
+    ) {
+        if (reasons != null && reasons.get(selectedLevel) != null) {
+            return reasons.get(selectedLevel).reason();
+        }
+
+        return selectedLevel.getDefaultReason();
+    }
+
+    private record AggregatedCoverage(CourseSkillCoverageLevel level, String reason) {
+
+        private static AggregatedCoverage defaultValue() {
+            return new AggregatedCoverage(
+                    CourseSkillCoverageLevel.BASIC,
+                    CourseSkillCoverageLevel.BASIC.getDefaultReason()
+            );
+        }
+    }
+
+    private record CoverageReasonCandidate(BigDecimal weight, String reason) {
     }
 }

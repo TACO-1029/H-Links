@@ -5,6 +5,7 @@ import com.hlinks.domain.interest.exception.InterestErrorCode;
 import com.hlinks.domain.interest.mapper.InterestMapper;
 import com.hlinks.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +43,7 @@ public class InterestServiceImpl implements InterestService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "dashboardNews", key = "#userId")
     public void saveUserInterests(Long userId, List<Long> skillIds) {
         List<Long> distinctSkillIds = normalizeSkillIds(skillIds);
         validateSkillIds(distinctSkillIds);

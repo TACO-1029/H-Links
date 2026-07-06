@@ -46,13 +46,17 @@
         CHAPTER_SKILL_ID,
         CHAPTER_ID,
         SKILL_ID,
-        WEIGHT
+        WEIGHT,
+        COVERAGE_LEVEL,
+        COVERAGE_REASON
         )
         VALUES (
         CHAPTER_SKILL_SEQ.NEXTVAL,
         #{chapterId},
         #{skillId},
-        #{weight}
+        #{weight},
+        #{coverageLevel},
+        #{coverageReason}
         )
     </insert>
 
