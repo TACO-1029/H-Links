@@ -38,16 +38,26 @@
         </a>
     </div>
 </main>
-
+<section class="home-career-intro" aria-label="커리어 패스 소개">
+    <img
+            class="home-career-intro__character"
+            th:src="@{/images/home/career-path-dog.webp}"
+            alt=""
+            aria-hidden="true">
+    <div class="home-career-intro__inner">
+        <strong>커리어 패스를 소개해드려요.</strong>
+        <p>회사와 동반 성장하는 방법을 정리해 왔어요.</p>
+    </div>
+</section>
 <section class="home-news" aria-labelledby="home-news-title">
     <div class="home-news__inner">
         <div class="home-news__header">
             <div>
                 <p class="home-news__eyebrow">PERSONALIZED INSIGHT</p>
-                <h2 id="home-news-title"
-                    th:text="${userName != null and !#strings.isEmpty(userName)
-                        ? userName + '을 위한 지금 읽기 좋은 기술 인사이트'
-                        : '지금 읽기 좋은 기술 인사이트'}">
+                <h2 id="home-news-title">
+                    <span th:if="${userName != null and !#strings.isEmpty(userName)}">
+                        <span class="home-news__username" th:text="${userName}">우진</span>을 위한
+                    </span>
                     지금 읽기 좋은 기술 인사이트
                 </h2>
             </div>
