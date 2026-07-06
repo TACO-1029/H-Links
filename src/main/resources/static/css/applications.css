@@ -21,7 +21,7 @@
 .mypage-aside-nav__title {
     font-size: var(--text-base, 16px);
     font-weight: var(--font-bold, 700);
-    color: var(--color-text-primary, #0f172a);
+    color: var(--color-text-primary, #3B4043);
     margin-bottom: 20px;
     padding-left: 8px;
 }
@@ -49,7 +49,7 @@
 
 .mypage-aside-nav__link:hover {
     background-color: var(--neutral-100, #f1f5f9);
-    color: var(--color-text-primary, #0f172a);
+    color: var(--color-text-primary, #3B4043);
 }
 
 .mypage-aside-nav__link.is-active {
@@ -74,7 +74,7 @@
 .applications-header__title-area h2 {
     font-size: 20px;
     font-weight: var(--font-bold, 700);
-    color: var(--color-text-primary, #0f172a);
+    color: var(--color-text-primary, #3B4043);
     margin: 0 0 6px 0;
 }
 
@@ -109,7 +109,7 @@
 .filter-select:hover, .filter-select:focus {
     border-color: var(--color-brand, #009e7a);
     outline: none;
-    color: var(--color-text-primary, #0f172a);
+    color: var(--color-text-primary, #3B4043);
 }
 
 .filter-dropdown::after {
@@ -244,7 +244,7 @@
 .application-card__title {
     font-size: var(--text-base, 16px);
     font-weight: var(--font-bold, 700);
-    color: var(--color-text-primary, #0f172a);
+    color: var(--color-text-primary, #3B4043);
     margin: 0 0 6px 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -288,7 +288,7 @@
     transition: all 0.2s ease;
     border: 1px solid var(--color-border-default, #e2e8f0);
     background-color: var(--color-bg-surface, #ffffff);
-    color: var(--color-text-primary, #0f172a);
+    color: var(--color-text-primary, #3B4043);
     text-decoration: none;
 }
 
@@ -408,7 +408,7 @@
 .header-modal {
     font-size: var(--text-lg, 18px);
     font-weight: var(--font-bold, 700);
-    color: var(--color-text-primary, #0f172a);
+    color: var(--color-text-primary, #3B4043);
     margin-bottom: 24px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--color-border-default, #e2e8f0);
@@ -455,7 +455,7 @@
 
 .val-modal {
     font-size: var(--text-sm, 14px);
-    color: var(--color-text-primary, #0f172a);
+    color: var(--color-text-primary, #3B4043);
     word-break: break-all;
     flex-grow: 1;
 }
@@ -505,7 +505,7 @@
 
 .btn-modal:hover {
     background-color: var(--neutral-50, #f8fafc);
-    color: var(--color-text-primary, #0f172a);
+    color: var(--color-text-primary, #3B4043);
 }
 
 .btn-modal.btn-confirm-action {
@@ -537,7 +537,7 @@
 }
 
 .modal-body__desc strong {
-    color: var(--color-text-primary, #0f172a);
+    color: var(--color-text-primary, #3B4043);
     font-weight: var(--font-bold, 700);
 }
 
