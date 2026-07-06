@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>H-Links | 나의 수강현황</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+    <link rel="stylesheet" th:href="@{/css/applications.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage-courses.css}">
+</head>
+<body class="mypage-page">
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="mypage-shell">
+
+    <!-- 마이페이지 공통 히어로 헤더 영역 -->
+    <section class="mypage-hero" aria-labelledby="mypage-title">
+        <div class="mypage-hero__identity">
+            <div class="mypage-avatar mypage-avatar--large" aria-hidden="true"
+                 th:text="${#authentication.principal.name != null ? #strings.substring(#authentication.principal.name, 0, 1) : 'H'}">
+                H
+            </div>
+            <div class="mypage-hero__text">
+                <span class="mypage-badge"
+                      th:text="'사번 ' + ${#authentication.principal.username}">
+                    사번 EMP-0000
+                </span>
+                <h1 id="mypage-title" class="mypage-hero__title">
+                    <span th:text="${#authentication.principal.name}">사용자명</span>
+                    <span th:text="${#authentication.principal.positionName}">사원</span>
+                </h1>
+                <p class="mypage-hero__meta">
+                    <span th:text="${#authentication.principal.departmentName}">소속 본부/팀</span>
+                    <span aria-hidden="true">·</span>
+                    <span th:text="${#authentication.principal.jobName}">직무 엔지니어</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="mypage-summary" aria-label="학습 요약">
+            <article class="mypage-summary-card">
+                <span class="mypage-summary-card__label">수강 중</span>
+                <strong class="mypage-summary-card__value" th:text="${statusDto.inProgressCount}">3</strong>
+            </article>
+            <article class="mypage-summary-card">
+                <span class="mypage-summary-card__label">수료 완료</span>
+                <strong class="mypage-summary-card__value mypage-summary-card__value--blue" th:text="${statusDto.completedCount}">1</strong>
+            </article>
+            <article class="mypage-summary-card">
+                <span class="mypage-summary-card__label">보완 필요</span>
+                <strong class="mypage-summary-card__value mypage-summary-card__value--red" th:text="${statusDto.reinforcementCount}">4</strong>
+            </article>
+        </div>
+    </section>
+
+    <!-- 와이어프레임 매칭을 위한 좌측 서브메뉴 & 우측 수강현황 레이아웃 구성 -->
+    <div class="mypage-content-layout">
+        
+        <!-- 좌측 서브메뉴 구조 -->
+        <aside class="mypage-aside-nav">
+            <h3 class="mypage-aside-nav__title">마이페이지</h3>
+            <ul class="mypage-aside-nav__list">
+                <li>
+                    <a th:href="@{/mypage}" class="mypage-aside-nav__link">내 정보</a>
+                </li>
+                <li>
+                    <a th:href="@{/mypage/courses}" class="mypage-aside-nav__link is-active">수강현황</a>
+                </li>
+                <li>
+                    <a th:href="@{/mypage/applications}" class="mypage-aside-nav__link">신청 내역</a>
+                </li>
+                <li>
+                    <a th:href="@{/mypage/evaluation}" class="mypage-aside-nav__link">역량 평가</a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- 우측 메인 영역 -->
+        <section class="mypage-main-content" aria-label="내 수강 현황">
+            
+            <div class="courses-layout">
+                <!-- 좌측 수강 목록 리스트 -->
+                <div class="courses-left-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            나의 수강 현황 
+                            <span class="section-badge" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE')])}">0</span>
+                        </h2>
+                    </div>
+
+                    <!-- 수강 상태별 필터 탭 -->
+                    <div class="filter-buttons">
+                        <button class="filter-btn is-active" onclick="filterCourses('ALL', this)">전체</button>
+                        <button class="filter-btn" onclick="filterCourses('NOT_STARTED', this)">수강 전</button>
+                        <button class="filter-btn" onclick="filterCourses('IN_PROGRESS', this)">수강 중</button>
+                        <button class="filter-btn" onclick="filterCourses('COMPLETED', this)">수료 완료</button>
+                    </div>
+
+                    <!-- 수강 리스트 -->
+                    <div th:if="${#lists.isEmpty(statusDto.inProgressCourses)}" class="applications-empty">
+                        <div class="applications-empty__icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 6V12M12 16H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <p class="applications-empty__text" style="margin-bottom: 20px; color: var(--color-text-secondary); font-weight: var(--font-semibold);">현재 수강 중이거나 승인 완료된 강의가 없습니다.</p>
+                        <a th:href="@{/courses}" class="btn-empty-cta">교육 콘텐츠 바로가기</a>
+                    </div>
+
+                    <div th:unless="${#lists.isEmpty(statusDto.inProgressCourses)}" class="course-card-list">
+                        <div th:each="course : ${statusDto.inProgressCourses}" 
+                             th:if="${!(course.categoryType == 'CAREER_HIGH' and course.courseType == 'OFFLINE')}"
+                             class="course-item-card" 
+                             th:data-status="${course.learningStatus}">
+                            
+                            <div class="course-item-info" style="flex-grow: 1; min-width: 0;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; width: 100%;">
+                                    <span class="course-item-tag" 
+                                          th:classappend="${course.learningStatus == 'COMPLETED'} ? 'completed' : (${course.progressRate > 0 or course.learningStatus == 'IN_PROGRESS'} ? 'in-progress' : 'not-started')"
+                                          th:text="${course.learningStatus == 'COMPLETED'} ? '수료 완료' : (${course.progressRate > 0 or course.learningStatus == 'IN_PROGRESS'} ? '수강 중' : '수강 전')"
+                                          style="margin-bottom: 0;">수강 중</span>
+                                    <span class="course-item-tag" 
+                                          th:classappend="${course.categoryType == 'CAREER_PATH'} ? 'online' : 'offline'"
+                                          th:text="${course.categoryType == 'CAREER_PATH'} ? '커리어패스' : '커리어하이'"
+                                          style="margin-bottom: 0;">구분</span>
+                                </div>
+                                
+                                <h3 class="course-item-title" th:text="${course.courseTitle}" style="margin-top: 0; margin-bottom: 16px;">강의 제목</h3>
+                                
+                                <!-- 학습 진도율 -->
+                                <div class="progress-container" style="margin-bottom: 0; width: 100%;">
+                                    <div class="progress-label">
+                                        <span>학습 진도</span>
+                                        <span class="progress-label-percent" th:text="${course.progressRate} + '%'">0%</span>
+                                    </div>
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar-fill" th:style="'width: ' + ${course.progressRate} + '%'"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 수강 액션 및 상세보기 버튼들 (세로 정렬) -->
+                            <div style="display: flex; flex-direction: column; gap: 6px; align-items: stretch; flex-shrink: 0; width: 100px; margin-left: 16px;">
+                                <!-- 수강시작 또는 이어보기 버튼 -->
+                                <a th:if="${course.progressRate == 0 or course.learningStatus == 'NOT_STARTED'}"
+                                   th:href="${course.nextChapterId != null} ? @{/courses/{courseId}/chapters/{chapterId}(courseId=${course.courseId}, chapterId=${course.nextChapterId})} : @{/courses/{courseId}(courseId=${course.courseId})}" 
+                                   class="btn-continue btn-start-course" style="padding: 6px 8px; font-size: 12px; justify-content: center; width: 100%; box-sizing: border-box;">
+                                    <span>수강시작</span>
+                                </a>
+                                <a th:if="${course.progressRate > 0 and course.learningStatus != 'NOT_STARTED'}"
+                                   th:href="${course.nextChapterId != null} ? @{/courses/{courseId}/chapters/{chapterId}(courseId=${course.courseId}, chapterId=${course.nextChapterId})} : @{/courses/{courseId}(courseId=${course.courseId})}" 
+                                   class="btn-continue btn-continue-course" style="padding: 6px 8px; font-size: 12px; justify-content: center; width: 100%; box-sizing: border-box;">
+                                    <span>이어보기</span>
+                                </a>
+                                
+                                <!-- 상세보기 버튼 (모달 호출) -->
+                                <button class="btn-continue" style="background: #475569; padding: 6px 8px; font-size: 12px; justify-content: center; width: 100%; box-sizing: border-box;"
+                                        th:data-title="${course.courseTitle}"
+                                        th:data-category="${course.categoryType == 'CAREER_PATH' ? '커리어패스' : '커리어하이'}"
+                                        th:data-appno="${course.applicationNo}"
+                                        th:data-lastplay="${course.lastPlayTimeStr}"
+                                        th:data-completion="${course.completionStatus}"
+                                        th:data-type="${course.courseType == 'OFFLINE' ? '오프라인 특강' : '온라인 과정'}"
+                                        onclick="openCourseDetailModal(this)">
+                                    <span>상세보기</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 우측 위젯 영역 -->
+                <div class="courses-right-section">
+                    <!-- 최근 수료 강의 -->
+                    <div class="right-card">
+                        <div class="right-card-title-row">
+                            <h3 class="right-card-title">최근 수료 강의</h3>
+                            <span class="right-card-badge" th:text="${statusDto.recentCompletedCourse != null} ? '1건' : '0건'">?건</span>
+                        </div>
+                        <div th:if="${statusDto.recentCompletedCourse != null}" class="completed-box">
+                            <div class="completed-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="completed-info">
+                                <h4 class="completed-name" th:text="${statusDto.recentCompletedCourse.courseTitle}">최근 수료 강의명 예시</h4>
+                                <span class="completed-date" th:text="'수료일: ' + ${statusDto.recentCompletedCourse.completedAtStr}">-</span>
+                            </div>
+                        </div>
+                        <div th:unless="${statusDto.recentCompletedCourse != null}" style="text-align: center; color: #94A3B8; font-size: 12px; padding: 16px 0;">
+                            최근 수료한 강의가 없습니다.
+                        </div>
+                    </div>
+
+                    <!-- 최근 학습 활동 -->
+                    <div class="right-card">
+                        <div class="right-card-title-row">
+                            <h3 class="right-card-title">최근 학습 활동</h3>
+                            <span class="right-card-badge">실시간 기록</span>
+                        </div>
+                        
+                        <div class="timeline-list">
+                            <div th:each="activity : ${statusDto.learningActivities}" class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-header">
+                                    <h4 class="timeline-title" th:text="'[' + ${activity.courseTitle} + '] ' + ${activity.chapterOrder} + '강'">활동 제목</h4>
+                                    <span class="timeline-time" th:text="${activity.eventAtStr}">시간</span>
+                                </div>
+                                <div class="timeline-body" th:text="${activity.eventType} + ': 진도율 ' + ${activity.progressRate} + '%'">상세 로그</div>
+                            </div>
+                            <div th:if="${#lists.isEmpty(statusDto.learningActivities)}" style="text-align: center; color: #94A3B8; font-size: 12px; padding: 16px 0;">
+                                최근 학습 기록이 없습니다.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 퀴즈 오답노트 -->
+            <div class="quiz-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        퀴즈 오답노트 
+                        <span class="section-badge" th:text="${#lists.size(statusDto.quizWrongNotes)}">0개</span>
+                    </h2>
+                </div>
+                
+                <div class="quiz-grid">
+                    <div th:each="note : ${statusDto.quizWrongNotes}" 
+                         class="quiz-card"
+                         th:data-question="${note.questionText}"
+                         th:data-explanation="${note.explanation}"
+                         th:data-chapter="${note.chapterTitle}"
+                         th:data-submitted="${note.submittedOptionText}"
+                         th:data-correct="${note.correctOptionText}"
+                         onclick="openQuizModal(this)">
+                        
+                        <div class="quiz-card-top">
+                            <span class="quiz-tag">오답노트</span>
+                            <span class="quiz-score" th:text="${note.score} + '점'">0점</span>
+                        </div>
+                        <h3 class="quiz-course-title" th:text="${note.courseTitle}">Docker & Kubernetes</h3>
+                        <div class="quiz-chapter-footer" th:text="${note.chapterTitle}">n주차 형성평가</div>
+                    </div>
+                </div>
+                
+                <div th:if="${#lists.isEmpty(statusDto.quizWrongNotes)}" style="text-align: center; color: #94A3B8; font-size: 13px; padding: 32px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; margin-top: 16px;">
+                    오답 기록이 없습니다. 퀴즈를 성실히 풀으셨군요!
+                </div>
+            </div>
+            
+        </section>
+    </div>
+
+</main>
+
+<!-- 오답노트 상세 보기 모달 팝업 -->
+<div id="quizModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalChapterTitle">2주차 형성평가</h3>
+            <button class="btn-modal-close" onclick="closeQuizModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div>
+                <h4 class="info-section-title">질문 문제</h4>
+                <div class="question-box" id="modalQuestionText">문제 내용</div>
+            </div>
+            <div>
+                <h4 class="info-section-title" style="color: #EF4444;">내가 제출한 오답</h4>
+                <div class="submitted-option-box" id="modalSubmittedOption">선택한 오답 내용</div>
+            </div>
+            <div>
+                <h4 class="info-section-title" style="color: #10B981;">정답 선지</h4>
+                <div class="correct-option-box" id="modalCorrectOption">정답 내용</div>
+            </div>
+            <div>
+                <h4 class="info-section-title">틀린 문항 오답 해설</h4>
+                <div class="explanation-box" id="modalExplanationText">해설 내용</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 강의 상세 정보 보기 모달 팝업 -->
+<div id="courseDetailModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="detailCourseTitle">강의 상세 정보</h3>
+            <button class="btn-modal-close" onclick="closeCourseDetailModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <dl class="mypage-info-grid" style="display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0;">
+                <div class="mypage-info-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F1F5F9;">
+                    <dt style="font-weight: 700; color: #64748B;">구분</dt>
+                    <dd id="detailCategory" style="font-weight: 700; color: #0F172A; margin: 0;">-</dd>
+                </div>
+                <div class="mypage-info-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F1F5F9;">
+                    <dt style="font-weight: 700; color: #64748B;">신청번호</dt>
+                    <dd id="detailAppNo" style="font-weight: 700; color: #0F172A; margin: 0;">-</dd>
+                </div>
+                <div class="mypage-info-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F1F5F9;">
+                    <dt style="font-weight: 700; color: #64748B;">마지막 학습 위치</dt>
+                    <dd id="detailLastPlay" style="font-weight: 700; color: #0F172A; margin: 0;">-</dd>
+                </div>
+                <div class="mypage-info-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F1F5F9;">
+                    <dt style="font-weight: 700; color: #64748B;">수료 여부</dt>
+                    <dd id="detailCompletion" style="font-weight: 700; color: #0F172A; margin: 0;">-</dd>
+                </div>
+                <div class="mypage-info-row" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F1F5F9;">
+                    <dt style="font-weight: 700; color: #64748B;">형태</dt>
+                    <dd id="detailType" style="font-weight: 700; color: #0F172A; margin: 0;">-</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:src="@{/js/mypage-courses.js}"></script>
+</body>
+</html>
