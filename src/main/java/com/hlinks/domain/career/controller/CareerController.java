@@ -14,7 +14,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Controller
@@ -27,6 +33,7 @@ public class CareerController {
 
     private final CareerService careerService;
     private final InterestService interestService;
+    private final ObjectMapper objectMapper;
 
     @GetMapping
     public String index(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
@@ -62,7 +69,7 @@ public class CareerController {
     public String submitSurvey(
             @RequestParam("diagnosisId") Long diagnosisId,
             @RequestParam(value = "skillIds", required = false) List<Long> skillIds,
-            @RequestParam(value = "difficulty", defaultValue = "중") String difficulty,
+            @RequestParam(value = "difficulties", required = false) List<String> difficulties,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model
     ) {
@@ -75,9 +82,12 @@ public class CareerController {
         }
 
         careerService.saveTargetSkills(diagnosisId, skillIds);
-        log.info("커리어 진단 목표 스킬 저장 완료 - UserId: {}, DiagnosisId: {}, 난이도: {}", userDetails.getUserId(), diagnosisId, difficulty);
+        careerService.buildLevelTestAsync(diagnosisId, skillIds, difficulties);
+        log.info("커리어 진단 목표 스킬 저장 및 비동기 생성 요청 완료 - UserId: {}, DiagnosisId: {}", userDetails.getUserId(), diagnosisId);
 
-        return "redirect:/courses/career-path/level-test-pending?diagnosisId=" + diagnosisId + "&difficulty=" + difficulty;
+        String firstDiff = (difficulties != null && !difficulties.isEmpty()) ? difficulties.get(0) : "중";
+        String encodedDiff = URLEncoder.encode(firstDiff, StandardCharsets.UTF_8);
+        return "redirect:/courses/career-path/level-test-pending?diagnosisId=" + diagnosisId + "&difficulty=" + encodedDiff;
     }
 
     @GetMapping("/level-test-pending")
@@ -90,10 +100,82 @@ public class CareerController {
         setActiveMenu(model);
         model.addAttribute("diagnosisId", diagnosisId);
         model.addAttribute("difficulty", difficulty);
-
-        // UI에 선택된 분야(첫번째 스킬의 분류 등)를 노출하기 위해 가상의 분석 필드 제공
         model.addAttribute("mode", "표준 진단");
         return "career/level_test_pending";
+    }
+
+    @org.springframework.web.bind.annotation.ResponseBody
+    @GetMapping("/build-status")
+    public Map<String, String> getBuildStatus(@RequestParam("diagnosisId") Long diagnosisId) {
+        CareerDiagnosis diagnosis = careerService.findDiagnosisById(diagnosisId);
+        return Map.of("status", diagnosis != null ? diagnosis.getLevelTestBuildStatus() : "PENDING");
+    }
+
+    @GetMapping("/level-test")
+    public String levelTest(
+            @RequestParam("diagnosisId") Long diagnosisId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model
+    ) {
+        setActiveMenu(model);
+        model.addAttribute("diagnosisId", diagnosisId);
+        model.addAttribute("questions", careerService.getLevelTestQuestions(diagnosisId));
+        return "career/level_test";
+    }
+
+    @PostMapping("/level-test/submit")
+    public String submitLevelTest(
+            @RequestParam("diagnosisId") Long diagnosisId,
+            @RequestParam("questionIds") List<Long> questionIds,
+            @RequestParam("selectedOptionIds") List<Long> selectedOptionIds,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        careerService.submitAnswers(diagnosisId, userDetails.getUserId(), questionIds, selectedOptionIds);
+        return "redirect:/courses/career-path/result?diagnosisId=" + diagnosisId;
+    }
+
+    @GetMapping("/result")
+    public String viewResult(
+            @RequestParam("diagnosisId") Long diagnosisId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model
+    ) {
+        setActiveMenu(model);
+        CareerDiagnosis diagnosis = careerService.findDiagnosisById(diagnosisId);
+        
+        String rawJson = diagnosis.getLlmSummary();
+        String category = "IT 기술";
+        List<Map<String, Object>> resultsList = new ArrayList<>();
+        
+        try {
+            if (rawJson != null && rawJson.trim().startsWith("{")) {
+                Map<String, Object> jsonMap = objectMapper.readValue(rawJson, Map.class);
+                category = (String) jsonMap.get("category");
+                List<Map<String, Object>> rawResults = (List<Map<String, Object>>) jsonMap.get("results");
+                if (rawResults != null) {
+                    for (Map<String, Object> res : rawResults) {
+                        Map<String, Object> enriched = new HashMap<>(res);
+                        Long skillId = ((Number) res.get("skillId")).longValue();
+                        
+                        String skillName = careerService.getAllActiveSkills().stream()
+                            .filter(s -> s.getSkillId().equals(skillId))
+                            .map(s -> s.getSkillName())
+                            .findFirst().orElse("세부 기술");
+                        
+                        enriched.put("skillName", skillName);
+                        resultsList.add(enriched);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to parse scoring JSON on result page", e);
+        }
+        
+        model.addAttribute("diagnosisId", diagnosisId);
+        model.addAttribute("category", category);
+        model.addAttribute("results", resultsList);
+        model.addAttribute("rawJson", rawJson);
+        return "career/result";
     }
 
     @GetMapping("/dashboard")

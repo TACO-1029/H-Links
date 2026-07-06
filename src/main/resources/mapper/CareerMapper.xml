@@ -94,4 +94,151 @@
         ORDER BY SKILL_TYPE, SKILL_NAME
     </select>
 
+    <resultMap id="LevelTestQuestionResultMap" type="com.hlinks.domain.career.entity.LevelTestQuestion">
+        <id property="levelQuestionId" column="LEVEL_QUESTION_ID"/>
+        <result property="diagnosisId" column="DIAGNOSIS_ID"/>
+        <result property="skillId" column="SKILL_ID"/>
+        <result property="questionText" column="QUESTION_TEXT" jdbcType="CLOB" javaType="string"/>
+        <result property="questionType" column="QUESTION_TYPE"/>
+        <result property="difficulty" column="DIFFICULTY"/>
+        <result property="explanation" column="EXPLANATION" jdbcType="CLOB" javaType="string"/>
+        <collection property="options" ofType="com.hlinks.domain.career.entity.LevelTestOption">
+            <id property="levelOptionId" column="LEVEL_OPTION_ID"/>
+            <result property="levelQuestionId" column="LEVEL_QUESTION_ID"/>
+            <result property="optionNo" column="OPTION_NO"/>
+            <result property="optionText" column="OPTION_TEXT" jdbcType="CLOB" javaType="string"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="LevelTestQuestionWithAnswersResultMap" type="com.hlinks.domain.career.entity.LevelTestQuestion">
+        <id property="levelQuestionId" column="LEVEL_QUESTION_ID"/>
+        <result property="diagnosisId" column="DIAGNOSIS_ID"/>
+        <result property="skillId" column="SKILL_ID"/>
+        <result property="questionText" column="QUESTION_TEXT" jdbcType="CLOB" javaType="string"/>
+        <result property="questionType" column="QUESTION_TYPE"/>
+        <result property="difficulty" column="DIFFICULTY"/>
+        <result property="explanation" column="EXPLANATION" jdbcType="CLOB" javaType="string"/>
+        <collection property="options" ofType="com.hlinks.domain.career.entity.LevelTestOption">
+            <id property="levelOptionId" column="LEVEL_OPTION_ID"/>
+            <result property="levelQuestionId" column="LEVEL_QUESTION_ID"/>
+            <result property="optionNo" column="OPTION_NO"/>
+            <result property="optionText" column="OPTION_TEXT" jdbcType="CLOB" javaType="string"/>
+            <result property="correctYn" column="CORRECT_YN"/>
+        </collection>
+    </resultMap>
+
+    <select id="findDiagnosisById" resultType="com.hlinks.domain.career.entity.CareerDiagnosis">
+        SELECT *
+        FROM CAREER_DIAGNOSIS
+        WHERE DIAGNOSIS_ID = #{diagnosisId}
+    </select>
+
+    <update id="updateLevelTestBuildStatus">
+        UPDATE CAREER_DIAGNOSIS
+        SET LEVEL_TEST_BUILD_STATUS = #{status}
+        WHERE DIAGNOSIS_ID = #{diagnosisId}
+    </update>
+
+    <update id="updateLlmSummary">
+        UPDATE CAREER_DIAGNOSIS
+        SET LLM_SUMMARY = #{llmSummary, jdbcType=CLOB}
+        WHERE DIAGNOSIS_ID = #{diagnosisId}
+    </update>
+
+    <insert id="insertLevelTestQuestion" parameterType="com.hlinks.domain.career.entity.LevelTestQuestion">
+        <selectKey keyProperty="levelQuestionId" resultType="long" order="BEFORE">
+            SELECT LEVEL_TEST_QUESTION_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO LEVEL_TEST_QUESTION (
+            LEVEL_QUESTION_ID,
+            DIAGNOSIS_ID,
+            SKILL_ID,
+            QUESTION_TEXT,
+            QUESTION_TYPE,
+            DIFFICULTY,
+            EXPLANATION
+        ) VALUES (
+            #{levelQuestionId},
+            #{diagnosisId},
+            #{skillId},
+            #{questionText, jdbcType=CLOB},
+            #{questionType},
+            #{difficulty},
+            #{explanation, jdbcType=CLOB}
+        )
+    </insert>
+
+    <insert id="insertLevelTestOption" parameterType="com.hlinks.domain.career.entity.LevelTestOption">
+        <selectKey keyProperty="levelOptionId" resultType="long" order="BEFORE">
+            SELECT LEVEL_TEST_OPTION_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO LEVEL_TEST_OPTION (
+            LEVEL_OPTION_ID,
+            LEVEL_QUESTION_ID,
+            OPTION_NO,
+            OPTION_TEXT,
+            CORRECT_YN
+        ) VALUES (
+            #{levelOptionId},
+            #{levelQuestionId},
+            #{optionNo},
+            #{optionText, jdbcType=CLOB},
+            #{correctYn}
+        )
+    </insert>
+
+    <select id="findQuestionsByDiagnosisId" resultMap="LevelTestQuestionResultMap">
+        SELECT q.*, o.LEVEL_OPTION_ID, o.OPTION_NO, o.OPTION_TEXT
+        FROM LEVEL_TEST_QUESTION q
+        LEFT JOIN LEVEL_TEST_OPTION o ON q.LEVEL_QUESTION_ID = o.LEVEL_QUESTION_ID
+        WHERE q.DIAGNOSIS_ID = #{diagnosisId}
+        ORDER BY q.LEVEL_QUESTION_ID, o.OPTION_NO
+    </select>
+
+    <select id="findQuestionsWithAnswersByDiagnosisId" resultMap="LevelTestQuestionWithAnswersResultMap">
+        SELECT q.*, o.LEVEL_OPTION_ID, o.OPTION_NO, o.OPTION_TEXT, o.CORRECT_YN
+        FROM LEVEL_TEST_QUESTION q
+        LEFT JOIN LEVEL_TEST_OPTION o ON q.LEVEL_QUESTION_ID = o.LEVEL_QUESTION_ID
+        WHERE q.DIAGNOSIS_ID = #{diagnosisId}
+        ORDER BY q.LEVEL_QUESTION_ID, o.OPTION_NO
+    </select>
+
+    <insert id="insertLevelTestAnswerLog" parameterType="com.hlinks.domain.career.entity.LevelTestAnswerLog">
+        <selectKey keyProperty="levelAnswerId" resultType="long" order="BEFORE">
+            SELECT LEVEL_TEST_ANSWER_LOG_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO LEVEL_TEST_ANSWER_LOG (
+            LEVEL_ANSWER_ID,
+            USER_ID,
+            LEVEL_QUESTION_ID,
+            SELECTED_OPTION_ID,
+            CORRECT_YN
+        ) VALUES (
+            #{levelAnswerId},
+            #{userId},
+            #{levelQuestionId},
+            #{selectedOptionId, jdbcType=NUMERIC},
+            #{correctYn}
+        )
+    </insert>
+
+    <select id="getSkillNameById" resultType="string">
+        SELECT SKILL_NAME FROM SKILL WHERE SKILL_ID = #{skillId}
+    </select>
+
+    <select id="findTargetSkillsByDiagnosisId" resultType="com.hlinks.domain.career.dto.CareerTargetSkillDto">
+        SELECT SKILL_ID AS skillId, '중' AS difficulty
+        FROM CAREER_TARGET_SKILL
+        WHERE DIAGNOSIS_ID = #{diagnosisId}
+    </select>
+
+    <select id="getCategoryNameByDiagnosisId" resultType="string">
+        SELECT DISTINCT p.SKILL_NAME 
+        FROM CAREER_TARGET_SKILL cts
+        JOIN SKILL s ON cts.SKILL_ID = s.SKILL_ID
+        JOIN SKILL p ON s.PARENT_SKILL_ID = p.SKILL_ID
+        WHERE cts.DIAGNOSIS_ID = #{diagnosisId}
+          AND ROWNUM = 1
+    </select>
+
 </mapper>
