@@ -67,7 +67,7 @@
     </div>
 
     <!-- 다음 단계 연결 시뮬레이션용 가이드 (실무 환경 개발용) -->
-    <div class="pending-simulation-guide">
+    <div class="pending-simulation-guide" style="display: none;">
         <p>💡 AI 출제 서비스(다음 이슈 개발 사항)와 연계될 영역입니다. 현재 테스트를 위해 4초 후 대시보드로 자동 리다이렉트됩니다.</p>
         <a th:href="@{/courses/career-path/dashboard}" class="btn-simulation-dashboard">즉시 대시보드로 이동</a>
     </div>
@@ -75,11 +75,11 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
-<script>
-    // 4초 뒤 대시보드로 리다이렉트 시뮬레이션
-    setTimeout(() => {
-        window.location.href = '/courses/career-path/dashboard';
-    }, 4000);
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const diagnosisId = /*[[${diagnosisId}]]*/ 0;
+    /*]]>*/
 </script>
+<script th:src="@{/js/career-pending.js}"></script>
 </body>
 </html>
