@@ -74,7 +74,7 @@ public class CareerController {
             return "career/survey";
         }
 
-        careerService.saveTargetSkills(diagnosisId, skillIds);
+        careerService.saveTargetSkills(diagnosisId, skillIds, difficulty);
         log.info("커리어 진단 목표 스킬 저장 완료 - UserId: {}, DiagnosisId: {}, 난이도: {}", userDetails.getUserId(), diagnosisId, difficulty);
 
         return "redirect:/courses/career-path/level-test-pending?diagnosisId=" + diagnosisId + "&difficulty=" + difficulty;
