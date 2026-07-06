@@ -3,6 +3,10 @@ package com.hlinks.domain.career.mapper;
 import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.dto.CareerSkillDto;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
+import com.hlinks.domain.career.dto.CareerTargetSkillDto;
+import com.hlinks.domain.career.entity.LevelTestQuestion;
+import com.hlinks.domain.career.entity.LevelTestOption;
+import com.hlinks.domain.career.entity.LevelTestAnswerLog;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import java.util.List;
@@ -54,4 +58,37 @@ public interface CareerMapper {
             @Param("offset") int offset,
             @Param("limitPlusOne") int limitPlusOne
     );
+
+    // 진단 상세 조회
+    CareerDiagnosis findDiagnosisById(@Param("diagnosisId") Long diagnosisId);
+
+    // AI 시험지 생성 상태 업데이트
+    void updateLevelTestBuildStatus(@Param("diagnosisId") Long diagnosisId, @Param("status") String status);
+
+    // AI 진단 총평(LLM Summary) 업데이트
+    void updateLlmSummary(@Param("diagnosisId") Long diagnosisId, @Param("llmSummary") String llmSummary);
+
+    // 레벨 테스트 문항 저장
+    void insertLevelTestQuestion(LevelTestQuestion question);
+
+    // 레벨 테스트 보기 옵션 저장
+    void insertLevelTestOption(LevelTestOption option);
+
+    // 레벨 테스트 문항 목록 조회 (정답 제외)
+    List<LevelTestQuestion> findQuestionsByDiagnosisId(@Param("diagnosisId") Long diagnosisId);
+
+    // 레벨 테스트 문항 및 정답 포함 조회 (채점용)
+    List<LevelTestQuestion> findQuestionsWithAnswersByDiagnosisId(@Param("diagnosisId") Long diagnosisId);
+
+    // 답안 제출 기록 저장
+    void insertLevelTestAnswerLog(LevelTestAnswerLog answerLog);
+
+    // 스킬 ID로 스킬명 조회
+    String getSkillNameById(@Param("skillId") Long skillId);
+
+    // 진단에 등록된 목표 스킬 및 난이도 조회
+    List<CareerTargetSkillDto> findTargetSkillsByDiagnosisId(@Param("diagnosisId") Long diagnosisId);
+
+    // 진단의 핵심 카테고리명 조회
+    String getCategoryNameByDiagnosisId(@Param("diagnosisId") Long diagnosisId);
 }

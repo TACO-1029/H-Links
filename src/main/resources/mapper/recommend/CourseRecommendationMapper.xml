@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.recommend.course.mapper.CourseRecommendationMapper">
+
+    <select id="findRecommendationCandidates"
+            resultType="com.hlinks.domain.recommend.course.dto.CourseRecommendationCandidateDto">
+        SELECT
+            C.COURSE_ID        AS courseId,
+            C.CATEGORY_TYPE    AS categoryType,
+            C.COURSE_TYPE      AS courseType,
+            C.COURSE_TITLE     AS courseTitle,
+            C.DESCRIPTION      AS description,
+            C.INSTRUCTOR_NAME  AS instructorName,
+            C.THUMBNAIL_URL    AS thumbnailUrl,
+            CS.SKILL_ID        AS skillId,
+            S.SKILL_NAME       AS skillName,
+            CS.WEIGHT          AS weight,
+            CS.COVERAGE_LEVEL  AS coverageLevel,
+            CS.COVERAGE_REASON AS coverageReason
+        FROM COURSE_SKILL CS
+        JOIN COURSE C
+          ON C.COURSE_ID = CS.COURSE_ID
+        JOIN SKILL S
+          ON S.SKILL_ID = CS.SKILL_ID
+        LEFT JOIN ONLINE_COURSE ONL
+          ON ONL.COURSE_ID = C.COURSE_ID
+        LEFT JOIN OFFLINE_COURSE OFF
+          ON OFF.COURSE_ID = C.COURSE_ID
+        WHERE CS.SKILL_ID IN
+        <foreach collection="skillIds" item="skillId" open="(" separator="," close=")">
+            #{skillId}
+        </foreach>
+          AND S.USE_YN = 'Y'
+          AND (
+              (C.COURSE_TYPE = 'ONLINE' AND NVL(ONL.STATUS, 'OPEN') != 'HIDDEN')
+              OR
+              (C.COURSE_TYPE = 'OFFLINE' AND NVL(OFF.STATUS, 'OPEN') != 'HIDDEN')
+          )
+        ORDER BY C.COURSE_ID DESC, CS.WEIGHT DESC
+    </select>
+
+</mapper>
