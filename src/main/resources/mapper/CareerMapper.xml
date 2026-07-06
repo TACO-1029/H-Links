@@ -229,7 +229,7 @@
     </select>
 
     <select id="findTargetSkillsByDiagnosisId" resultType="com.hlinks.domain.career.dto.CareerTargetSkillDto">
-        SELECT SKILL_ID AS skillId, '중' AS difficulty
+        SELECT SKILL_ID AS skillId, USER_SET_SKILL_LEVEL AS difficulty
         FROM CAREER_TARGET_SKILL
         WHERE DIAGNOSIS_ID = #{diagnosisId}
     </select>

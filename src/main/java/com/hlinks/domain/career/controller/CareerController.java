@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URLEncoder;
@@ -71,6 +72,7 @@ public class CareerController {
             @RequestParam(value = "skillIds", required = false) List<Long> skillIds,
             @RequestParam(value = "difficulties", required = false) List<String> difficulties,
             @AuthenticationPrincipal CustomUserDetails userDetails,
+            RedirectAttributes redirectAttributes,
             Model model
     ) {
         if (skillIds == null || skillIds.isEmpty()) {
@@ -87,22 +89,30 @@ public class CareerController {
         log.info("커리어 진단 목표 스킬 저장 및 비동기 생성 요청 완료 - UserId: {}, DiagnosisId: {}, Difficulties: {}", userDetails.getUserId(), diagnosisId, difficulties);
 
         String firstDiff = (difficulties != null && !difficulties.isEmpty()) ? difficulties.get(0) : "중";
-        String encodedDiff = URLEncoder.encode(firstDiff, StandardCharsets.UTF_8);
-        return "redirect:/courses/career-path/level-test-pending?diagnosisId=" + diagnosisId + "&difficulty=" + encodedDiff;
+        redirectAttributes.addFlashAttribute("diagnosisId", diagnosisId);
+        redirectAttributes.addFlashAttribute("difficulty", firstDiff);
+        return "redirect:/courses/career-path/level-test-pending";
     }
 
     @GetMapping("/level-test-pending")
     public String levelTestPending(
-            @RequestParam("diagnosisId") Long diagnosisId,
-            @RequestParam(value = "difficulty", defaultValue = "중") String difficulty,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model
     ) {
         setActiveMenu(model);
+        
+        Long diagnosisId = (Long) model.asMap().get("diagnosisId");
+        String difficulty = (String) model.asMap().get("difficulty");
+        
+        if (diagnosisId == null) {
+            diagnosisId = careerService.findLatestDiagnosisId(userDetails.getUserId());
+        }
+        if (difficulty == null) {
+            difficulty = "중";
+        }
+
         model.addAttribute("diagnosisId", diagnosisId);
         model.addAttribute("difficulty", difficulty);
-
-        // UI에 선택된 분야(첫번째 스킬의 분류 등)를 노출하기 위해 가상의 분석 필드 제공
         model.addAttribute("mode", "표준 진단");
         return "career/level_test_pending";
     }
@@ -116,11 +126,14 @@ public class CareerController {
 
     @GetMapping("/level-test")
     public String levelTest(
-            @RequestParam("diagnosisId") Long diagnosisId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model
     ) {
         setActiveMenu(model);
+        Long diagnosisId = (Long) model.asMap().get("diagnosisId");
+        if (diagnosisId == null) {
+            diagnosisId = careerService.findLatestDiagnosisId(userDetails.getUserId());
+        }
         model.addAttribute("diagnosisId", diagnosisId);
         model.addAttribute("questions", careerService.getLevelTestQuestions(diagnosisId));
         return "career/level_test";
@@ -131,31 +144,43 @@ public class CareerController {
             @RequestParam("diagnosisId") Long diagnosisId,
             @RequestParam("questionIds") List<Long> questionIds,
             @RequestParam("selectedOptionIds") List<Long> selectedOptionIds,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            RedirectAttributes redirectAttributes
     ) {
         careerService.submitAnswers(diagnosisId, userDetails.getUserId(), questionIds, selectedOptionIds);
-        return "redirect:/courses/career-path/result?diagnosisId=" + diagnosisId;
+        redirectAttributes.addFlashAttribute("diagnosisId", diagnosisId);
+        return "redirect:/courses/career-path/result";
     }
 
     @GetMapping("/result")
     public String viewResult(
-            @RequestParam("diagnosisId") Long diagnosisId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model
     ) {
         setActiveMenu(model);
+        Long diagnosisId = (Long) model.asMap().get("diagnosisId");
+        if (diagnosisId == null) {
+            diagnosisId = careerService.findLatestDiagnosisId(userDetails.getUserId());
+        }
         CareerDiagnosis diagnosis = careerService.findDiagnosisById(diagnosisId);
 
         String rawJson = diagnosis.getLlmSummary();
         String category = "IT 기술";
+        String aiSummary = null;
         List<Map<String, Object>> resultsList = new ArrayList<>();
+        int avgScore = 0;
+        String lowestSkillName = "";
 
         try {
             if (rawJson != null && rawJson.trim().startsWith("{")) {
                 Map<String, Object> jsonMap = objectMapper.readValue(rawJson, Map.class);
                 category = (String) jsonMap.get("category");
+                aiSummary = (String) jsonMap.get("aiSummary");
                 List<Map<String, Object>> rawResults = (List<Map<String, Object>>) jsonMap.get("results");
                 if (rawResults != null) {
+                    double sum = 0;
+                    int count = 0;
+                    int lowestScore = 999;
                     for (Map<String, Object> res : rawResults) {
                         Map<String, Object> enriched = new HashMap<>(res);
                         Long skillId = ((Number) res.get("skillId")).longValue();
@@ -167,6 +192,17 @@ public class CareerController {
 
                         enriched.put("skillName", skillName);
                         resultsList.add(enriched);
+
+                        int scoreVal = ((Number) res.get("score")).intValue();
+                        sum += scoreVal;
+                        count++;
+                        if (scoreVal < lowestScore) {
+                            lowestScore = scoreVal;
+                            lowestSkillName = skillName;
+                        }
+                    }
+                    if (count > 0) {
+                        avgScore = (int) Math.round(sum / count);
                     }
                 }
             }
@@ -178,6 +214,10 @@ public class CareerController {
         model.addAttribute("category", category);
         model.addAttribute("results", resultsList);
         model.addAttribute("rawJson", rawJson);
+        model.addAttribute("averageScore", avgScore);
+        model.addAttribute("lowestSkill", lowestSkillName.isEmpty() ? "핵심 기술" : lowestSkillName);
+        model.addAttribute("userName", userDetails.getName());
+        model.addAttribute("aiSummary", aiSummary);
         return "career/result";
     }
 

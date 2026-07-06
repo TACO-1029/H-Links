@@ -76,7 +76,7 @@ public class CareerServiceImpl implements CareerService {
 
         // 기존 매핑이 있다면 삭제하거나 그냥 바로 다중 등록 (처음 등록하는 것이므로)
         for (int  j = 0; j < skillIds.size(); j++) {
-            careerMapper.insertCareerTargetSkill(skillIds.get(j), diagnosisId, userSetSkillLevels.get(j));
+            careerMapper.insertCareerTargetSkill(diagnosisId, skillIds.get(j), userSetSkillLevels.get(j));
         }
     }
 
@@ -229,8 +229,17 @@ public class CareerServiceImpl implements CareerService {
             resultsList.add(skillResult);
         }
 
+        // Generate AI feedback summary narrative
+        StringBuilder scoreInfo = new StringBuilder();
+        for (Map<String, Object> res : resultsList) {
+            scoreInfo.append(String.format("- 기술 ID: %s, 선택 난이도: %s, 획득 점수: %s점\n", 
+                    res.get("skillId"), res.get("selectedDifficulty"), res.get("score")));
+        }
+        String aiFeedback = aiLevelTestService.generateFeedbackSummary(categoryName, scoreInfo.toString());
+
         Map<String, Object> finalJsonMap = new HashMap<>();
         finalJsonMap.put("category", categoryName);
+        finalJsonMap.put("aiSummary", aiFeedback);
         finalJsonMap.put("results", resultsList);
 
         try {

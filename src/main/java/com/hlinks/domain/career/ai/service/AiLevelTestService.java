@@ -191,16 +191,69 @@ public class AiLevelTestService {
             
             careerMapper.insertLevelTestQuestion(question);
 
-            // Save options
-            for (AiGeneratedLevelTestOption genOpt : genQ.getOptions()) {
+            // Save options (shuffled to randomize option number)
+            List<AiGeneratedLevelTestOption> options = new java.util.ArrayList<>(genQ.getOptions());
+            java.util.Collections.shuffle(options);
+            int optNo = 1;
+            for (AiGeneratedLevelTestOption genOpt : options) {
                 LevelTestOption option = new LevelTestOption();
                 option.setLevelQuestionId(question.getLevelQuestionId());
-                option.setOptionNo(String.valueOf(genOpt.getOptionNo()));
+                option.setOptionNo(String.valueOf(optNo++));
                 option.setOptionText(genOpt.getOptionText());
                 option.setCorrectYn(genOpt.getCorrectYn() != null ? genOpt.getCorrectYn() : "N");
                 
                 careerMapper.insertLevelTestOption(option);
             }
+        }
+    }
+
+    public String generateFeedbackSummary(String categoryName, String scoreInfo) {
+        if (!StringUtils.hasText(properties.getApiKey())) {
+            log.warn("AI Quiz API Key is missing. Falling back to default feedback.");
+            return "테스트 채점이 완료되었습니다. 선택하신 기술 분야를 바탕으로 기본 개념 학습을 다지고 실무 프로젝트 실습을 진행해 보세요!";
+        }
+
+        try {
+            SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+            int timeoutMillis = Math.toIntExact(Duration.ofSeconds(properties.getTimeoutSeconds()).toMillis());
+            requestFactory.setConnectTimeout(timeoutMillis);
+            requestFactory.setReadTimeout(timeoutMillis);
+
+            RestClient restClient = RestClient.builder().requestFactory(requestFactory).build();
+
+            String systemPrompt = "당신은 IT 스킬 평가 전문가이자 멘토입니다. 학습자의 점수 결과를 바탕으로 진심 어린 피드백을 한국어로 제공해야 합니다.";
+            String userPrompt = String.format(
+                    "학습자가 '%s' 기술 분야에서 치른 레벨 테스트 결과 정보는 다음과 같습니다:\n" +
+                    "%s\n\n" +
+                    "이 결과를 바탕으로 학습자의 현재 역량 상태를 진단하고, 앞으로 어떤 부분을 공부해야 하는지 조언하는 'AI 진단 총평'을 3~4문장의 깔끔한 줄글 단락으로 작성해 주세요.\n" +
+                    "[조건]\n" +
+                    "- 공손하고 격려하는 어조를 사용해 주세요.\n" +
+                    "- 마크다운, 따옴표, 또는 JSON 형식을 절대 쓰지 말고 오직 순수한 텍스트 단락만 반환해 주세요.",
+                    categoryName, scoreInfo
+            );
+
+            Map<String, Object> requestBody = Map.of(
+                    "model", properties.getModel(),
+                    "temperature", 0.5,
+                    "messages", List.of(
+                            Map.of("role", "system", "content", systemPrompt),
+                            Map.of("role", "user", "content", userPrompt)
+                    )
+            );
+
+            String rawResponse = restClient.post()
+                    .uri(properties.getApiUrl())
+                    .header("Authorization", "Bearer " + properties.getApiKey())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode root = objectMapper.readTree(rawResponse);
+            return root.path("choices").path(0).path("message").path("content").asText().trim();
+        } catch (Exception e) {
+            log.error("Failed to generate AI feedback summary via LLM", e);
+            return "테스트 채점이 완료되었습니다. 선택하신 기술 분야를 바탕으로 기본 개념 학습을 다지고 실무 프로젝트 실습을 진행해 보세요!";
         }
     }
 }
