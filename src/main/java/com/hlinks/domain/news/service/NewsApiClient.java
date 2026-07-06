@@ -21,9 +21,9 @@ public class NewsApiClient {
     private final NewsApiProperties properties;
     private final RestClient restClient;
 
-    public NewsApiClient(NewsApiProperties properties) {
+    public NewsApiClient(NewsApiProperties properties, RestClient.Builder restClientBuilder) {
         this.properties = properties;
-        this.restClient = RestClient.builder()
+        this.restClient = restClientBuilder
                 .requestFactory(requestFactory(properties.getTimeoutSeconds()))
                 .build();
     }
