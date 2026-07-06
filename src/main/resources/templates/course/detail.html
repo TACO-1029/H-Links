@@ -491,14 +491,47 @@
             margin-bottom: 24px;
         }
 
+        .sc-mid-stats--single {
+            grid-template-columns: 1fr;
+        }
+
         .stat-box {
-            background: #F8FAFC;
+            background: #ffffff;
             border-radius: 8px;
             padding: 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 4px;
+        }
+
+        .stat-box--progress {
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .stat-box--progress .sc-label-small {
+            text-align: left;
+        }
+
+        .stat-box--progress .stat-val {
+            text-align: right;
+        }
+
+        .stat-progress {
+            width: 100%;
+            height: 7px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #E2E8F0;
+        }
+
+        .stat-progress__fill {
+            display: block;
+            width: var(--progress, 0%);
+            height: 100%;
+            border-radius: inherit;
+            background: #10B981;
         }
 
         .stat-val {
@@ -646,6 +679,181 @@
             text-align: center;
             font-weight: 600;
             padding: 8px 0;
+        }
+
+        .status-card--offline {
+            padding: 20px;
+            border-radius: 20px;
+            overflow: visible;
+        }
+
+        .status-card--offline .sc-actions {
+            margin-top: 16px;
+        }
+
+        .offline-calendar {
+            position: relative;
+            overflow: visible;
+            padding-bottom: 22px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .offline-calendar__header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 26px;
+            margin-bottom: 18px;
+        }
+
+        .offline-calendar__nav {
+            border: 0;
+            background: transparent;
+            color: #CBD5E1;
+            font-size: 22px;
+            line-height: 1;
+            cursor: default;
+            padding: 0;
+        }
+
+        .offline-calendar__title {
+            color: #111827;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .offline-calendar__grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            row-gap: 10px;
+            text-align: center;
+        }
+
+        .offline-calendar__weekday {
+            color: #475569;
+            font-size: 13px;
+            font-weight: 700;
+            padding-bottom: 4px;
+        }
+
+        .offline-calendar__day {
+            position: relative;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #111827;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .offline-calendar__day.is-muted {
+            color: #D1D5DB;
+            font-weight: 500;
+        }
+
+        .offline-calendar__day.is-sunday {
+            color: #FF264A;
+        }
+
+        .offline-calendar__day.is-course-period {
+            background: #B8E8D5;
+            color: #064E3B;
+        }
+
+        .offline-calendar__day.is-period-start {
+            border-radius: 8px 0 0 8px;
+        }
+
+        .offline-calendar__day.is-period-end {
+            border-radius: 0 8px 8px 0;
+        }
+
+        .offline-calendar__day.is-period-start.is-period-end {
+            border-radius: 8px;
+        }
+
+        .offline-calendar-tooltip {
+            position: absolute;
+            left: 0;
+            top: 0;
+            z-index: 40;
+            padding: 6px 8px;
+            border-radius: 6px;
+            background: #0F172A;
+            color: #FFFFFF;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translate(-50%, -100%);
+            transition: opacity 160ms ease, visibility 160ms ease, transform 160ms ease;
+        }
+
+        .offline-calendar-tooltip::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -4px;
+            width: 8px;
+            height: 8px;
+            background: #0F172A;
+            transform: translateX(-50%) rotate(45deg);
+        }
+
+        .offline-calendar-tooltip.is-visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, calc(-100% - 8px));
+        }
+
+        .offline-summary-box {
+            margin: 16px 0 20px;
+            padding: 18px 16px;
+            border: 1px solid #14B8A6;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .offline-summary-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .offline-summary-label {
+            color: #64748B;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .offline-summary-value {
+            color: #1F2937;
+            font-size: 15px;
+            font-weight: 800;
+            text-align: right;
+        }
+
+        .offline-guide-box {
+            margin-bottom: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            background: #F1F5F9;
+            color: #94A3B8;
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.55;
+        }
+
+        .offline-status-panel--compact {
+            margin-bottom: 14px;
         }
 
         .btn-cancel {
@@ -840,40 +1048,28 @@
             </div>
 
             <div class="right-column">
-                <aside class="premium-box status-card">
-                    <div class="sc-top" th:if="${isApplied}">
-                        <span class="sc-label-small">수강 상태</span>
-                        <th:block th:if="${course.online}">
+                <aside class="premium-box status-card"
+                       th:classappend="${!course.online} ? ' status-card--offline' : ''">
+                    <th:block th:if="${course.online}">
+                        <div class="sc-top" th:if="${isApplied}">
+                            <span class="sc-label-small">수강 상태</span>
                             <span class="sc-status-big"
                                   th:text="${course.learningCompleted ? '수강 완료' : '수강 중'}">상태</span>
-                        </th:block>
-                        <th:block th:unless="${course.online}">
-                            <span class="sc-status-big" th:text="${course.learningCompletionLabel}">미완료</span>
-                        </th:block>
-                    </div>
-
-                    <div class="sc-mid-stats">
-                        <div class="stat-box">
-                            <span class="sc-label-small">신청 인원</span>
-                            <span class="stat-val" th:if="${course.online}">제한 없음</span>
-                            <span class="stat-val" th:unless="${course.online}"
-                                  th:text="|${course.currentApplicantCount != null ? course.currentApplicantCount : 0}/${course.capacity != null ? course.capacity : 0}명|"></span>
                         </div>
-                        <div class="stat-box" th:if="${isApplied}">
-                            <span class="sc-label-small" th:text="${course.online ? '내 진도율' : '완료 여부'}">내 진도율</span>
-                            <th:block th:if="${course.online}">
-                                <span class="stat-val"
-                                      th:text="${course.progressRate != null and course.progressRate > 0 ? course.progressRate + '%' : '-'}"></span>
-                            </th:block>
-                            <th:block th:unless="${course.online}">
-                                <span class="stat-val"
-                                      th:text="${course.learningCompletionLabel}">-</span>
-                            </th:block>
-                        </div>
-                    </div>
 
-                    <div class="sc-actions">
-                        <th:block th:if="${course.online}">
+                        <div class="sc-mid-stats sc-mid-stats--single" th:if="${isApplied}">
+                            <div class="stat-box stat-box--progress">
+                                <span class="sc-label-small">내 진도율</span>
+                                <span class="stat-val"
+                                      th:text="${course.progressRate != null ? course.progressRate + '%' : '0%'}"></span>
+                                <span class="stat-progress" aria-hidden="true">
+                                    <span class="stat-progress__fill"
+                                          th:style="|--progress: ${course.progressRate != null ? course.progressRate : 0}%|"></span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="sc-actions">
                             <button class="action-btn btn-apply"
                                     type="button"
                                     data-course-action="apply"
@@ -903,23 +1099,82 @@
                                         disabled>학습할 챕터 없음
                                 </button>
                             </th:block>
-                        </th:block>
-                        <th:block th:unless="${course.online}">
-                            <div class="text-offline-only">오프라인 현장 강의입니다.</div>
-                            <div class="offline-status-panel" th:if="${!course.applicationNotApplied}">
-                                <span class="offline-status-badge"
-                                      th:if="${course.offlineApplicationBadgeLabel != null}"
-                                      th:text="${course.offlineApplicationBadgeLabel}">신청 승인 완료</span>
-                                <div class="offline-course-state">
-                                    <span class="offline-course-state__label">기준 날짜 상태</span>
-                                    <span class="offline-course-state__value"
-                                          th:text="${course.offlineDateStatusLabel}">수강 예정</span>
-                                </div>
+                            <button class="action-btn btn-cancel"
+                                    type="button"
+                                    data-course-action="cancel"
+                                    th:if="${course.cancelableApplication and !course.learningCompleted}">수강 취소
+                            </button>
+                        </div>
+
+                        <div class="sc-notice">
+                            온라인 과정은 신청 후 즉시 학습할 수 있으며, 챕터별 진도율과 퀴즈 제출 상태를 기준으로 수강 완료 여부가 표시됩니다.
+                        </div>
+                    </th:block>
+
+                    <th:block th:unless="${course.online}">
+                        <div class="offline-calendar">
+                            <div class="offline-calendar__header">
+                                <button class="offline-calendar__nav" type="button" aria-hidden="true" tabindex="-1">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                                <strong class="offline-calendar__title"
+                                        th:text="${course.offlineCalendarTitle}">2026.07</strong>
+                                <button class="offline-calendar__nav" type="button" aria-hidden="true" tabindex="-1">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
                             </div>
+                            <div class="offline-calendar__grid" aria-label="오프라인 강의 일정">
+                                <span class="offline-calendar__weekday">일</span>
+                                <span class="offline-calendar__weekday">월</span>
+                                <span class="offline-calendar__weekday">화</span>
+                                <span class="offline-calendar__weekday">수</span>
+                                <span class="offline-calendar__weekday">목</span>
+                                <span class="offline-calendar__weekday">금</span>
+                                <span class="offline-calendar__weekday">토</span>
+                                <th:block th:each="week : ${course.offlineCalendarWeeks}">
+                                    <span th:each="day : ${week}"
+                                          class="offline-calendar__day"
+                                          th:classappend="${(!day.currentMonth ? ' is-muted' : '') + (day.sunday ? ' is-sunday' : '') + (day.coursePeriod ? ' is-course-period' : '') + (day.periodStart ? ' is-period-start' : '') + (day.periodEnd ? ' is-period-end' : '')}"
+                                          th:data-course-period="${day.coursePeriod}"
+                                          th:text="${day.day}">1</span>
+                                </th:block>
+                            </div>
+                            <div class="offline-calendar-tooltip" aria-hidden="true">강의기간</div>
+                        </div>
+
+                        <div class="offline-summary-box">
+                            <div class="offline-summary-row">
+                                <span class="offline-summary-label">신청 인원</span>
+                                <strong class="offline-summary-value"
+                                        th:text="|${course.currentApplicantCount != null ? course.currentApplicantCount : 0} / ${course.capacity != null ? course.capacity : 0}명|">0 / 300명</strong>
+                            </div>
+                            <div class="offline-summary-row">
+                                <span class="offline-summary-label">위치</span>
+                                <strong class="offline-summary-value"
+                                        th:text="${course.location != null ? course.location : '추후 안내'}">본사 지하 1층 대강당 복합홀</strong>
+                            </div>
+                        </div>
+
+                        <div class="offline-status-panel offline-status-panel--compact" th:if="${!course.applicationNotApplied}">
+                            <span class="offline-status-badge"
+                                  th:if="${course.offlineApplicationBadgeLabel != null}"
+                                  th:text="${course.offlineApplicationBadgeLabel}">신청 승인 완료</span>
+                            <div class="offline-course-state">
+                                <span class="offline-course-state__label">기준 날짜 상태</span>
+                                <span class="offline-course-state__value"
+                                      th:text="${course.offlineDateStatusLabel}">수강 예정</span>
+                            </div>
+                        </div>
+
+                        <div class="offline-guide-box">
+                            접수기간 내 신청 및 취소가 가능하며, 오프라인 과정은 정원 마감 시 신청이 제한됩니다.
+                            오프라인 강의의 완료 여부는 강의 종료일 기준으로 표시됩니다.
+                        </div>
+
+                        <div class="sc-actions">
                             <div class="offline-apply-wrapper"
                                  th:if="${course.applicationNotApplied}"
                                  th:classappend="${!course.offlineApplyPeriodOpen} ? ' offline-apply-wrapper--disabled' : ''">
-
                                 <button class="action-btn btn-apply"
                                         type="button"
                                         data-course-action="apply"
@@ -933,21 +1188,18 @@
                                      role="tooltip">
                                     <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
                                     <span th:text="${course.offlineApplyUnavailableMessage}">
-            접수기간이 지나 신청할 수 없습니다.
-        </span>
+                                        접수기간이 지나 신청할 수 없습니다.
+                                    </span>
                                 </div>
                             </div>
-                        </th:block>
-                        <button class="action-btn btn-cancel"
-                                type="button"
-                                data-course-action="cancel"
-                                th:if="${course.cancelableApplication and !course.learningCompleted}">수강 취소
-                        </button>
-                    </div>
 
-                    <div class="sc-notice">
-                        접수기간 내 신청 및 취소가 가능하며, 오프라인 과정은 정원 마감 시 신청이 제한됩니다. 오프라인 강의의 완료 여부는 강의 종료일 기준으로 표시됩니다.
-                    </div>
+                            <button class="action-btn btn-cancel"
+                                    type="button"
+                                    data-course-action="cancel"
+                                    th:if="${course.cancelableApplication}">수강 취소
+                            </button>
+                        </div>
+                    </th:block>
                 </aside>
             </div>
 
@@ -1001,6 +1253,8 @@
                 }
             });
         });
+
+        initOfflineCalendarTooltip();
 
         const actionButtons = document.querySelectorAll('[data-course-action]');
         actionButtons.forEach(button => {
@@ -1057,6 +1311,55 @@
             } finally {
                 button.disabled = false;
             }
+        }
+
+        function initOfflineCalendarTooltip() {
+            const calendar = document.querySelector('.offline-calendar');
+            const tooltip = calendar?.querySelector('.offline-calendar-tooltip');
+            const periodDays = calendar?.querySelectorAll('.offline-calendar__day.is-course-period');
+
+            if (!calendar || !tooltip || !periodDays || periodDays.length === 0) {
+                return;
+            }
+
+            let activeDay = null;
+
+            function showTooltip(day) {
+                activeDay = day;
+                const calendarRect = calendar.getBoundingClientRect();
+                const dayRect = day.getBoundingClientRect();
+                const left = dayRect.left - calendarRect.left + dayRect.width / 2;
+                const top = dayRect.top - calendarRect.top - 8;
+
+                tooltip.style.left = `${left}px`;
+                tooltip.style.top = `${top}px`;
+                tooltip.classList.add('is-visible');
+            }
+
+            function hideTooltip() {
+                activeDay = null;
+                tooltip.classList.remove('is-visible');
+            }
+
+            periodDays.forEach(day => {
+                day.setAttribute('tabindex', '0');
+                day.addEventListener('mouseenter', () => showTooltip(day));
+                day.addEventListener('mouseleave', hideTooltip);
+                day.addEventListener('focus', () => showTooltip(day));
+                day.addEventListener('blur', hideTooltip);
+                day.addEventListener('touchstart', (event) => {
+                    event.stopPropagation();
+                    if (activeDay === day && tooltip.classList.contains('is-visible')) {
+                        hideTooltip();
+                        return;
+                    }
+                    showTooltip(day);
+                }, {passive: true});
+            });
+
+            document.addEventListener('touchstart', hideTooltip, {passive: true});
+            window.addEventListener('scroll', hideTooltip, {passive: true});
+            window.addEventListener('resize', hideTooltip);
         }
 
         async function readJsonSafely(response) {
