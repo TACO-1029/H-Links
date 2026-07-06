@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.statistics.mapper.OrganizationStatisticsMapper">
+
+    <sql id="selectedDepartmentTree">
+        selected_roots AS (
+            SELECT DEPARTMENT_ID AS root_id,
+                   DEPARTMENT_NAME AS root_name
+            FROM DEPARTMENT
+            WHERE USE_YN = 'Y'
+              AND DEPARTMENT_ID IN
+              <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
+                  #{departmentId}
+              </foreach>
+        ),
+        selected_tree AS (
+            SELECT CONNECT_BY_ROOT d.DEPARTMENT_ID AS root_id,
+                   d.DEPARTMENT_ID AS department_id
+            FROM DEPARTMENT d
+            WHERE d.USE_YN = 'Y'
+            START WITH d.DEPARTMENT_ID IN
+            <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
+                #{departmentId}
+            </foreach>
+            CONNECT BY PRIOR d.DEPARTMENT_ID = d.PARENT_DEPARTMENT_ID
+        )
+    </sql>
+
+    <sql id="positionFilter">
+        <if test="positionId != null">
+            AND u.POSITION_ID = #{positionId}
+        </if>
+    </sql>
+
+    <select id="selectOrganizationKpis" resultType="com.hlinks.domain.statistics.dto.OrganizationKpiStats">
+        WITH
+        <include refid="selectedDepartmentTree"/>,
+        participation_stats AS (
+            SELECT sr.root_name AS department_name,
+                   NVL(ROUND(COUNT(DISTINCT ca.USER_ID) / NULLIF(COUNT(DISTINCT u.USER_ID), 0) * 100, 1), 0) AS participation_rate
+            FROM selected_roots sr
+            LEFT JOIN selected_tree st ON st.root_id = sr.root_id
+            LEFT JOIN USERS u
+              ON u.DEPARTMENT_ID = st.department_id
+             <include refid="positionFilter"/>
+            LEFT JOIN COURSE_APPLICATION ca
+              ON ca.USER_ID = u.USER_ID
+             AND ca.APPLICATION_STATUS IN ('WAITING', 'APPROVED')
+             AND ca.APPLIED_AT &gt;= #{startDate}
+             AND ca.APPLIED_AT &lt; #{endDate} + 1
+            GROUP BY sr.root_name
+        ),
+        completion_stats AS (
+            SELECT sr.root_name AS department_name,
+                   NVL(ROUND(COUNT(CASE WHEN cls.STATUS = 'COMPLETED' THEN 1 END) / NULLIF(COUNT(cls.COURSE_LEARNING_ID), 0) * 100, 1), 0) AS completion_rate
+            FROM selected_roots sr
+            LEFT JOIN selected_tree st ON st.root_id = sr.root_id
+            LEFT JOIN USERS u
+              ON u.DEPARTMENT_ID = st.department_id
+             <include refid="positionFilter"/>
+            LEFT JOIN COURSE_LEARNING_STATUS cls
+              ON cls.USER_ID = u.USER_ID
+             AND cls.STATUS != 'CANCELED'
+             AND cls.UPDATED_AT &gt;= #{startDate}
+             AND cls.UPDATED_AT &lt; #{endDate} + 1
+            GROUP BY sr.root_name
+        ),
+        competency_stats AS (
+            SELECT sr.root_name AS department_name,
+                   NVL(ROUND(AVG(ucs.SCORE), 1), 0) AS competency_score
+            FROM selected_roots sr
+            LEFT JOIN selected_tree st ON st.root_id = sr.root_id
+            LEFT JOIN USERS u
+              ON u.DEPARTMENT_ID = st.department_id
+             <include refid="positionFilter"/>
+            LEFT JOIN USER_COMPETENCY_SCORE ucs
+              ON ucs.USER_ID = u.USER_ID
+             AND ucs.CALCULATED_AT &gt;= #{startDate}
+             AND ucs.CALCULATED_AT &lt; #{endDate} + 1
+            GROUP BY sr.root_name
+        ),
+        quarterly_competency_scores AS (
+            SELECT sr.root_name AS department_name,
+                   TRUNC(csh.CALCULATED_AT, 'Q') AS quarter_start,
+                   AVG(csh.SCORE) AS average_score
+            FROM selected_roots sr
+            JOIN selected_tree st ON st.root_id = sr.root_id
+            JOIN USERS u ON u.DEPARTMENT_ID = st.department_id
+            JOIN COMPETENCY_SCORE_HISTORY csh ON csh.USER_ID = u.USER_ID
+            WHERE csh.CALCULATED_AT &gt;= #{startDate}
+              AND csh.CALCULATED_AT &lt; #{endDate} + 1
+            <include refid="positionFilter"/>
+            GROUP BY sr.root_name, TRUNC(csh.CALCULATED_AT, 'Q')
+        ),
+        growth_stats AS (
+            SELECT department_name,
+                   NVL(ROUND(
+                       (
+                           MAX(average_score) KEEP (DENSE_RANK LAST ORDER BY quarter_start)
+                           - MAX(average_score) KEEP (DENSE_RANK FIRST ORDER BY quarter_start)
+                       )
+                       / NULLIF(MAX(average_score) KEEP (DENSE_RANK FIRST ORDER BY quarter_start), 0) * 100,
+                       1
+                   ), 0) AS growth_rate
+            FROM quarterly_competency_scores
+            GROUP BY department_name
+        )
+        SELECT
+            (SELECT COUNT(*) FROM selected_roots) AS departmentCount,
+            (
+                SELECT department_name
+                FROM (
+                    SELECT department_name, participation_rate
+                    FROM participation_stats
+                    ORDER BY participation_rate DESC NULLS LAST, department_name
+                )
+                WHERE ROWNUM = 1
+            ) AS topParticipationDepartmentName,
+            (SELECT NVL(MAX(participation_rate), 0) FROM participation_stats) AS topParticipationRate,
+            (SELECT NVL(ROUND(AVG(participation_rate), 1), 0) FROM participation_stats) AS averageParticipationRate,
+            (
+                SELECT department_name
+                FROM (
+                    SELECT department_name, completion_rate
+                    FROM completion_stats
+                    ORDER BY completion_rate DESC NULLS LAST, department_name
+                )
+                WHERE ROWNUM = 1
+            ) AS topCompletionDepartmentName,
+            (SELECT NVL(MAX(completion_rate), 0) FROM completion_stats) AS topCompletionRate,
+            (SELECT NVL(ROUND(AVG(completion_rate), 1), 0) FROM completion_stats) AS averageCompletionRate,
+            (
+                SELECT department_name
+                FROM (
+                    SELECT department_name, competency_score
+                    FROM competency_stats
+                    ORDER BY competency_score DESC NULLS LAST, department_name
+                )
+                WHERE ROWNUM = 1
+            ) AS topCompetencyDepartmentName,
+            (SELECT NVL(MAX(competency_score), 0) FROM competency_stats) AS topCompetencyScore,
+            (SELECT NVL(ROUND(AVG(competency_score), 1), 0) FROM competency_stats) AS averageCompetencyScore,
+            (
+                SELECT department_name
+                FROM (
+                    SELECT department_name, growth_rate
+                    FROM growth_stats
+                    ORDER BY growth_rate DESC NULLS LAST, department_name
+                )
+                WHERE ROWNUM = 1
+            ) AS topGrowthDepartmentName,
+            (SELECT NVL(MAX(growth_rate), 0) FROM growth_stats) AS topGrowthRate,
+            (SELECT NVL(ROUND(AVG(growth_rate), 1), 0) FROM growth_stats) AS averageGrowthRate
+        FROM DUAL
+    </select>
+
+    <select id="selectDepartmentParticipationRate" resultType="com.hlinks.domain.statistics.dto.StatisticsPointRow">
+        WITH
+        <include refid="selectedDepartmentTree"/>
+        SELECT sr.root_name AS label,
+               NVL(ROUND(COUNT(DISTINCT ca.USER_ID) / NULLIF(COUNT(DISTINCT u.USER_ID), 0) * 100, 1), 0) AS value
+        FROM selected_roots sr
+        LEFT JOIN selected_tree st ON st.root_id = sr.root_id
+        LEFT JOIN USERS u
+          ON u.DEPARTMENT_ID = st.department_id
+         <include refid="positionFilter"/>
+        LEFT JOIN COURSE_APPLICATION ca
+          ON ca.USER_ID = u.USER_ID
+         AND ca.APPLICATION_STATUS IN ('WAITING', 'APPROVED')
+         AND ca.APPLIED_AT &gt;= #{startDate}
+         AND ca.APPLIED_AT &lt; #{endDate} + 1
+        GROUP BY sr.root_id, sr.root_name
+        ORDER BY sr.root_name
+    </select>
+
+    <select id="selectDepartmentCompletionRate" resultType="com.hlinks.domain.statistics.dto.StatisticsPointRow">
+        WITH
+        <include refid="selectedDepartmentTree"/>
+        SELECT sr.root_name AS label,
+               NVL(ROUND(COUNT(CASE WHEN cls.STATUS = 'COMPLETED' THEN 1 END) / NULLIF(COUNT(cls.COURSE_LEARNING_ID), 0) * 100, 1), 0) AS value
+        FROM selected_roots sr
+        LEFT JOIN selected_tree st ON st.root_id = sr.root_id
+        LEFT JOIN USERS u
+          ON u.DEPARTMENT_ID = st.department_id
+         <include refid="positionFilter"/>
+        LEFT JOIN COURSE_LEARNING_STATUS cls
+          ON cls.USER_ID = u.USER_ID
+         AND cls.STATUS != 'CANCELED'
+         AND cls.UPDATED_AT &gt;= #{startDate}
+         AND cls.UPDATED_AT &lt; #{endDate} + 1
+        GROUP BY sr.root_id, sr.root_name
+        ORDER BY sr.root_name
+    </select>
+
+    <select id="selectDepartmentAverageCompetencyScores" resultType="com.hlinks.domain.statistics.dto.DepartmentCompetencyScoreRow">
+        WITH
+        <include refid="selectedDepartmentTree"/>
+        SELECT sr.root_name AS departmentName,
+               comp.COMPETENCY_NAME AS competencyName,
+               NVL(ROUND(AVG(ucs.SCORE), 1), 0) AS score
+        FROM selected_roots sr
+        CROSS JOIN COMPETENCY comp
+        LEFT JOIN selected_tree st ON st.root_id = sr.root_id
+        LEFT JOIN USERS u
+          ON u.DEPARTMENT_ID = st.department_id
+         <include refid="positionFilter"/>
+        LEFT JOIN USER_COMPETENCY_SCORE ucs
+          ON ucs.USER_ID = u.USER_ID
+         AND ucs.COMPETENCY_ID = comp.COMPETENCY_ID
+         AND ucs.CALCULATED_AT &gt;= #{startDate}
+         AND ucs.CALCULATED_AT &lt; #{endDate} + 1
+        WHERE comp.USE_YN = 'Y'
+        GROUP BY sr.root_id, sr.root_name, comp.COMPETENCY_NAME
+        ORDER BY sr.root_name, comp.COMPETENCY_NAME
+    </select>
+
+    <select id="selectDepartmentGrowthRates" resultType="com.hlinks.domain.statistics.dto.DepartmentGrowthPointRow">
+        WITH
+        <include refid="selectedDepartmentTree"/>,
+        periods AS (
+            SELECT period_start,
+                   CASE #{periodUnit}
+                       WHEN 'DAY' THEN period_start + 1
+                       WHEN 'WEEK' THEN period_start + 7
+                       WHEN 'MONTH' THEN ADD_MONTHS(period_start, 1)
+                       ELSE ADD_MONTHS(period_start, 3)
+                   END AS period_end,
+                   CASE #{periodUnit}
+                       WHEN 'DAY' THEN TO_CHAR(period_start, 'MM/DD')
+                       WHEN 'WEEK' THEN TO_CHAR(period_start, 'MM/DD') || '주'
+                       WHEN 'MONTH' THEN TO_CHAR(period_start, 'YYYY-MM')
+                       ELSE TO_CHAR(period_start, 'YYYY') || ' Q' || TO_CHAR(period_start, 'Q')
+                   END AS period_label
+            FROM (
+                SELECT CASE #{periodUnit}
+                           WHEN 'DAY' THEN #{startDate} + LEVEL - 1
+                           WHEN 'WEEK' THEN TRUNC(#{startDate}, 'IW') + ((LEVEL - 1) * 7)
+                           WHEN 'MONTH' THEN ADD_MONTHS(TRUNC(#{startDate}, 'MM'), LEVEL - 1)
+                           ELSE ADD_MONTHS(TRUNC(#{startDate}, 'Q'), (LEVEL - 1) * 3)
+                       END AS period_start
+                FROM DUAL
+                CONNECT BY LEVEL &lt;= CASE #{periodUnit}
+                    WHEN 'DAY' THEN TRUNC(#{endDate}) - TRUNC(#{startDate}) + 1
+                    WHEN 'WEEK' THEN CEIL((TRUNC(#{endDate}) - TRUNC(#{startDate}, 'IW') + 1) / 7)
+                    WHEN 'MONTH' THEN FLOOR(MONTHS_BETWEEN(TRUNC(#{endDate}, 'MM'), TRUNC(#{startDate}, 'MM'))) + 1
+                    ELSE FLOOR(MONTHS_BETWEEN(TRUNC(#{endDate}, 'Q'), TRUNC(#{startDate}, 'Q')) / 3) + 1
+                END
+            )
+            WHERE period_start &lt; #{endDate} + 1
+        ),
+        quarterly_competency_scores AS (
+            SELECT sr.root_id,
+                   p.period_start,
+                   AVG(csh.SCORE) AS average_score
+            FROM selected_roots sr
+            JOIN selected_tree st ON st.root_id = sr.root_id
+            JOIN USERS u ON u.DEPARTMENT_ID = st.department_id
+            JOIN COMPETENCY_SCORE_HISTORY csh ON csh.USER_ID = u.USER_ID
+            JOIN periods p
+              ON csh.CALCULATED_AT &gt;= p.period_start
+             AND csh.CALCULATED_AT &lt; p.period_end
+            WHERE csh.CALCULATED_AT &gt;= #{startDate}
+              AND csh.CALCULATED_AT &lt; #{endDate} + 1
+            <include refid="positionFilter"/>
+            GROUP BY sr.root_id, p.period_start
+        ),
+        baseline_scores AS (
+            SELECT root_id,
+                   MAX(average_score) KEEP (DENSE_RANK FIRST ORDER BY period_start) AS baseline_score
+            FROM quarterly_competency_scores
+            GROUP BY root_id
+        )
+        SELECT sr.root_name AS departmentName,
+               p.period_label AS periodLabel,
+               NVL(ROUND(
+                   (qcs.average_score - bs.baseline_score) / NULLIF(bs.baseline_score, 0) * 100,
+                   1
+               ), 0) AS growthRate
+        FROM selected_roots sr
+        CROSS JOIN periods p
+        LEFT JOIN quarterly_competency_scores qcs
+          ON qcs.root_id = sr.root_id
+         AND qcs.period_start = p.period_start
+        LEFT JOIN baseline_scores bs ON bs.root_id = sr.root_id
+        ORDER BY sr.root_name, p.period_start
+    </select>
+
+    <select id="selectTopParticipationDepartments" resultType="com.hlinks.domain.statistics.dto.StatisticsRankRow">
+        WITH
+        <include refid="selectedDepartmentTree"/>
+        SELECT rn AS rank,
+               '조직' AS badgeText,
+               badge_tone AS badgeTone,
+               label,
+               value
+        FROM (
+            SELECT ROW_NUMBER() OVER (ORDER BY COUNT(DISTINCT ca.USER_ID) / NULLIF(COUNT(DISTINCT u.USER_ID), 0) DESC NULLS LAST, sr.root_name) AS rn,
+                   CASE MOD(ROW_NUMBER() OVER (ORDER BY COUNT(DISTINCT ca.USER_ID) / NULLIF(COUNT(DISTINCT u.USER_ID), 0) DESC NULLS LAST, sr.root_name), 4)
+                       WHEN 1 THEN 'green'
+                       WHEN 2 THEN 'blue'
+                       WHEN 3 THEN 'orange'
+                       ELSE 'purple'
+                   END AS badge_tone,
+                   sr.root_name AS label,
+                   NVL(ROUND(COUNT(DISTINCT ca.USER_ID) / NULLIF(COUNT(DISTINCT u.USER_ID), 0) * 100, 1), 0) AS value
+            FROM selected_roots sr
+            LEFT JOIN selected_tree st ON st.root_id = sr.root_id
+            LEFT JOIN USERS u
+              ON u.DEPARTMENT_ID = st.department_id
+             <include refid="positionFilter"/>
+            LEFT JOIN COURSE_APPLICATION ca
+              ON ca.USER_ID = u.USER_ID
+             AND ca.APPLICATION_STATUS IN ('WAITING', 'APPROVED')
+             AND ca.APPLIED_AT &gt;= #{startDate}
+             AND ca.APPLIED_AT &lt; #{endDate} + 1
+            GROUP BY sr.root_name
+        )
+        WHERE rn &lt;= 5
+        ORDER BY rn
+    </select>
+
+    <select id="selectPopularCoursesByDepartment" resultType="com.hlinks.domain.statistics.dto.DepartmentCourseRankRow">
+        WITH
+        <include refid="selectedDepartmentTree"/>
+        SELECT root_name AS departmentName,
+               rn AS rank,
+               course_title AS courseTitle,
+               application_count AS value
+        FROM (
+            SELECT sr.root_name,
+                   c.COURSE_TITLE AS course_title,
+                   COUNT(*) AS application_count,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY sr.root_id
+                       ORDER BY COUNT(*) DESC, c.COURSE_TITLE
+                   ) AS rn
+            FROM selected_roots sr
+            JOIN selected_tree st ON st.root_id = sr.root_id
+            JOIN USERS u ON u.DEPARTMENT_ID = st.department_id
+            JOIN COURSE_APPLICATION ca ON ca.USER_ID = u.USER_ID
+            JOIN COURSE c ON c.COURSE_ID = ca.COURSE_ID
+            WHERE ca.APPLICATION_STATUS IN ('WAITING', 'APPROVED')
+              AND ca.APPLIED_AT &gt;= #{startDate}
+              AND ca.APPLIED_AT &lt; #{endDate} + 1
+            <include refid="positionFilter"/>
+            GROUP BY sr.root_id, sr.root_name, c.COURSE_TITLE
+        )
+        WHERE rn &lt;= 5
+        ORDER BY departmentName, rank
+    </select>
+</mapper>

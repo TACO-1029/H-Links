@@ -3,6 +3,7 @@ package com.hlinks.domain.course.service;
 import com.hlinks.domain.course.dto.LearningProgressResponseDto;
 import com.hlinks.domain.course.dto.LearningProgressSaveRequest;
 import com.hlinks.domain.course.dto.LearningProgressTargetDto;
+import com.hlinks.domain.course.dto.OnlineChapterAccessTargetDto;
 import com.hlinks.domain.course.mapper.CourseMapper;
 import com.hlinks.domain.course.type.LearningStatus;
 import com.hlinks.global.exception.BaseException;
@@ -28,12 +29,9 @@ public class CourseLearningService {
 
     @Transactional
     public void startOnlineChapterLearning(Long courseId, Long chapterId, Long userId) {
-        courseService.getOnlineChapterPage(courseId, chapterId, userId);
-
-        Long courseLearningId = courseMapper.findCourseLearningId(userId, courseId);
-        if (courseLearningId == null) {
-            throw new BaseException(ErrorResponseCode.FORBIDDEN);
-        }
+        OnlineChapterAccessTargetDto accessTarget =
+                courseService.ensureOnlineChapterLearningAccess(courseId, chapterId, userId);
+        Long courseLearningId = accessTarget.getCourseLearningId();
 
         courseMapper.startCourseLearning(courseLearningId, LearningStatus.IN_PROGRESS.name());
         courseMapper.startChapterLearning(courseLearningId, chapterId, LearningStatus.IN_PROGRESS.name());
