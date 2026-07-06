@@ -215,7 +215,9 @@ public interface CourseMapper {
     int insertCourseSkill(
             @Param("courseId") Long courseId,
             @Param("skillId") Long skillId,
-            @Param("weight") BigDecimal weight
+            @Param("weight") BigDecimal weight,
+            @Param("coverageLevel") String coverageLevel,
+            @Param("coverageReason") String coverageReason
     );
 
     List<Long> findCourseIdsHavingChapterSkills();
@@ -272,5 +274,4 @@ public interface CourseMapper {
      */
     boolean hasLearningLogs(@Param("userId") Long userId);
 }
-
 

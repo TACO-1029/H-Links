@@ -13,4 +13,6 @@ public class CourseSummarySkill {
     private String sourceSkillName;
     private String newSkillYn;
     private BigDecimal weight;
+    private String coverageLevel;
+    private String coverageReason;
 }

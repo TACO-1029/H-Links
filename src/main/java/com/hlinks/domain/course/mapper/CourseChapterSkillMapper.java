@@ -23,6 +23,8 @@ public interface CourseChapterSkillMapper {
     int insertChapterSkill(
             @Param("chapterId") Long chapterId,
             @Param("skillId") Long skillId,
-            @Param("weight") BigDecimal weight
+            @Param("weight") BigDecimal weight,
+            @Param("coverageLevel") String coverageLevel,
+            @Param("coverageReason") String coverageReason
     );
 }
