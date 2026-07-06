@@ -141,6 +141,36 @@ public class CourseDetailResponseDto {
         return "퀴즈 생성 완료 후 신청 가능";
     }
 
+    public String getOfflineApplyUnavailableLabel() {
+        if (isOnline() || isOfflineApplyPeriodOpen()) {
+            return null;
+        }
+
+        LocalDate today = LocalDate.now();
+        if (applyStartDate != null && today.isBefore(applyStartDate)) {
+            return "접수 예정";
+        }
+        if (applyEndDate != null && today.isAfter(applyEndDate)) {
+            return "접수기간 지남";
+        }
+        return "신청 불가";
+    }
+
+    public String getOfflineApplyUnavailableMessage() {
+        if (isOnline() || isOfflineApplyPeriodOpen()) {
+            return "오프라인 수강 신청";
+        }
+
+        LocalDate today = LocalDate.now();
+        if (applyStartDate != null && today.isBefore(applyStartDate)) {
+            return "접수 시작일 이후 신청할 수 있습니다.";
+        }
+        if (applyEndDate != null && today.isAfter(applyEndDate)) {
+            return "접수기간이 지나 신청할 수 없습니다.";
+        }
+        return "현재 신청할 수 없는 강의입니다.";
+    }
+
     public String getLearningCompletionLabel() {
         return isLearningCompleted() ? "완료" : "미완료";
     }
