@@ -238,15 +238,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h4 style="font-size: 15px; font-weight: bold; color: var(--color-text-primary);">${skillName} 난이도 선택</h4>
                 </div>
                 <div class="difficulty-grid small">
-                    <div class="difficulty-card ${defaultValue === '상' ? 'active' : ''}" data-difficulty="상">
+                    <div class="difficulty-card difficulty-card--high ${defaultValue === '상' ? 'active' : ''}" data-difficulty="상">
                         <span class="difficulty-val">상</span>
                         <span class="difficulty-desc">실무자 / 마스터 과정</span>
                     </div>
-                    <div class="difficulty-card ${defaultValue === '중' ? 'active' : ''}" data-difficulty="중">
+                    <div class="difficulty-card difficulty-card--medium ${defaultValue === '중' ? 'active' : ''}" data-difficulty="중">
                         <span class="difficulty-val">중</span>
                         <span class="difficulty-desc">준비생 / 현업 적용용</span>
                     </div>
-                    <div class="difficulty-card ${defaultValue === '하' ? 'active' : ''}" data-difficulty="하">
+                    <div class="difficulty-card difficulty-card--low ${defaultValue === '하' ? 'active' : ''}" data-difficulty="하">
                         <span class="difficulty-val">하</span>
                         <span class="difficulty-desc">비전공자 / 전직자 기초</span>
                     </div>

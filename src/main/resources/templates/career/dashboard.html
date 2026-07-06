@@ -92,6 +92,15 @@
                 <blockquote class="ai-quote">
                     "선택하신 목표 기술 스택을 완벽하게 학습하여 실무에 적용할 수 있는 초개인화 강의 로드맵을 구성하고 있습니다. 하단의 권장 코스를 따라가시면 레벨 향상에 큰 도움이 됩니다."
                 </blockquote>
+                
+                <!-- 최근 결과 보고서 보기 버튼 (진단 분석 이력이 있을 때만 노출) -->
+                <div th:if="${diagnosis != null && diagnosis.llmSummary != null}" style="margin-top: 8px;">
+                    <a th:href="@{/courses/career-path/result(diagnosisId=${diagnosis.diagnosisId})}" 
+                       class="btn-primary" 
+                       style="background: #059669; font-size: var(--text-xs); padding: 10px 20px;">
+                        최근 분석 보고서 보기 &gt;
+                    </a>
+                </div>
             </div>
         </section>
     </div>
