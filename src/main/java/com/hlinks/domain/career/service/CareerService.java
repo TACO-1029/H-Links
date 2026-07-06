@@ -19,7 +19,7 @@ public interface CareerService {
     Long createDiagnosis(Long userId);
 
     // 목표 학습 스킬을 저장
-    void saveTargetSkills(Long diagnosisId, List<Long> skillIds);
+    void saveTargetSkills(Long diagnosisId, List<Long> skillIds, String userSetSkillLevel);
 
     // 진단에 등록된 목표 스킬 수 조회
     int getTargetSkillCount(Long diagnosisId);

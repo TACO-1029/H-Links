@@ -50,11 +50,13 @@
         INSERT INTO CAREER_TARGET_SKILL (
             TARGET_SKILL_ID,
             DIAGNOSIS_ID,
-            SKILL_ID
+            SKILL_ID,
+            USER_SET_SKILL_LEVEL
         ) VALUES (
             CAREER_TARGET_SKILL_SEQ.NEXTVAL,
             #{diagnosisId},
-            #{skillId}
+            #{skillId},
+            #{userSetSkillLevel}
         )
     </insert>
 
