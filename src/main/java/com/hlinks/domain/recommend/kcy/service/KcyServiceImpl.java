@@ -20,8 +20,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class KcyServiceImpl implements KcyService {
 
-    private static final int MIN_QUESTIONS_FOR_EARLY_STOP = 6;
-    private static final int MAX_QUESTIONS = 9;
+    private static final int MIN_MCQ_FOR_EARLY_STOP = 2;
+    private static final int MAX_MCQ_LIMIT = 6;
     private static final int SCORE_DIFF_THRESHOLD = 3;
 
     private final KcyMapper kcyMapper;
@@ -50,9 +50,30 @@ public class KcyServiceImpl implements KcyService {
 
     @Override
     public KcyAdaptiveResponse getNextAdaptiveQuestion(KcyAdaptiveRequest request) {
+        // 조건 1: 코드 리뷰는 끝났으나 테트리스 배치 데이터가 아직 없는 경우 -> 즉시 테트리스 단계 개시
+        if (request.getTiebreakerBlocks() == null || request.getTiebreakerBlocks().isEmpty()) {
+            List<TetrisBlockDto> allBlocks = Arrays.stream(TetrisBlockRegistry.values())
+                    .map(TetrisBlockRegistry::toDto)
+                    .collect(Collectors.toList());
+
+            return KcyAdaptiveResponse.builder()
+                    .status("TETRIS_PHASE")
+                    .currentCount(0)
+                    .totalPredictCount(MAX_MCQ_LIMIT)
+                    .blocks(allBlocks)
+                    .build();
+        }
+
+        // 조건 2: 테트리스가 배포되었거나 이미 MCQ 진행 중인 경우
         List<KcyQuestionDto> allQuestions = getQuestions();
         
-        KcyScoreDto currentScore = calculateCurrentScore(request.getSelectedOptionIds(), request.getAngerScoreTypes(), null, null, null);
+        KcyScoreDto currentScore = calculateCurrentScore(
+                request.getSelectedOptionIds(), 
+                request.getAngerScoreTypes(), 
+                request.getTiebreakerBlocks(), 
+                request.getTimeTaken(), 
+                request.getFillRate()
+        );
         
         log.info("[KCY DEBUG] Current Scores - A/O(Action/Outline): {}/{}, W/D(Wide/Deep): {}/{}, I/C(Independent/Corporate): {}/{}, P/M(Prompter/Manual): {}/{}",
                 currentScore.getActionScore(), currentScore.getOutlineScore(),
@@ -62,22 +83,24 @@ public class KcyServiceImpl implements KcyService {
         
         int answeredCount = request.getSelectedOptionIds() != null ? request.getSelectedOptionIds().size() : 0;
         
-        // 조기 종료 조건: 6문항 이상 풀었고 모든 축 격차가 3점 이상
-        if (answeredCount >= MIN_QUESTIONS_FOR_EARLY_STOP && isAllAxesDetermined(currentScore)) {
-            return KcyAdaptiveResponse.builder()
-                    .status("TETRIS_PHASE") // 조기 종료 시에도 테트리스는 무조건 노출
-                    .currentCount(answeredCount)
-                    .totalPredictCount(answeredCount)
-                    .blocks(generateBlocks(currentScore))
-                    .build();
+        // 조기 종료 조건: MCQ를 2문항 이상 풀었고 모든 축 격차가 3점 이상으로 확실히 결정된 경우
+        // 단, 사용자가 우회를 희망하여 bypassEarlyStop = true 로 오면 건너뛴다.
+        if (answeredCount >= MIN_MCQ_FOR_EARLY_STOP && isAllAxesDetermined(currentScore)) {
+            if (request.getBypassEarlyStop() == null || !request.getBypassEarlyStop()) {
+                return KcyAdaptiveResponse.builder()
+                        .status("EARLY_STOP_PROMPT")
+                        .currentCount(answeredCount)
+                        .totalPredictCount(answeredCount)
+                        .build();
+            }
         }
 
-        if (answeredCount >= MAX_QUESTIONS) {
+        // 최대 문항 수 제한 도달 조건: MCQ를 6문항 다 푼 경우
+        if (answeredCount >= MAX_MCQ_LIMIT) {
             return KcyAdaptiveResponse.builder()
-                    .status("TETRIS_PHASE")
+                    .status("FINAL_SUBMIT_PHASE")
                     .currentCount(answeredCount)
                     .totalPredictCount(answeredCount)
-                    .blocks(generateBlocks(currentScore))
                     .build();
         }
 
@@ -92,10 +115,9 @@ public class KcyServiceImpl implements KcyService {
 
         if (nextQ == null) {
              return KcyAdaptiveResponse.builder()
-                    .status("TETRIS_PHASE")
+                    .status("FINAL_SUBMIT_PHASE")
                     .currentCount(answeredCount)
                     .totalPredictCount(answeredCount)
-                    .blocks(generateBlocks(currentScore))
                     .build();
         }
 
@@ -103,7 +125,7 @@ public class KcyServiceImpl implements KcyService {
                 .status("IN_PROGRESS_MCQ")
                 .nextQuestion(nextQ)
                 .currentCount(answeredCount + 1)
-                .totalPredictCount(MAX_QUESTIONS)
+                .totalPredictCount(MAX_MCQ_LIMIT)
                 .build();
     }
 
@@ -197,35 +219,63 @@ public class KcyServiceImpl implements KcyService {
 
         if (score == null) score = new KcyScoreDto();
 
-        // 1. 하이라이터 훅 점수 추가
+        // [통계 보정] 40%/60% 비율제 하에서 0점 분모에 의한 극단적 쏠림 방지용 초기 Base 5점 적재
+        score.addScore("ACTION", 5);
+        score.addScore("OUTLINE", 5);
+        score.addScore("WIDE", 5);
+        score.addScore("DEEP", 5);
+        score.addScore("INDEPENDENT", 5);
+        score.addScore("CORPORATE", 5);
+        score.addScore("PROMPTER", 5);
+        score.addScore("MANUAL", 5);
+
+        // 1. 하이라이터 훅 점수 추가 (MCQ 대비 가중치 미미하게 1점 부여)
         if (angerTypes != null) {
             for (String type : angerTypes) {
-                score.addScore(type, 2);
+                score.addScore(type, 1);
             }
         }
 
-        // 2. 테트리스 블록 점수 추가
+        // 2. 테트리스 블록 점수 추가 (MCQ 대비 가중치 미미하게 1점 부여)
         if (tetrisBlocks != null) {
             for (String blockId : tetrisBlocks) {
                 TetrisBlockRegistry registry = TetrisBlockRegistry.findById(blockId);
-                if (registry != null && registry.getTargetScoreAxis() != null) {
-                    score.addScore(registry.getTargetScoreAxis(), 2);
+                if (registry != null) {
+                    if (registry.getTargetScoreAxis() != null) {
+                        score.addScore(registry.getTargetScoreAxis(), 1);
+                    }
+                    // 블록 형상 종횡비를 기반으로 한 동적 wide/deep 1점 보조 판별 합산
+                    applyBlockShapeScores(score, registry);
                 }
             }
         }
 
-        // 3. 테트리스 시간/충전율 점수 추가
+        // 3. 테트리스 시간/충전율 점수 추가 (가중치 1점 부여)
         if (timeTaken != null) {
-            if (timeTaken < 15) score.addScore("ACTION", 2);
-            else if (timeTaken > 30) score.addScore("OUTLINE", 2);
+            if (timeTaken < 15) score.addScore("ACTION", 1);
+            else if (timeTaken > 30) score.addScore("OUTLINE", 1);
         }
 
         if (fillRate != null) {
-            if (fillRate >= 80) score.addScore("OUTLINE", 2);
-            else if (fillRate <= 60) score.addScore("ACTION", 2);
+            if (fillRate >= 80) score.addScore("OUTLINE", 1);
+            else if (fillRate <= 60) score.addScore("ACTION", 1);
         }
 
         return score;
+    }
+
+    private void applyBlockShapeScores(KcyScoreDto score, TetrisBlockRegistry block) {
+        int width = block.getWidth();
+        int height = block.getHeight();
+        int diff = Math.abs(width - height);
+        
+        if (diff == 0) {
+            // 정사각형 블록 -> WIDE 1점 반영
+            score.addScore("WIDE", 1);
+        } else if (diff >= 2) {
+            // 가로세로 비율차가 큰 직사각형 블록 -> DEEP 1점 반영
+            score.addScore("DEEP", 1);
+        }
     }
 
     private List<TetrisBlockDto> generateBlocks(KcyScoreDto score) {
@@ -258,10 +308,16 @@ public class KcyServiceImpl implements KcyService {
     }
 
     private boolean isAllAxesDetermined(KcyScoreDto score) {
-        return Math.abs(score.getActionScore() - score.getOutlineScore()) >= SCORE_DIFF_THRESHOLD &&
-               Math.abs(score.getWideScore() - score.getDeepScore()) >= SCORE_DIFF_THRESHOLD &&
-               Math.abs(score.getIndependentScore() - score.getCorporateScore()) >= SCORE_DIFF_THRESHOLD &&
-               Math.abs(score.getPrompterScore() - score.getManualScore()) >= SCORE_DIFF_THRESHOLD;
+        return isAxisDetermined(score.getActionScore(), score.getOutlineScore()) &&
+               isAxisDetermined(score.getWideScore(), score.getDeepScore()) &&
+               isAxisDetermined(score.getIndependentScore(), score.getCorporateScore()) &&
+               isAxisDetermined(score.getPrompterScore(), score.getManualScore());
+    }
+
+    private boolean isAxisDetermined(int a, int b) {
+        if (a + b == 0) return false;
+        double ratio = (double) a / (a + b);
+        return ratio < 0.4 || ratio > 0.6;
     }
 
     private List<Long> getAnsweredQuestionIds(List<KcyQuestionDto> allQuestions, List<Long> selectedOptionIds) {

@@ -303,11 +303,13 @@
         tiebreakerBlocks: [],
         timeTaken: 0,
         fillRate: 0,
+        bypassEarlyStop: false,
         history: [],        // State history snapshots for Undo
         questionHistory: [] // MCQ question DTO history snapshots for Undo
     };
     let tetrisStartTime = 0;
     let isDelayEnabled = true;
+    let allBlocks = [];
 
     const intro = document.querySelector("[data-kcy-intro]");
     const test = document.querySelector("[data-kcy-test]");
@@ -510,6 +512,28 @@
 
     function appendAttachment(type, stepIndex, extraData) {
         const chatMessages = document.getElementById('chat-messages');
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        // 봇 메시지 껍데기 마크업 생성
+        const wrapperId = `msg-wrap-${type}-${stepIndex}`;
+        const msgWrapperHtml = `
+            <div class="teams-message incoming step-${stepIndex}" id="${wrapperId}" style="margin-bottom: 12px; width: 100%;">
+                <div class="teams-avatar">
+                    <img src="${botAvatar}" alt="흰디 매니저">
+                </div>
+                <div class="teams-msg-content" style="width: 100%;">
+                    <div class="teams-msg-header">
+                        <span class="teams-sender">흰디 매니저</span>
+                        <span class="teams-time">${timeStr}</span>
+                    </div>
+                    <div class="teams-attachment-area"></div>
+                </div>
+            </div>
+        `;
+        chatMessages.insertAdjacentHTML('beforeend', msgWrapperHtml);
+        const lastMsg = document.getElementById(wrapperId);
+        const attachmentArea = lastMsg.querySelector('.teams-attachment-area');
+
         const template = document.getElementById('template-stage-attachment');
         if (!template) return;
         const clone = document.importNode(template.content, true);
@@ -527,34 +551,13 @@
             }
         }
         
+        attachmentArea.appendChild(wrapper);
+        
         if (type === 'hook') {
-            // "Same Bubble" 처리: 직전의 봇 메시지 말풍선(teams-msg-bubble) 내부로 삽입
-            const incomingMsgs = chatMessages.querySelectorAll('.teams-message.incoming');
-            const lastBotMsg = incomingMsgs[incomingMsgs.length - 1];
-            if (lastBotMsg) {
-                const msgBubble = lastBotMsg.querySelector('.teams-msg-bubble');
-                if (msgBubble) {
-                    msgBubble.appendChild(wrapper);
-                }
-            } else {
-                chatMessages.appendChild(clone);
-            }
             bindHookListeners();
         } else if (type === 'mcq') {
-            // MCQ도 Same Bubble로 삽입하여 봇 텍스트 바로 아래에 위치시킴
-            const incomingMsgs = chatMessages.querySelectorAll('.teams-message.incoming');
-            const lastBotMsg = incomingMsgs[incomingMsgs.length - 1];
-            if (lastBotMsg) {
-                const msgBubble = lastBotMsg.querySelector('.teams-msg-bubble');
-                if (msgBubble) {
-                    msgBubble.appendChild(wrapper);
-                }
-            } else {
-                chatMessages.appendChild(clone);
-            }
             renderMcqCardContent(wrapper, extraData);
         } else if (type === 'tetris') {
-            // "Full Overlay" 처리: overlay 클래스 추가 및 상태값 초기화
             wrapper.classList.add('tetris-full-overlay');
             const tetrisArticle = wrapper.querySelector('#stage-tetris');
             if (tetrisArticle) {
@@ -566,10 +569,7 @@
             blockStates = {};
             tetrisStartTime = Date.now();
             
-            chatMessages.appendChild(clone);
             renderTetrisBlocks(extraData);
-        } else {
-            chatMessages.appendChild(clone);
         }
         
         chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -748,12 +748,39 @@
             },
             body: JSON.stringify({
                 selectedOptionIds: state.selectedOptionIds,
-                angerScoreTypes: state.angerScoreTypes
+                angerScoreTypes: state.angerScoreTypes,
+                tiebreakerBlocks: state.tiebreakerBlocks,
+                timeTaken: state.timeTaken,
+                fillRate: state.fillRate,
+                bypassEarlyStop: state.bypassEarlyStop || false
             })
         })
         .then(res => res.json())
         .then(data => {
-            if (data.status === 'TETRIS_PHASE') {
+            if (data.status === 'FINAL_SUBMIT_PHASE') {
+                finalizeSubmission();
+            } else if (data.status === 'EARLY_STOP_PROMPT') {
+                state.questionHistory.push(null); // Align index
+                
+                // 1. 봇 멘트 말풍선 추가
+                enqueueMessages([
+                    { text: "충분히 데이터가 누적되어 테스트 결과를 볼 수 있어요. 어떻게 하시겠어요? 📊", stepIndex: nextStep }
+                ]);
+                
+                // 2. 결과 보기 / 끝까지 할래요 선택지 주입
+                setTimeout(() => {
+                    const optContainer = document.getElementById('chat-options-container');
+                    if (optContainer) {
+                        optContainer.innerHTML = `
+                            <div style="display: flex; gap: 8px; justify-content: center; width: 100%; padding: 8px 16px; box-sizing: border-box;">
+                                <button class="teams-quick-reply-btn" type="button" onclick="handleEarlyStopChoice(true)" style="background: #009E7A; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1;">결과 보기 📊</button>
+                                <button class="teams-quick-reply-btn" type="button" onclick="handleEarlyStopChoice(false)" style="background: #f3f2f1; color: #242424; border: 1px solid #d2d0ce; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1;">끝까지 할래요 📝</button>
+                            </div>
+                        `;
+                    }
+                }, 300);
+
+            } else if (data.status === 'TETRIS_PHASE') {
                 state.questionHistory.push(null); // Align index
                 
                 enqueueMessages([
@@ -765,12 +792,26 @@
                 state.questionHistory.push(data.nextQuestion);
                 
                 enqueueMessages([
-                    { text: "다음 문항입니다. 📝", stepIndex: nextStep, isMcqCard: true, question: data.nextQuestion }
+                    { isMcqCard: true, question: data.nextQuestion, stepIndex: nextStep }
                 ]);
             } else {
                 finalizeSubmission();
             }
         });
+    }
+
+    function handleEarlyStopChoice(isStop) {
+        document.getElementById('chat-options-container').innerHTML = '';
+        const nextStep = state.selectedOptionIds.length + 1;
+        
+        if (isStop) {
+            appendUserMessage("결과 보기 📊", nextStep);
+            finalizeSubmission();
+        } else {
+            appendUserMessage("끝까지 할래요 📝", nextStep);
+            state.bypassEarlyStop = true;
+            requestNextAdaptive();
+        }
     }
 
 
@@ -779,8 +820,30 @@
     /* Step 3: Tetris Simulation and Snapping Logic                  */
     /* ============================================================= */
     function renderTetrisBlocks(blocks) {
+        allBlocks = blocks;
+        shuffleInventory();
+    }
+
+    const cellSize = 56;
+    let occupied = Array(4).fill(null).map(() => Array(4).fill(false));
+    let blockStates = {};
+    let activeDrag = null;
+    let dragOffset = { x: 0, y: 0 };
+
+    function shuffleInventory() {
+        // 1. 현재 보드판에 이미 드롭(배치) 완료된 블록의 아이디를 수집
+        const placedIds = Object.keys(blockStates).filter(id => blockStates[id].isPlaced);
+        
+        // 2. 배치되지 않은 블록 후보들 필터링
+        const candidates = allBlocks.filter(b => !placedIds.includes(b.id));
+        
+        // 3. 랜덤으로 6개 무작위 선택
+        const shuffled = [...candidates].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 6);
+        
+        // 4. 인벤토리 쉘프에 HTML 주입
         let shelfHtml = '';
-        blocks.forEach(b => {
+        selected.forEach(b => {
             let cellsHtml = '';
             for(let y=0; y<b.height; y++){
                 for(let x=0; x<b.width; x++){
@@ -790,30 +853,36 @@
                 }
             }
             shelfHtml += `
-                <div class="draggable-block block-${b.theme.toLowerCase()}" id="${b.id}" data-w="${b.width}" data-h="${b.height}" data-type="${b.type.toLowerCase()}" data-block="${b.type.toUpperCase()}" data-layout='${JSON.stringify(b.layout)}' style="width: ${b.width * 56}px; height: ${b.height * 56}px;">
+                <div class="draggable-block block-${b.theme.toLowerCase()}" id="${b.id}" data-w="${b.width}" data-h="${b.height}" data-type="${b.theme.toLowerCase()}" data-block="${b.theme.toUpperCase()}" data-layout='${JSON.stringify(b.layout)}' style="width: ${b.width * 56}px; height: ${b.height * 56}px; position: relative;">
                     ${cellsHtml}
                     <div class="block-label" style="line-height: 1.2;">${b.name.replace(' ', '<br>')}</div>
                 </div>
             `;
         });
         document.getElementById('shelf').innerHTML = shelfHtml;
-        initDraggables();
-    }
-
-    const cellSize = 56;
-    let occupied = Array(4).fill(null).map(() => Array(4).fill(false));
-    let blockStates = {};
-    let activeDrag = null;
-    let dragOffset = { x: 0, y: 0 };
-
-    function initDraggables() {
-        const draggables = document.querySelectorAll('.draggable-block');
+        
+        // 5. 쉘프 안의 새로운 드래그 대상에만 리스너 바인딩
+        const draggables = document.getElementById('shelf').querySelectorAll('.draggable-block');
         draggables.forEach(block => {
-            blockStates[block.id] = { x: -1, y: -1, isPlaced: false };
-            block.style.position = 'relative';
+            if (!blockStates[block.id]) {
+                blockStates[block.id] = { x: -1, y: -1, isPlaced: false };
+            }
             block.addEventListener('mousedown', startDrag);
             block.addEventListener('touchstart', startDrag, { passive: false });
         });
+    }
+
+    function resetSprintBoard() {
+        if (!confirm("배치된 모든 기술 블록을 초기화하시겠습니까?")) return;
+        
+        const gridBoard = document.getElementById('grid-board');
+        const placedBlocks = gridBoard.querySelectorAll('.draggable-block');
+        placedBlocks.forEach(b => b.remove());
+        
+        occupied = Array(4).fill(null).map(() => Array(4).fill(false));
+        blockStates = {};
+        
+        shuffleInventory();
     }
 
     function startDrag(e) {
@@ -827,13 +896,25 @@
         dragOffset.x = clientX - rect.left;
         dragOffset.y = clientY - rect.top;
 
-        const state = blockStates[activeDrag.id];
-        if (state.isPlaced) {
+        // 드래그 중인 블록의 description 툴팁 표시
+        const blockId = activeDrag.id;
+        const blockData = allBlocks.find(b => b.id === blockId);
+        if (blockData && blockData.description) {
+            const toast = document.getElementById('tetris-tooltip-toast');
+            if (toast) {
+                toast.innerHTML = `<strong>💡 ${blockData.name}</strong>: ${blockData.description}`;
+                toast.style.display = 'block';
+                toast.style.opacity = '1';
+            }
+        }
+
+        const stateVal = blockStates[activeDrag.id];
+        if (stateVal.isPlaced) {
             const w = parseInt(activeDrag.getAttribute('data-w'));
             const h = parseInt(activeDrag.getAttribute('data-h'));
             const layout = JSON.parse(activeDrag.getAttribute('data-layout'));
-            setOccupied(state.x, state.y, w, h, layout, false);
-            state.isPlaced = false;
+            setOccupied(stateVal.x, stateVal.y, w, h, layout, false);
+            stateVal.isPlaced = false;
         }
 
         activeDrag.style.position = 'fixed';
@@ -864,6 +945,14 @@
         document.removeEventListener('touchmove', dragMove);
         document.removeEventListener('mouseup', endDrag);
         document.removeEventListener('touchend', endDrag);
+
+        const toast = document.getElementById('tetris-tooltip-toast');
+        if (toast) {
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                if (toast.style.opacity === '0') toast.style.display = 'none';
+            }, 150);
+        }
 
         const block = activeDrag;
         activeDrag = null;
@@ -935,6 +1024,7 @@
         state.fillRate = Math.round((occupiedCells / 16) * 100);
         state.timeTaken = Math.round((Date.now() - tetrisStartTime) / 1000);
         
+        state.tiebreakerBlocks = []; // reset to avoid duplicates
         Object.keys(blockStates).forEach(id => {
             const s = blockStates[id];
             if (s.isPlaced) {
@@ -942,7 +1032,20 @@
             }
         });
 
-        finalizeSubmission();
+        // 1. 테트리스가 어태치되어있던 풀 오버레이 영역을 비활성화/숨김 처리
+        const overlay = document.querySelector('.attachment-tetris');
+        if (overlay) {
+            overlay.classList.remove('tetris-full-overlay');
+            const tetrisArticle = overlay.querySelector('#stage-tetris');
+            if (tetrisArticle) tetrisArticle.style.display = 'none';
+        }
+
+        // 2. 사용자 말풍선으로 테트리스 배포 상황 피드백 노출
+        const nextStep = state.selectedOptionIds.length + 1;
+        appendUserMessage(`[프로젝트 배포 완료] 총 ${state.tiebreakerBlocks.length}개의 맞춤 기술 스택을 구성하여 배포했습니다.`, nextStep);
+
+        // 3. 백엔드에 테트리스 배치 정보와 함께 다음 적응형 질문 요청
+        requestNextAdaptive();
     }
 
     function finalizeSubmission() {
