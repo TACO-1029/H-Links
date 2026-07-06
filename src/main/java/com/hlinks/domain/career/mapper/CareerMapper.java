@@ -2,6 +2,7 @@ package com.hlinks.domain.career.mapper;
 
 import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.dto.CareerSkillDto;
+import com.hlinks.domain.course.dto.CourseListResponseDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import java.util.List;
@@ -17,6 +18,11 @@ public interface CareerMapper {
 
     // 가장 최근 진단 상세 조회
     CareerDiagnosis findLatestDiagnosisByUserId(@Param("userId") Long userId);
+
+    int countDiagnosisByDiagnosisIdAndUserId(
+            @Param("diagnosisId") Long diagnosisId,
+            @Param("userId") Long userId
+    );
 
     // 신규 커리어 진단 데이터 삽입
     void insertCareerDiagnosis(CareerDiagnosis diagnosis);
@@ -42,4 +48,10 @@ public interface CareerMapper {
 
     // 전체 활성 스킬 및 카테고리 정보 조회
     List<CareerSkillDto> findAllActiveSkills();
+
+    List<CourseListResponseDto> findRecommendationCourseSlice(
+            @Param("diagnosisId") Long diagnosisId,
+            @Param("offset") int offset,
+            @Param("limitPlusOne") int limitPlusOne
+    );
 }

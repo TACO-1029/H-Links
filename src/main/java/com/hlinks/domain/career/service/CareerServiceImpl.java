@@ -4,7 +4,10 @@ import com.hlinks.domain.career.exception.CareerErrorCode;
 import com.hlinks.domain.career.mapper.CareerMapper;
 import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.dto.CareerSkillDto;
+import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.global.exception.BaseException;
+import com.hlinks.global.response.SliceResponse;
+import com.hlinks.global.response.code.ErrorResponseCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,5 +91,31 @@ public class CareerServiceImpl implements CareerService {
     @Override
     public List<CareerSkillDto> getAllActiveSkills() {
         return careerMapper.findAllActiveSkills();
+    }
+
+    @Override
+    public SliceResponse<CourseListResponseDto> getRecommendationCourseSlice(Long userId, Long diagnosisId, int page, int size) {
+        if (careerMapper.countDiagnosisByDiagnosisIdAndUserId(diagnosisId, userId) == 0) {
+            throw new BaseException(ErrorResponseCode.FORBIDDEN, "조회할 수 없는 커리어패스 추천 결과입니다.");
+        }
+
+        int normalizedPage = Math.max(page, 0);
+        int normalizedSize = normalizeSliceSize(size);
+        int limitPlusOne = normalizedSize + 1;
+        int offset = normalizedPage * normalizedSize;
+
+        List<CourseListResponseDto> rows =
+                careerMapper.findRecommendationCourseSlice(diagnosisId, offset, limitPlusOne);
+        boolean hasNext = rows.size() > normalizedSize;
+        List<CourseListResponseDto> content = hasNext ? rows.subList(0, normalizedSize) : rows;
+
+        return SliceResponse.of(content, normalizedPage, normalizedSize, hasNext);
+    }
+
+    private int normalizeSliceSize(int size) {
+        if (size <= 0) {
+            return 12;
+        }
+        return Math.min(size, 50);
     }
 }

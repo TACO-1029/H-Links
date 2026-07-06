@@ -27,6 +27,13 @@
         WHERE ROWNUM = 1
     </select>
 
+    <select id="countDiagnosisByDiagnosisIdAndUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM CAREER_DIAGNOSIS
+        WHERE DIAGNOSIS_ID = #{diagnosisId}
+          AND USER_ID = #{userId}
+    </select>
+
     <insert id="insertCareerDiagnosis" parameterType="com.hlinks.domain.career.entity.CareerDiagnosis">
         <selectKey keyProperty="diagnosisId" resultType="long" order="BEFORE">
             SELECT CAREER_DIAGNOSIS_SEQ.NEXTVAL FROM DUAL
@@ -94,6 +101,47 @@
         FROM SKILL
         WHERE USE_YN = 'Y'
         ORDER BY SKILL_TYPE, SKILL_NAME
+    </select>
+
+    <select id="findRecommendationCourseSlice"
+            resultType="com.hlinks.domain.course.dto.CourseListResponseDto">
+        SELECT
+            c.COURSE_ID AS courseId,
+            c.CATEGORY_TYPE AS categoryType,
+            c.COURSE_TYPE AS courseType,
+            c.COURSE_TITLE AS courseTitle,
+            c.INSTRUCTOR_NAME AS instructorName,
+            c.THUMBNAIL_URL AS thumbnailUrl,
+            CASE
+            WHEN c.COURSE_TYPE = 'ONLINE' THEN
+                CASE
+                WHEN onc.STATUS = 'CANCELED' THEN '서비스 종료'
+                ELSE '상시 수강 가능'
+                END
+            WHEN c.COURSE_TYPE = 'OFFLINE' THEN
+                CASE
+                WHEN ofc.STATUS = 'CANCELED' THEN '폐강'
+                WHEN SYSDATE &lt; ofc.APPLY_START_DATE THEN '모집 대기'
+                WHEN SYSDATE BETWEEN ofc.APPLY_START_DATE AND ofc.APPLY_END_DATE THEN '모집 중'
+                WHEN SYSDATE BETWEEN ofc.APPLY_END_DATE AND ofc.COURSE_START_DATE THEN '모집 마감'
+                WHEN SYSDATE BETWEEN ofc.COURSE_START_DATE AND ofc.COURSE_END_DATE THEN '강의 진행 중'
+                WHEN SYSDATE &gt; ofc.COURSE_END_DATE THEN '강의 종료'
+                ELSE '상태 불명'
+                END
+            ELSE '유형 오류'
+            END AS virtualStatus
+        FROM CAREER_RECOMMENDATION cr
+        JOIN COURSE c ON cr.COURSE_ID = c.COURSE_ID
+        LEFT OUTER JOIN ONLINE_COURSE onc ON c.COURSE_ID = onc.COURSE_ID
+        LEFT OUTER JOIN OFFLINE_COURSE ofc ON c.COURSE_ID = ofc.COURSE_ID
+        WHERE cr.DIAGNOSIS_ID = #{diagnosisId}
+          AND (
+              (c.COURSE_TYPE = 'ONLINE' AND NVL(onc.STATUS, 'OPEN') != 'HIDDEN')
+              OR
+              (c.COURSE_TYPE = 'OFFLINE' AND NVL(ofc.STATUS, 'OPEN') != 'HIDDEN')
+          )
+        ORDER BY c.CREATED_AT DESC, c.COURSE_ID DESC
+        OFFSET #{offset} ROWS FETCH NEXT #{limitPlusOne} ROWS ONLY
     </select>
 
 </mapper>
