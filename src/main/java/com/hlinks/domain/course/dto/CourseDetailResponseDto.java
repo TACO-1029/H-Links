@@ -5,6 +5,8 @@ import lombok.*;
 import com.hlinks.domain.quiz.type.QuizBuildStatus;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -233,6 +235,53 @@ public class CourseDetailResponseDto {
         return "수강 완료";
     }
 
+    public String getOfflineCalendarTitle() {
+        YearMonth calendarMonth = resolveOfflineCalendarMonth();
+        return String.format("%d.%02d", calendarMonth.getYear(), calendarMonth.getMonthValue());
+    }
+
+    public List<List<OfflineCalendarDay>> getOfflineCalendarWeeks() {
+        YearMonth calendarMonth = resolveOfflineCalendarMonth();
+        LocalDate firstDay = calendarMonth.atDay(1);
+        LocalDate lastDay = calendarMonth.atEndOfMonth();
+        LocalDate cursor = firstDay.minusDays(firstDay.getDayOfWeek().getValue() % 7L);
+        LocalDate end = lastDay.plusDays(6L - (lastDay.getDayOfWeek().getValue() % 7L));
+
+        List<List<OfflineCalendarDay>> weeks = new ArrayList<>();
+        List<OfflineCalendarDay> week = new ArrayList<>();
+        while (!cursor.isAfter(end)) {
+            week.add(new OfflineCalendarDay(
+                    cursor.getDayOfMonth(),
+                    cursor.getMonthValue() == calendarMonth.getMonthValue(),
+                    cursor.getDayOfWeek().getValue() == 7,
+                    isOfflineCoursePeriodDay(cursor),
+                    courseStartDate != null && cursor.isEqual(courseStartDate),
+                    courseEndDate != null && cursor.isEqual(courseEndDate)
+            ));
+
+            if (week.size() == 7) {
+                weeks.add(week);
+                week = new ArrayList<>();
+            }
+            cursor = cursor.plusDays(1);
+        }
+        return weeks;
+    }
+
+    private YearMonth resolveOfflineCalendarMonth() {
+        LocalDate baseDate = courseStartDate != null
+                ? courseStartDate
+                : (applyStartDate != null ? applyStartDate : LocalDate.now());
+        return YearMonth.from(baseDate);
+    }
+
+    private boolean isOfflineCoursePeriodDay(LocalDate date) {
+        if (courseStartDate == null || courseEndDate == null) {
+            return false;
+        }
+        return !date.isBefore(courseStartDate) && !date.isAfter(courseEndDate);
+    }
+
     public String getCourseTypeLabel() {
         return isOnline() ? "온라인" : "오프라인";
     }
@@ -266,5 +315,16 @@ public class CourseDetailResponseDto {
             return "강의 종료";
         }
         return "상태 불명";
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class OfflineCalendarDay {
+        private int day;
+        private boolean currentMonth;
+        private boolean sunday;
+        private boolean coursePeriod;
+        private boolean periodStart;
+        private boolean periodEnd;
     }
 }
