@@ -258,6 +258,28 @@
         .course-card:hover {
             transform: translateY(-4px);
         }
+        .course-card-link {
+            color: inherit;
+            text-decoration: none;
+        }
+        .course-thumb-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .course-thumb-placeholder.has-thumbnail::after {
+            content: none;
+        }
+        .course-empty-card {
+            grid-column: 1 / -1;
+            padding: 36px;
+            background: white;
+            border: 1px dashed var(--color-border-default);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-secondary);
+            text-align: center;
+            font-size: var(--text-sm);
+        }
         .course-thumb-placeholder {
             height: 120px;
             background: #e2e8f0;
@@ -433,7 +455,7 @@
                 </div>
                 <div class="summary-meta-item">
                     <span class="meta-label">추천 코스 분량</span>
-                    <span class="meta-value" th:text="'총 ' + ${results.size()} + '개 맞춤 매핑 과정'">총 3개 맞춤 매핑 과정</span>
+                    <span class="meta-value" th:text="'총 ' + ${recommendedCourses.size()} + '개 맞춤 매핑 과정'">총 3개 맞춤 매핑 과정</span>
                 </div>
             </div>
         </div>
@@ -451,61 +473,31 @@
 
     <!-- 강의 추천 카드 그리드 -->
     <div class="course-grid">
-        <!-- 임시 더미 코스 1 -->
-        <div class="course-card">
-            <div class="course-thumb-placeholder"></div>
+        <a th:each="course : ${recommendedCourses}"
+           th:href="@{/courses/{courseId}(courseId=${course.courseId})}"
+           class="course-card course-card-link">
+            <div class="course-thumb-placeholder" th:classappend="${course.thumbnailUrl != null} ? 'has-thumbnail'">
+                <img th:if="${course.thumbnailUrl != null}" th:src="${course.thumbnailUrl}" alt="">
+            </div>
             <div class="course-info">
                 <div>
-                    <h4 class="course-title" th:text="'실전! ' + ${lowestSkill} + ' 완벽 마스터 과정'">실전! React 완벽 마스터 과정</h4>
-                    <div class="course-instructor">준비 중</div>
+                    <h4 class="course-title" th:text="${course.courseTitle}">추천 강의명</h4>
+                    <div class="course-instructor" th:text="${course.instructorName != null ? course.instructorName : '강사 정보 준비 중'}">강사명</div>
                 </div>
                 <div>
-                    <div class="course-rating" style="color: var(--color-text-secondary);">강의 연동 준비 중</div>
-                    <button class="course-tag-btn">#Section 7 ~ 8 참고</button>
+                    <div class="course-rating" style="color: var(--color-text-secondary);"
+                         th:text="'추천 점수 ' + ${#numbers.formatDecimal(course.recommendationScore, 1, 1)} + '점'">
+                        추천 점수 42.0점
+                    </div>
+                    <div class="course-tag-btn"
+                         th:text="${#lists.isEmpty(course.matchedSkills) ? '#맞춤 추천' : '#' + course.matchedSkills[0].skillName + ' ' + course.matchedSkills[0].recommendedCoverageLevel}">
+                        #Java BASIC
+                    </div>
                 </div>
             </div>
-        </div>
-        <!-- 임시 더미 코스 2 -->
-        <div class="course-card">
-            <div class="course-thumb-placeholder"></div>
-            <div class="course-info">
-                <div>
-                    <h4 class="course-title" th:text="'대용량 데이터 환경에서의 ' + ${lowestSkill} + ' 최적화 튜닝'">대용량 데이터 환경에서의 React 최적화 튜닝</h4>
-                    <div class="course-instructor">준비 중</div>
-                </div>
-                <div>
-                    <div class="course-rating" style="color: var(--color-text-secondary);">강의 연동 준비 중</div>
-                    <button class="course-tag-btn">#실무 트러블슈팅</button>
-                </div>
-            </div>
-        </div>
-        <!-- 임시 더미 코스 3 -->
-        <div class="course-card">
-            <div class="course-thumb-placeholder"></div>
-            <div class="course-info">
-                <div>
-                    <h4 class="course-title" th:text="'우아한 아키텍처 설계를 위한 ' + ${lowestSkill} + ' 깊이 읽기'">우아한 아키텍처 설계를 위한 React 깊이 읽기</h4>
-                    <div class="course-instructor">준비 중</div>
-                </div>
-                <div>
-                    <div class="course-rating" style="color: var(--color-text-secondary);">강의 연동 준비 중</div>
-                    <button class="course-tag-btn">#아키텍처 설계</button>
-                </div>
-            </div>
-        </div>
-        <!-- 임시 더미 코스 4 -->
-        <div class="course-card">
-            <div class="course-thumb-placeholder"></div>
-            <div class="course-info">
-                <div>
-                    <h4 class="course-title" th:text="'시니어로 도약하기 위한 ' + ${lowestSkill} + ' 엣지케이스 장애 분석'">시니어로 도약하기 위한 React 엣지케이스 장애 분석</h4>
-                    <div class="course-instructor">준비 중</div>
-                </div>
-                <div>
-                    <div class="course-rating" style="color: var(--color-text-secondary);">강의 연동 준비 중</div>
-                    <button class="course-tag-btn">#장애 회고</button>
-                </div>
-            </div>
+        </a>
+        <div th:if="${recommendedCourses.isEmpty()}" class="course-empty-card">
+            현재 레벨테스트 결과와 직접 연결된 추천 강의를 찾지 못했습니다. 강의 데이터가 보강되면 이 영역에 맞춤 강의가 표시됩니다.
         </div>
     </div>
 
