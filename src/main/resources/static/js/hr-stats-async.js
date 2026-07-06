@@ -9,6 +9,7 @@
   bindPeriodPresets(form);
   bindDateRangeDropdowns(form);
   bindOrganizationFilter(form);
+  bindStatsAlert();
   updateDateRangeLabels(form);
   updatePeriodPresetState(form);
 
@@ -27,7 +28,7 @@
     event.preventDefault();
 
     if (hasEmptyOrganizationSelection(form)) {
-      window.alert('통계를 확인할 조직을 선택해주세요.');
+      showStatsAlert('통계를 확인할 부서를 선택해주세요.');
       return;
     }
 
@@ -161,8 +162,8 @@
   function renderRankBlock(block, spanClass) {
     const ranks = normalizeArray(block.ranks);
     const detailed = Boolean(ranks[0]?.categoryName);
-    const rows = detailed ? renderRankTable(ranks) : renderRankList(ranks);
-    const emptyState = ranks.length === 0 ? renderRankEmptyState() : '';
+    const rows = block.rankTable ? renderRankMatrixTable(block.rankTable) : detailed ? renderRankTable(ranks) : renderRankList(ranks);
+    const emptyState = !block.rankTable && ranks.length === 0 ? renderRankEmptyState() : '';
 
     return `
       <div class="hr-stats-block ${spanClass}">
@@ -189,6 +190,34 @@
     `).join('');
 
     return `<ol class="hr-stats-rank">${rows}</ol>`;
+  }
+
+  function renderRankMatrixTable(rankTable) {
+    const columns = normalizeArray(rankTable.columns);
+    const rows = normalizeArray(rankTable.rows).map((row) => `
+      <tr>
+        <td class="hr-stats-matrix-table__rank">${escapeHtml(row.rankLabel)}</td>
+        ${normalizeArray(row.values).map((value) => `
+          <td>
+            <span class="hr-stats-matrix-table__course" title="${escapeAttribute(value)}">${escapeHtml(value)}</span>
+          </td>
+        `).join('')}
+      </tr>
+    `).join('');
+
+    return `
+      <div class="hr-stats-matrix-wrap">
+        <table class="hr-stats-matrix-table">
+          <thead>
+            <tr>
+              <th class="hr-stats-matrix-table__rank">순위</th>
+              ${columns.map((column) => `<th>${escapeHtml(column)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
   }
 
   function renderRankEmptyState() {
@@ -429,7 +458,7 @@
         return;
       }
 
-      label.textContent = `비교 조직 ${selectedItems.length}개`;
+      label.textContent = `비교 부서 ${selectedItems.length}개`;
     }
   }
 
@@ -457,6 +486,51 @@
 
     return !Array.from(picker.querySelectorAll('input[name="departmentIds"]'))
       .some((input) => input.checked);
+  }
+
+  function bindStatsAlert() {
+    const modal = document.getElementById('hrStatsAlertModal');
+    const closeButton = document.getElementById('hrStatsAlertClose');
+
+    if (!modal || !closeButton) {
+      return;
+    }
+
+    closeButton.addEventListener('click', hideStatsAlert);
+
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        hideStatsAlert();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        hideStatsAlert();
+      }
+    });
+  }
+
+  function showStatsAlert(message) {
+    const modal = document.getElementById('hrStatsAlertModal');
+    const messageElement = document.getElementById('hrStatsAlertMessage');
+    const closeButton = document.getElementById('hrStatsAlertClose');
+
+    if (!modal || !messageElement || !closeButton) {
+      return;
+    }
+
+    messageElement.textContent = message;
+    modal.classList.add('is-open');
+    closeButton.focus();
+  }
+
+  function hideStatsAlert() {
+    const modal = document.getElementById('hrStatsAlertModal');
+
+    if (modal) {
+      modal.classList.remove('is-open');
+    }
   }
 
   function closeDateRangeDropdowns(formElement) {

@@ -36,6 +36,12 @@ public interface LearningStatisticsMapper {
     // 사용자의 역량 점수를 역량 항목별로 평균 내어 레이더 차트 데이터를 조회합니다.
     List<StatisticsPointRow> selectAverageCompetencyScores(StatisticsFilter filter);
 
+    List<StatisticsPointRow> selectCompanyAverageCompetencyScores(StatisticsFilter filter);
+
     // 역량 점수 이력을 선택 기간 기준 단위로 평균 내어 역량 성장 추이 데이터를 조회합니다.
     List<StatisticsPointRow> selectCompetencyGrowthInPeriod(DepartmentGrowthQuery query);
+
+    List<StatisticsPointRow> selectMonthlyCompetencyGrowthInPeriod(StatisticsFilter filter);
+
+    List<StatisticsPointRow> selectMonthlyCompletedCourseCounts(StatisticsFilter filter);
 }

@@ -4,7 +4,6 @@ import com.hlinks.domain.statistics.dto.ChartPointDto;
 import com.hlinks.domain.statistics.dto.ChartSeriesDto;
 import com.hlinks.domain.statistics.dto.ChartStatDto;
 import com.hlinks.domain.statistics.dto.CoursePeriodQuery;
-import com.hlinks.domain.statistics.dto.CoursePeriodSeriesRow;
 import com.hlinks.domain.statistics.dto.CourseStatisticsView;
 import com.hlinks.domain.statistics.dto.KpiStatDto;
 import com.hlinks.domain.statistics.dto.PopularCourseRow;
@@ -24,10 +23,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -55,15 +51,16 @@ public class CourseStatisticsService {
                         StatisticsBlockDto.kpi(1, new KpiStatDto("bi bi-play-fill", "전체 평균 진도율", percent(averageProgressRate), percentComparisonHint(averageProgressRate, previousAverageProgressRate), "orange"))
                 ),
                 List.of(
-                        new StatisticsSectionDto("강의 성과", List.of(
+                        new StatisticsSectionDto("강의 운영 및 성과", List.of(
                                 StatisticsBlockDto.chart(1, StatisticsChartFactory.chart("course-type-status", "강의 유형별 현황", "현재 OPEN 강의 기준", "donut", "개", "개설 강의 수", courseStatisticsMapper.selectOperatingCoursesByType(filter))),
                                 StatisticsBlockDto.chart(1, StatisticsChartFactory.chart("course-type-completion", "강의 유형별 수료율", "온라인/오프라인", "bar", "%", "수료율", courseStatisticsMapper.selectCourseTypeCompletionRate(filter))),
-                                StatisticsBlockDto.chart(2, applicationCompletionConversionTrend(courseStatisticsMapper.selectApplicationCompletionConversionTrend(CoursePeriodQuery.from(filter)))),
+                                StatisticsBlockDto.chart(2, applicationCompletionConversionTrend(courseStatisticsMapper.selectApplicationCompletionConversionTrend(CoursePeriodQuery.from(filter))))
+                        )),
+                        new StatisticsSectionDto("강의 인기도 및 수요", List.of(
                                 StatisticsBlockDto.rank(3, "인기 강의 TOP 5", "수강 신청 기준", popularCourseRanks(courseStatisticsMapper.selectPopularCourses(filter))),
                                 StatisticsBlockDto.rank(1, "미수료/이탈 강의 TOP 5", "미수료/이탈 건수 기준", incompleteCourseRanks(courseStatisticsMapper.selectIncompleteCourses(filter))),
-                                StatisticsBlockDto.chart(2, StatisticsChartFactory.chart("course-popular-skills", "스킬별 인기 TOP 5", "수강 신청 수 기준", "bar", "명", "수강 신청 수", courseStatisticsMapper.selectPopularSkills(filter))),
-                                StatisticsBlockDto.chart(2, risingSkills(courseStatisticsMapper.selectRisingSkills(SkillPopularityChangeQuery.from(filter, previousFilter)))),
-                                StatisticsBlockDto.chart(4, applicationCompletionTrend(courseStatisticsMapper.selectApplicationCompletionTrend(CoursePeriodQuery.from(filter))))
+                                StatisticsBlockDto.chart(2, StatisticsChartFactory.chart("course-popular-skills", "인기 스킬 TOP 5", "수강 신청 수 기준", "bar", "명", "수강 신청 수", courseStatisticsMapper.selectPopularSkills(filter))),
+                                StatisticsBlockDto.chart(2, risingSkills(courseStatisticsMapper.selectRisingSkills(SkillPopularityChangeQuery.from(filter, previousFilter))))
                         ))
                 )
         );
@@ -81,37 +78,10 @@ public class CourseStatisticsService {
         return new ChartStatDto(
                 "course-application-completion-conversion",
                 "강의 신청 대비 수료 전환율 추이",
-                "선택 기간 단위별 수료 건수 / 신청 건수",
+                "선택 기간 내 수료 건수 / 신청 건수",
                 "line",
                 "%",
                 List.of(new ChartSeriesDto("전환율", points))
-        );
-    }
-
-    private ChartStatDto applicationCompletionTrend(List<CoursePeriodSeriesRow> rows) {
-        Map<String, List<ChartPointDto>> pointsBySeries = new LinkedHashMap<>();
-
-        for (CoursePeriodSeriesRow row : rows) {
-            pointsBySeries
-                    .computeIfAbsent(row.seriesName(), ignored -> new ArrayList<>())
-                    .add(new ChartPointDto(
-                            row.periodLabel(),
-                            safe(row.value()),
-                            number(row.value(), "건")
-                    ));
-        }
-
-        List<ChartSeriesDto> series = pointsBySeries.entrySet().stream()
-                .map(entry -> new ChartSeriesDto(entry.getKey(), entry.getValue()))
-                .toList();
-
-        return new ChartStatDto(
-                "course-application-completion-trend",
-                "기간 내 수강 신청 및 수료 추이",
-                "선택 기간 단위별 신청/수료 건수",
-                "line",
-                "건",
-                series
         );
     }
 

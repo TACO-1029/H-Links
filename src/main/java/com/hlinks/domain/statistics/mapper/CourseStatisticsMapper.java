@@ -1,7 +1,6 @@
 package com.hlinks.domain.statistics.mapper;
 
 import com.hlinks.domain.statistics.dto.CoursePeriodQuery;
-import com.hlinks.domain.statistics.dto.CoursePeriodSeriesRow;
 import com.hlinks.domain.statistics.dto.PopularCourseRow;
 import com.hlinks.domain.statistics.dto.SkillPopularityChangeQuery;
 import com.hlinks.domain.statistics.dto.StatisticsFilter;
@@ -50,8 +49,6 @@ public interface CourseStatisticsMapper {
     List<StatisticsPointRow> selectRisingSkills(SkillPopularityChangeQuery query);
 
     // 기간 단위별 수강 신청 및 수료 추이 데이터를 조회합니다.
-    List<CoursePeriodSeriesRow> selectApplicationCompletionTrend(CoursePeriodQuery query);
-
     // 기간 단위별 수강 신청 대비 수료 전환율 추이 데이터를 조회합니다.
     List<StatisticsPointRow> selectApplicationCompletionConversionTrend(CoursePeriodQuery query);
 }

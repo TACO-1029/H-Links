@@ -111,7 +111,7 @@
   </button>
 </form>
 
-<form class="hr-stats-filter hr-stats-filter--compact" aria-label="조직 비교 통계 필터" th:fragment="organizationFilter" method="get">
+<form class="hr-stats-filter hr-stats-filter--compact" aria-label="부서 비교 통계 필터" th:fragment="organizationFilter" method="get">
   <div class="hr-stats-filter__date" data-date-range>
     <span class="hr-stats-filter__label">기간</span>
     <button class="hr-stats-filter__date-toggle" type="button" data-date-range-toggle aria-expanded="false">
@@ -141,15 +141,15 @@
     </div>
   </div>
   <div class="hr-stats-filter__field hr-stats-org-picker" data-org-filter data-max-selection="5">
-    <span class="hr-stats-filter__label">비교 조직</span>
+    <span class="hr-stats-filter__label">비교 부서</span>
     <button class="hr-stats-org-picker__toggle" type="button" data-org-filter-toggle aria-expanded="false">
       <i class="bi bi-diagram-3" aria-hidden="true"></i>
-      <span data-org-filter-label>조직 선택</span>
+      <span data-org-filter-label>부서 선택</span>
       <i class="bi bi-chevron-down" aria-hidden="true"></i>
     </button>
     <div class="hr-stats-org-picker__panel" data-org-filter-panel>
       <div class="hr-stats-org-picker__header">
-        <strong>비교 조직</strong>
+        <strong>비교 부서</strong>
         <span>최대 5개</span>
       </div>
       <div class="hr-stats-org-tree">
@@ -214,8 +214,26 @@
     <h2 class="hr-stats-card__title" th:text="${block.rankTitle}">목록 제목</h2>
     <p class="hr-stats-card__caption" th:text="${block.rankCaption}">기준</p>
   </div>
+  <div class="hr-stats-matrix-wrap" th:if="${block.rankTable != null}">
+    <table class="hr-stats-matrix-table">
+      <thead>
+      <tr>
+        <th class="hr-stats-matrix-table__rank">순위</th>
+        <th th:each="column : ${block.rankTable.columns}" th:text="${column}">부서</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="row : ${block.rankTable.rows}">
+        <td class="hr-stats-matrix-table__rank" th:text="${row.rankLabel}">1위</td>
+        <td th:each="value : ${row.values}">
+          <span class="hr-stats-matrix-table__course" th:text="${value}" th:title="${value}">강의명</span>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
   <div class="hr-stats-table-wrap"
-       th:if="${!#lists.isEmpty(block.ranks) and block.ranks[0].hasCourseDetails()}">
+       th:if="${block.rankTable == null and !#lists.isEmpty(block.ranks) and block.ranks[0].hasCourseDetails()}">
     <table class="hr-stats-table">
       <thead>
       <tr>
@@ -244,7 +262,7 @@
     </table>
   </div>
   <ol class="hr-stats-rank"
-      th:if="${#lists.isEmpty(block.ranks) or !block.ranks[0].hasCourseDetails()}">
+      th:if="${block.rankTable == null and (#lists.isEmpty(block.ranks) or !block.ranks[0].hasCourseDetails())}">
     <li th:each="rank : ${block.ranks}">
       <span class="hr-stats-rank__meta" th:text="${rank.rank}">1</span>
       <span class="hr-stats-rank__badge badge rounded-pill"
@@ -254,7 +272,7 @@
       <strong th:text="${rank.value}">0명</strong>
     </li>
   </ol>
-  <div class="hr-stats-empty" th:if="${#lists.isEmpty(block.ranks)}">
+  <div class="hr-stats-empty" th:if="${block.rankTable == null and #lists.isEmpty(block.ranks)}">
     <i class="bi bi-database-slash" aria-hidden="true"></i>
     <p>표시할 인기 강의가 없습니다.</p>
   </div>

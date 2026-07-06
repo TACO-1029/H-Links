@@ -8,6 +8,22 @@
   <nav class="hr-nav">
     <div class="hr-nav__group">
       <p class="hr-nav__heading">
+        <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
+        <span>통계</span>
+      </p>
+      <a class="hr-nav__link"
+         th:classappend="${activeMenu == 'stats-learning'} ? ' is-active'"
+         th:href="@{/hr/statistics/learning}">학습 통계</a>
+      <a class="hr-nav__link"
+         th:classappend="${activeMenu == 'stats-course'} ? ' is-active'"
+         th:href="@{/hr/statistics/courses}">강의 통계</a>
+      <a class="hr-nav__link"
+         th:classappend="${activeMenu == 'stats-organization'} ? ' is-active'"
+         th:href="@{/hr/statistics/organizations}">부서 비교 통계</a>
+    </div>
+    <div class="hr-nav__divider" aria-hidden="true"></div>
+    <div class="hr-nav__group">
+      <p class="hr-nav__heading">
         <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
         <span>강의 관리</span>
       </p>
@@ -34,22 +50,6 @@
       </p>
       <a class="hr-nav__link" href="#">수강 신청 현황</a>
       <a class="hr-nav__link" href="#">수료 현황</a>
-    </div>
-    <div class="hr-nav__divider" aria-hidden="true"></div>
-    <div class="hr-nav__group">
-      <p class="hr-nav__heading">
-        <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
-        <span>통계</span>
-      </p>
-      <a class="hr-nav__link"
-         th:classappend="${activeMenu == 'stats-learning'} ? ' is-active'"
-         th:href="@{/hr/statistics/learning}">학습 통계</a>
-      <a class="hr-nav__link"
-         th:classappend="${activeMenu == 'stats-course'} ? ' is-active'"
-         th:href="@{/hr/statistics/courses}">강의 통계</a>
-      <a class="hr-nav__link"
-         th:classappend="${activeMenu == 'stats-organization'} ? ' is-active'"
-         th:href="@{/hr/statistics/organizations}">조직 비교 통계</a>
     </div>
   </nav>
 </aside>
