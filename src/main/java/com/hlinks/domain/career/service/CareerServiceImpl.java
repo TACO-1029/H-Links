@@ -69,14 +69,14 @@ public class CareerServiceImpl implements CareerService {
 
     @Override
     @Transactional
-    public void saveTargetSkills(Long diagnosisId, List<Long> skillIds) {
+    public void saveTargetSkills(Long diagnosisId, List<Long> skillIds, List<String> userSetSkillLevels) {
         if (skillIds == null || skillIds.isEmpty()) {
             throw new BaseException(CareerErrorCode.SKILL_REQUIRED);
         }
 
         // 기존 매핑이 있다면 삭제하거나 그냥 바로 다중 등록 (처음 등록하는 것이므로)
-        for (Long skillId : skillIds) {
-            careerMapper.insertCareerTargetSkill(diagnosisId, skillId);
+        for (int  j = 0; j < skillIds.size(); j++) {
+            careerMapper.insertCareerTargetSkill(skillIds.get(j), diagnosisId, userSetSkillLevels.get(j));
         }
     }
 

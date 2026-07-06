@@ -2,7 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>홈 대시보드</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H-Links 홈</title>
     <link rel="stylesheet" th:href="@{/css/tokens.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/header.css}">
@@ -11,6 +12,191 @@
 </head>
 <body class="home-page">
 <div th:replace="~{fragments/header :: header}"></div>
+
+<main class="home-shell home-assessment">
+    <section class="home-assessment__intro" aria-labelledby="home-assessment-title">
+        <p class="home-assessment__eyebrow">HLINKs CAREER PATH</p>
+        <h1 id="home-assessment-title">
+            어떤 <span>역량</span>을 키우고 싶은지,<br>
+            아직 모르겠다면?
+        </h1>
+        <p>
+            성향과 목표 스킬을 진단하고, <br>지금 나에게 필요한 교육 콘텐츠와 성장 경로를 추천받아보세요.
+        </p>
+    </section>
+
+    <section class="home-assessment__visual" aria-label="역량 진단 미리보기">
+        <div class="home-assessment__panel">
+            <img th:src="@{/images/home/stairs.webp}"
+                 alt="성장 단계로 이어지는 역량 진단 이미지">
+        </div>
+    </section>
+
+    <div class="home-assessment__actions">
+        <a class="home-assessment__button" th:href="@{/courses/career-path}">
+            지금 진단 시작
+        </a>
+    </div>
+</main>
+
+<section class="home-news" aria-labelledby="home-news-title">
+    <div class="home-news__inner">
+        <div class="home-news__header">
+            <div>
+                <p class="home-news__eyebrow">PERSONALIZED INSIGHT</p>
+                <h2 id="home-news-title"
+                    th:text="${userName != null and !#strings.isEmpty(userName)
+                        ? userName + '을 위한 지금 읽기 좋은 기술 인사이트'
+                        : '지금 읽기 좋은 기술 인사이트'}">
+                    지금 읽기 좋은 기술 인사이트
+                </h2>
+            </div>
+        </div>
+
+        <div class="home-news__grid js-news-grid" aria-live="polite">
+            <div class="news-loading">
+                <lottie-player src="/lottie/news-loading.json"
+                               background="transparent"
+                               speed="1"
+                               style="width: 200px; height: 200px;"
+                               loop
+                               autoplay>
+                </lottie-player>
+                <strong>뉴스를 불러오는 중입니다.</strong>
+                <p>관심 분야에 맞는 기술 인사이트를 준비하고 있어요.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const dashboardNewsList = document.querySelector('.js-news-grid');
+        if (!dashboardNewsList) {
+            return;
+        }
+
+        renderDashboardNewsLoading(dashboardNewsList);
+
+        fetch('/api/dashboard/news', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to load dashboard news.');
+                }
+                return response.json();
+            })
+            .then((newsList) => {
+                if (!Array.isArray(newsList) || newsList.length === 0) {
+                    renderDashboardNewsMessage(dashboardNewsList, '표시할 기술 뉴스가 없습니다.', '잠시 후 다시 확인해 주세요.');
+                    return;
+                }
+
+                renderDashboardNewsList(dashboardNewsList, newsList);
+            })
+            .catch(() => {
+                renderDashboardNewsMessage(dashboardNewsList, '뉴스를 불러오지 못했습니다.', '외부 뉴스 서비스 응답이 지연되고 있습니다.');
+            });
+    });
+
+    function renderDashboardNewsLoading(dashboardNewsList) {
+        dashboardNewsList.innerHTML = `
+            <div class="news-loading">
+                <lottie-player src="/lottie/news-loading.json"
+                               background="transparent"
+                               speed="1"
+                               style="width: 200px; height: 200px;"
+                               loop
+                               autoplay>
+                </lottie-player>
+                <strong>뉴스를 불러오는 중입니다.</strong>
+                <p>관심 분야에 맞는 기술 인사이트를 준비하고 있어요.</p>
+            </div>
+        `;
+    }
+
+    function renderDashboardNewsList(dashboardNewsList, newsList) {
+        dashboardNewsList.innerHTML = newsList.map(createNewsCardHtml).join('');
+    }
+
+    function renderDashboardNewsMessage(dashboardNewsList, title, description) {
+        dashboardNewsList.innerHTML = `
+            <article class="home-news-card home-news-card--message">
+                <div class="home-news-card__body">
+                    <strong>${escapeHtml(title)}</strong>
+                    <p>${escapeHtml(description)}</p>
+                </div>
+            </article>
+        `;
+    }
+
+    function createNewsCardHtml(news) {
+        const title = hasText(news && news.title) ? news.title : '제목 없는 뉴스';
+        const description = hasText(news && news.description) ? news.description : '요약 정보가 없습니다.';
+        const source = hasText(news && news.source) ? news.source : 'Unknown';
+        const publishedAt = formatDate(news && news.publishedAt);
+        const imageUrl = toSafeUrl(news && news.urlToImage);
+        const imageSrc = imageUrl === '#' ? '/images/home/news-placeholder.webp' : imageUrl;
+
+        return `
+            <a class="home-news-card"
+               href="${escapeHtml(toSafeUrl(news && news.url))}"
+               target="_blank"
+               rel="noopener noreferrer">
+                <img class="home-news-card__image"
+                     src="${escapeHtml(imageSrc)}"
+                     alt=""
+                     loading="lazy"
+                     referrerpolicy="no-referrer"
+                     onerror="this.onerror=null;this.src='/images/home/news-placeholder.webp';">
+                <div class="home-news-card__body">
+                    <strong>${escapeHtml(title)}</strong>
+                    <p>${escapeHtml(description)}</p>
+                    <span class="home-news-card__meta">
+                        <span>${escapeHtml(source)}</span>
+                        <span>${escapeHtml(publishedAt)}</span>
+                    </span>
+                </div>
+            </a>
+        `;
+    }
+
+    function hasText(value) {
+        return typeof value === 'string' && value.trim().length > 0;
+    }
+
+    function toSafeUrl(value) {
+        if (!hasText(value)) {
+            return '#';
+        }
+
+        try {
+            const url = new URL(value, window.location.origin);
+            return ['http:', 'https:'].includes(url.protocol) ? url.href : '#';
+        } catch (error) {
+            return '#';
+        }
+    }
+
+    function formatDate(value) {
+        return hasText(value) && value.length >= 10 ? value.substring(0, 10) : '';
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+</script>
 </body>
 </html>

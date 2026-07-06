@@ -81,9 +81,10 @@ public class CareerController {
             return "career/survey";
         }
 
-        careerService.saveTargetSkills(diagnosisId, skillIds);
+        careerService.saveTargetSkills(diagnosisId, skillIds, difficulties);
+        log.info("커리어 진단 목표 스킬 저장 완료 - UserId: {}, DiagnosisId: {}, 난이도: {}", userDetails.getUserId(), diagnosisId, difficulties);
         careerService.buildLevelTestAsync(diagnosisId, skillIds, difficulties);
-        log.info("커리어 진단 목표 스킬 저장 및 비동기 생성 요청 완료 - UserId: {}, DiagnosisId: {}", userDetails.getUserId(), diagnosisId);
+        log.info("커리어 진단 목표 스킬 저장 및 비동기 생성 요청 완료 - UserId: {}, DiagnosisId: {}, Difficulties: {}", userDetails.getUserId(), diagnosisId, difficulties);
 
         String firstDiff = (difficulties != null && !difficulties.isEmpty()) ? difficulties.get(0) : "중";
         String encodedDiff = URLEncoder.encode(firstDiff, StandardCharsets.UTF_8);
@@ -100,6 +101,8 @@ public class CareerController {
         setActiveMenu(model);
         model.addAttribute("diagnosisId", diagnosisId);
         model.addAttribute("difficulty", difficulty);
+
+        // UI에 선택된 분야(첫번째 스킬의 분류 등)를 노출하기 위해 가상의 분석 필드 제공
         model.addAttribute("mode", "표준 진단");
         return "career/level_test_pending";
     }
@@ -142,11 +145,11 @@ public class CareerController {
     ) {
         setActiveMenu(model);
         CareerDiagnosis diagnosis = careerService.findDiagnosisById(diagnosisId);
-        
+
         String rawJson = diagnosis.getLlmSummary();
         String category = "IT 기술";
         List<Map<String, Object>> resultsList = new ArrayList<>();
-        
+
         try {
             if (rawJson != null && rawJson.trim().startsWith("{")) {
                 Map<String, Object> jsonMap = objectMapper.readValue(rawJson, Map.class);
@@ -156,12 +159,12 @@ public class CareerController {
                     for (Map<String, Object> res : rawResults) {
                         Map<String, Object> enriched = new HashMap<>(res);
                         Long skillId = ((Number) res.get("skillId")).longValue();
-                        
+
                         String skillName = careerService.getAllActiveSkills().stream()
                             .filter(s -> s.getSkillId().equals(skillId))
                             .map(s -> s.getSkillName())
                             .findFirst().orElse("세부 기술");
-                        
+
                         enriched.put("skillName", skillName);
                         resultsList.add(enriched);
                     }
@@ -170,7 +173,7 @@ public class CareerController {
         } catch (Exception e) {
             log.error("Failed to parse scoring JSON on result page", e);
         }
-        
+
         model.addAttribute("diagnosisId", diagnosisId);
         model.addAttribute("category", category);
         model.addAttribute("results", resultsList);

@@ -26,7 +26,11 @@ public interface CareerMapper {
     void insertCareerDiagnosis(CareerDiagnosis diagnosis);
 
     // 목표 스킬 매핑 데이터 삽입
-    void insertCareerTargetSkill(@Param("diagnosisId") Long diagnosisId, @Param("skillId") Long skillId);
+    void insertCareerTargetSkill(
+            @Param("diagnosisId") Long diagnosisId,
+            @Param("skillId") Long skillId,
+            @Param("userSetSkillLevel") String userSetSkillLevel
+    );
 
     // 진단에 생성된 문제 수 조회
     int countQuestionsByDiagnosisId(@Param("diagnosisId") Long diagnosisId);
