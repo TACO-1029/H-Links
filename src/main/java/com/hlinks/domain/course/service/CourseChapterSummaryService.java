@@ -6,6 +6,7 @@ import com.hlinks.domain.course.ai.service.AiCourseSummaryService;
 import com.hlinks.domain.course.entity.CourseChapter;
 import com.hlinks.domain.course.mapper.CourseChapterMapper;
 import com.hlinks.domain.course.mapper.CourseChapterSkillMapper;
+import com.hlinks.domain.course.type.CourseSkillCoverageLevel;
 import com.hlinks.domain.course.util.SkillWeightNormalizer;
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.global.response.code.ErrorResponseCode;
@@ -82,6 +83,8 @@ public class CourseChapterSummaryService {
         }
 
         Map<Long, BigDecimal> matchedSkills = new LinkedHashMap<>();
+        Map<Long, Map<CourseSkillCoverageLevel, BigDecimal>> coverageScores = new LinkedHashMap<>();
+        Map<Long, Map<CourseSkillCoverageLevel, CoverageReasonCandidate>> coverageReasons = new LinkedHashMap<>();
 
         for (CourseSummarySkill skill : skills) {
             Long skillId = resolveSkillId(chapterId, skill);
@@ -97,13 +100,29 @@ public class CourseChapterSummaryService {
             }
 
             matchedSkills.merge(skillId, weight, BigDecimal::add);
+            CourseSkillCoverageLevel coverageLevel = CourseSkillCoverageLevel.from(skill.getCoverageLevel());
+            coverageScores
+                    .computeIfAbsent(skillId, key -> new LinkedHashMap<>())
+                    .merge(coverageLevel, weight, BigDecimal::add);
+            mergeCoverageReason(coverageReasons, skillId, coverageLevel, weight, skill.getCoverageReason());
         }
 
         Map<Long, BigDecimal> normalizedSkills = SkillWeightNormalizer.normalizeToOne(matchedSkills);
 
-        normalizedSkills.forEach((skillId, weight) ->
-                courseChapterSkillMapper.insertChapterSkill(chapterId, skillId, weight)
-        );
+        normalizedSkills.forEach((skillId, weight) -> {
+            SkillCoverage coverage = resolveSkillCoverage(
+                    coverageScores.get(skillId),
+                    coverageReasons.get(skillId)
+            );
+
+            courseChapterSkillMapper.insertChapterSkill(
+                    chapterId,
+                    skillId,
+                    weight,
+                    coverage.level().name(),
+                    coverage.reason()
+            );
+        });
 
         courseSkillAggregationService.recalculateCourseSkills(chapter.getCourseId());
     }
@@ -179,6 +198,63 @@ public class CourseChapterSummaryService {
         return newSkillYn.trim();
     }
 
+    private void mergeCoverageReason(
+            Map<Long, Map<CourseSkillCoverageLevel, CoverageReasonCandidate>> coverageReasons,
+            Long skillId,
+            CourseSkillCoverageLevel coverageLevel,
+            BigDecimal weight,
+            String coverageReason
+    ) {
+        if (!StringUtils.hasText(coverageReason)) {
+            return;
+        }
+
+        Map<CourseSkillCoverageLevel, CoverageReasonCandidate> reasonByLevel = coverageReasons
+                .computeIfAbsent(skillId, key -> new LinkedHashMap<>());
+        CoverageReasonCandidate current = reasonByLevel.get(coverageLevel);
+
+        if (current == null || weight.compareTo(current.weight()) > 0) {
+            reasonByLevel.put(coverageLevel, new CoverageReasonCandidate(weight, coverageReason.trim()));
+        }
+    }
+
+    private SkillCoverage resolveSkillCoverage(
+            Map<CourseSkillCoverageLevel, BigDecimal> scores,
+            Map<CourseSkillCoverageLevel, CoverageReasonCandidate> reasons
+    ) {
+        CourseSkillCoverageLevel selectedLevel = CourseSkillCoverageLevel.BASIC;
+        BigDecimal selectedScore = BigDecimal.ZERO;
+
+        if (scores != null) {
+            for (Map.Entry<CourseSkillCoverageLevel, BigDecimal> entry : scores.entrySet()) {
+                CourseSkillCoverageLevel level = entry.getKey();
+                BigDecimal score = entry.getValue();
+
+                if (score == null) {
+                    continue;
+                }
+
+                if (score.compareTo(selectedScore) > 0
+                        || (score.compareTo(selectedScore) == 0 && level.getRank() > selectedLevel.getRank())) {
+                    selectedLevel = level;
+                    selectedScore = score;
+                }
+            }
+        }
+
+        String reason = null;
+
+        if (reasons != null && reasons.get(selectedLevel) != null) {
+            reason = reasons.get(selectedLevel).reason();
+        }
+
+        if (!StringUtils.hasText(reason)) {
+            reason = selectedLevel.getDefaultReason();
+        }
+
+        return new SkillCoverage(selectedLevel, reason);
+    }
+
     private CourseChapter findChapter(Long chapterId) {
         if (chapterId == null) {
             throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "chapterId는 필수입니다.");
@@ -194,5 +270,11 @@ public class CourseChapterSummaryService {
         }
 
         return chapter;
+    }
+
+    private record SkillCoverage(CourseSkillCoverageLevel level, String reason) {
+    }
+
+    private record CoverageReasonCandidate(BigDecimal weight, String reason) {
     }
 }
