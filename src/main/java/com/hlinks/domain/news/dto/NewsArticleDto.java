@@ -10,6 +10,7 @@ public class NewsArticleDto {
     private String title;
     private String description;
     private String url;
+    private String urlToImage;
     private String source;
     private String publishedAt;
 }

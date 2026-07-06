@@ -142,12 +142,20 @@
         const description = hasText(news && news.description) ? news.description : '요약 정보가 없습니다.';
         const source = hasText(news && news.source) ? news.source : 'Unknown';
         const publishedAt = formatDate(news && news.publishedAt);
+        const imageUrl = toSafeUrl(news && news.urlToImage);
+        const imageSrc = imageUrl === '#' ? '/images/home/news-placeholder.webp' : imageUrl;
 
         return `
             <a class="home-news-card"
                href="${escapeHtml(toSafeUrl(news && news.url))}"
                target="_blank"
                rel="noopener noreferrer">
+                <img class="home-news-card__image"
+                     src="${escapeHtml(imageSrc)}"
+                     alt=""
+                     loading="lazy"
+                     referrerpolicy="no-referrer"
+                     onerror="this.onerror=null;this.src='/images/home/news-placeholder.webp';">
                 <div class="home-news-card__body">
                     <strong>${escapeHtml(title)}</strong>
                     <p>${escapeHtml(description)}</p>

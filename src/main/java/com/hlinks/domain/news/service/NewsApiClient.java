@@ -80,6 +80,7 @@ public class NewsApiClient {
                 .title(defaultText(article.getTitle()))
                 .description(defaultText(article.getDescription()))
                 .url(defaultText(article.getUrl()))
+                .urlToImage(defaultText(article.getUrlToImage()))
                 .source(article.getSource() != null ? defaultText(article.getSource().getName()) : "")
                 .publishedAt(defaultText(article.getPublishedAt()))
                 .build();

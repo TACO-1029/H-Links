@@ -296,6 +296,7 @@ public class NewsService {
                 .title(translationApiClient.translateToKorean(article.getTitle()))
                 .description(translationApiClient.translateToKorean(article.getDescription()))
                 .url(article.getUrl())
+                .urlToImage(article.getUrlToImage())
                 .source(article.getSource())
                 .publishedAt(article.getPublishedAt())
                 .build();
