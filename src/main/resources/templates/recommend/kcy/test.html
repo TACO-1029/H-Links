@@ -689,9 +689,8 @@
         const footer = document.querySelector('#stage-hook .kcy-test-card__footer');
         if (footer) footer.style.display = 'none';
 
-        const nextStep = state.turnIndex + 1;
-        appendUserMessage(`[코드 리뷰 완료] ${lines.length}개의 불편한 코드 라인을 식별하여 피드백을 전달했습니다.`, nextStep);
-        state.turnIndex++;
+        state.turnIndex = 1;
+        appendUserMessage(`[코드 리뷰 완료] ${lines.length}개의 불편한 코드 라인을 식별하여 피드백을 전달했습니다.`, state.turnIndex);
         updateHeaderProgress();
         requestNextAdaptive();
     }
@@ -700,8 +699,6 @@
     /* Step 2: Adaptive MCQ and Undo Handling                       */
     /* ============================================================= */
     function submitQuickReply(optionId, optionText) {
-        const nextStep = state.turnIndex + 1;
-
         // Push current states to history snapshots for Undo
         state.history.push({
             selectedOptionIds: [...state.selectedOptionIds],
@@ -712,8 +709,8 @@
 
         // Add user response to flow
         state.selectedOptionIds.push(optionId);
-        appendUserMessage(optionText, nextStep);
         state.turnIndex++;
+        appendUserMessage(optionText, state.turnIndex);
 
         requestNextAdaptive();
     }
@@ -740,19 +737,44 @@
         const prevStepIndex = state.turnIndex;
         const prevCard = document.querySelector(`.teams-msg-attachment.step-${prevStepIndex}`);
         if (prevCard) {
-            const footer = prevCard.querySelector('.kcy-test-card__footer');
-            if (footer) footer.style.display = 'flex';
-            
-            // 라디오 버튼 및 체크 활성화 복구
-            prevCard.querySelectorAll('input').forEach(i => {
-                i.disabled = false;
-                i.checked = false; // 라디오 선택 상태를 풀어서 사용자가 다시 선택하게 유도
-            });
+            // 테트리스 카드인 경우 오버레이 스타일 및 display block 원복
+            if (prevCard.classList.contains('attachment-tetris')) {
+                prevCard.classList.add('tetris-full-overlay');
+                const tetrisArticle = prevCard.querySelector('#stage-tetris');
+                if (tetrisArticle) {
+                    tetrisArticle.style.display = 'block';
+                }
+            } else {
+                const footer = prevCard.querySelector('.kcy-test-card__footer');
+                if (footer) footer.style.display = 'flex';
+                
+                // 라디오 버튼 및 체크 활성화 복구
+                prevCard.querySelectorAll('input').forEach(i => {
+                    i.disabled = false;
+                    i.checked = false; // 라디오 선택 상태를 풀어서 사용자가 다시 선택하게 유도
+                });
 
-            // "이전으로" 버튼의 활성화 여부 재평가
-            const undoBtn = prevCard.querySelector('.teams-undo-btn');
-            if (undoBtn) {
-                undoBtn.disabled = (state.selectedOptionIds.length === 0);
+                // "이전으로" 버튼의 활성화 여부 재평가
+                const undoBtn = prevCard.querySelector('.teams-undo-btn');
+                if (undoBtn) {
+                    undoBtn.disabled = (state.selectedOptionIds.length === 0);
+                }
+            }
+        }
+
+        // 이전 턴이 조기종료 프롬프트 단계라면 옵션 컨테이너 복구
+        if (state.questionHistory.length > 0) {
+            const lastQ = state.questionHistory[state.questionHistory.length - 1];
+            if (state.tetrisFinished && lastQ === null) {
+                const optContainer = document.getElementById('chat-options-container');
+                if (optContainer) {
+                    optContainer.innerHTML = `
+                        <div style="display: flex; gap: 8px; justify-content: center; width: 100%; padding: 8px 16px; box-sizing: border-box;">
+                            <button class="teams-quick-reply-btn" type="button" onclick="handleEarlyStopChoice(true)" style="background: #009E7A; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1;">결과 보기 📊</button>
+                            <button class="teams-quick-reply-btn" type="button" onclick="handleEarlyStopChoice(false)" style="background: #f3f2f1; color: #242424; border: 1px solid #d2d0ce; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1;">끝까지 할래요 📝</button>
+                        </div>
+                    `;
+                }
             }
         }
 
@@ -761,7 +783,7 @@
     }
 
     function requestNextAdaptive() {
-        const nextStep = state.turnIndex + 1;
+        const nextStep = state.turnIndex;
         document.getElementById('chat-options-container').innerHTML = '';
 
         const controller = new AbortController();
@@ -840,10 +862,9 @@
 
     function handleEarlyStopChoice(isStop) {
         document.getElementById('chat-options-container').innerHTML = '';
-        const nextStep = state.turnIndex + 1;
         
         if (isStop) {
-            appendUserMessage("결과 보기 📊", nextStep);
+            appendUserMessage("결과 보기 📊", state.turnIndex + 1);
             finalizeSubmission();
         } else {
             // Push states for Undo back to prompt selection
@@ -853,8 +874,8 @@
                 tetrisFinished: state.tetrisFinished,
                 turnIndex: state.turnIndex
             });
-            appendUserMessage("끝까지 할래요 📝", nextStep);
             state.turnIndex++;
+            appendUserMessage("끝까지 할래요 📝", state.turnIndex);
             state.bypassEarlyStop = true;
             requestNextAdaptive();
         }
@@ -1261,10 +1282,6 @@
         }
 
         // 2. 사용자 말풍선으로 테트리스 배포 상황 피드백 노출
-        const nextStep = state.turnIndex + 1;
-        appendUserMessage(`[프로젝트 배포 완료] 총 ${state.tiebreakerBlocks.length}개의 맞춤 기술 스택을 구성하여 배포했습니다.`, nextStep);
-        state.turnIndex++;
-
         // Push state snapshot right before marking tetrisFinished = true to allow undo back to tetris board
         state.history.push({
             selectedOptionIds: [...state.selectedOptionIds],
@@ -1272,6 +1289,10 @@
             tetrisFinished: state.tetrisFinished,
             turnIndex: state.turnIndex
         });
+
+        state.turnIndex++;
+        // 2. 사용자 말풍선으로 테트리스 배포 상황 피드백 노출
+        appendUserMessage(`[프로젝트 배포 완료] 총 ${state.tiebreakerBlocks.length}개의 맞춤 기술 스택을 구성하여 배포했습니다.`, state.turnIndex);
 
         state.tetrisFinished = true; // Mark tetris phase as fully finished
 

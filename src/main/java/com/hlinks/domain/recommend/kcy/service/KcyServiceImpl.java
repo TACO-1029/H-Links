@@ -294,7 +294,7 @@ public class KcyServiceImpl implements KcyService {
         // 1. 하이라이터 훅 점수 추가 (MCQ 대비 가중치 미미하게 1점 부여)
         if (angerTypes != null) {
             for (String type : angerTypes) {
-                if (type != null && "".equals(type)) {
+                if (type != null) {
                     score.addScore(type, 1);
                 }
             }
