@@ -498,10 +498,20 @@
 }
 
 .pending-title {
+    min-height: 34px;
+    margin-bottom: 30px;
     font-size: var(--text-2xl);
     font-weight: var(--font-bold);
+    line-height: 1.35;
     color: var(--color-text-primary);
-    margin-bottom: 30px;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.pending-title.is-fading {
+    opacity: 0;
+    transform: translateY(4px);
 }
 
 .pending-lottie {

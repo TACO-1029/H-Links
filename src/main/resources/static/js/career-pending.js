@@ -17,8 +17,13 @@ function rotatePendingTitle() {
     let currentTitleIndex = 0;
 
     setInterval(() => {
-        currentTitleIndex = (currentTitleIndex + 1) % pendingTitles.length;
-        titleElement.textContent = pendingTitles[currentTitleIndex];
+        titleElement.classList.add('is-fading');
+
+        setTimeout(() => {
+            currentTitleIndex = (currentTitleIndex + 1) % pendingTitles.length;
+            titleElement.textContent = pendingTitles[currentTitleIndex];
+            titleElement.classList.remove('is-fading');
+        }, 280);
     }, 2200);
 }
 
