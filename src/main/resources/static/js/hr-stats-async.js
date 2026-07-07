@@ -9,6 +9,7 @@
   bindPeriodPresets(form);
   bindDateRangeDropdowns(form);
   bindOrganizationFilter(form);
+  bindStatsAlert();
   updateDateRangeLabels(form);
   updatePeriodPresetState(form);
 
@@ -27,7 +28,7 @@
     event.preventDefault();
 
     if (hasEmptyOrganizationSelection(form)) {
-      window.alert('통계를 확인할 조직을 선택해주세요.');
+      showStatsAlert('통계를 확인할 부서를 선택해주세요.');
       return;
     }
 
@@ -160,9 +161,9 @@
 
   function renderRankBlock(block, spanClass) {
     const ranks = normalizeArray(block.ranks);
-    const detailed = Boolean(ranks[0]?.categoryName);
-    const rows = detailed ? renderRankTable(ranks) : renderRankList(ranks);
-    const emptyState = ranks.length === 0 ? renderRankEmptyState() : '';
+    const detailed = Boolean(ranks[0]?.categoryName || ranks[0]?.courseTypeName || ranks[0]?.completionRate);
+    const rows = block.rankTable ? renderRankMatrixTable(block.rankTable) : detailed ? renderRankTable(ranks, block) : renderRankList(ranks);
+    const emptyState = !block.rankTable && ranks.length === 0 ? renderRankEmptyState() : '';
 
     return `
       <div class="hr-stats-block ${spanClass}">
@@ -182,13 +183,41 @@
     const rows = ranks.map((rank) => `
       <li>
         <span class="hr-stats-rank__meta">${escapeHtml(rank.rank)}</span>
-        <span class="hr-stats-rank__badge badge rounded-pill ${escapeAttribute(rank.badgeTone || '')}">${escapeHtml(rank.badgeText)}</span>
+        ${rank.badgeText ? `<span class="hr-stats-rank__badge badge rounded-pill ${escapeAttribute(rank.badgeTone || '')}">${escapeHtml(rank.badgeText)}</span>` : ''}
         <span class="hr-stats-rank__label">${escapeHtml(rank.label)}</span>
         <strong>${escapeHtml(rank.value)}</strong>
       </li>
     `).join('');
 
     return `<ol class="hr-stats-rank">${rows}</ol>`;
+  }
+
+  function renderRankMatrixTable(rankTable) {
+    const columns = normalizeArray(rankTable.columns);
+    const rows = normalizeArray(rankTable.rows).map((row) => `
+      <tr>
+        <td class="hr-stats-matrix-table__rank">${escapeHtml(row.rankLabel)}</td>
+        ${normalizeArray(row.values).map((value) => `
+          <td>
+            <span class="hr-stats-matrix-table__course" title="${escapeAttribute(value)}">${escapeHtml(value)}</span>
+          </td>
+        `).join('')}
+      </tr>
+    `).join('');
+
+    return `
+      <div class="hr-stats-matrix-wrap">
+        <table class="hr-stats-matrix-table">
+          <thead>
+            <tr>
+              <th class="hr-stats-matrix-table__rank">순위</th>
+              ${columns.map((column) => `<th>${escapeHtml(column)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
   }
 
   function renderRankEmptyState() {
@@ -200,39 +229,42 @@
     `;
   }
 
-  function renderRankTable(ranks) {
+  function renderRankTable(ranks, block) {
+    const countLabel = String(block.rankTitle || '').includes('미수료') ? '미수료/이탈' : '신청 수';
     const rows = ranks.map((rank) => `
       <tr>
         <td>${escapeHtml(rank.rank)}</td>
         <td class="hr-stats-table__title">${escapeHtml(rank.label)}</td>
-        <td>${escapeHtml(rank.categoryName)}</td>
-        <td>${escapeHtml(rank.courseTypeName)}</td>
+        <td>${renderCourseType(rank)}</td>
         <td>${escapeHtml(rank.applicationCount)}</td>
         <td>${escapeHtml(rank.completionRate)}</td>
-        <td>${escapeHtml(rank.averageProgressRate)}</td>
-        <td>${escapeHtml(rank.quizCorrectRate)}</td>
       </tr>
     `).join('');
 
     return `
       <div class="hr-stats-table-wrap">
-        <table class="hr-stats-table">
+        <table class="hr-stats-table hr-stats-table--compact">
           <thead>
             <tr>
               <th>순위</th>
               <th>강의명</th>
-              <th>카테고리</th>
-              <th>강의 유형</th>
-              <th>수강 신청 수</th>
+              <th>유형</th>
+              <th>${countLabel}</th>
               <th>수료율</th>
-              <th>평균 진도율</th>
-              <th>퀴즈 정답률</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
     `;
+  }
+
+  function renderCourseType(rank) {
+    if (rank.badgeText) {
+      return `<span class="hr-stats-table__type badge rounded-pill ${escapeAttribute(rank.badgeTone || '')}">${escapeHtml(rank.badgeText)}</span>`;
+    }
+
+    return `<span class="hr-stats-table__type-text">${escapeHtml(rank.courseTypeName)}</span>`;
   }
 
   function setLoading(button, loading) {
@@ -429,7 +461,7 @@
         return;
       }
 
-      label.textContent = `비교 조직 ${selectedItems.length}개`;
+      label.textContent = `비교 부서 ${selectedItems.length}개`;
     }
   }
 
@@ -457,6 +489,51 @@
 
     return !Array.from(picker.querySelectorAll('input[name="departmentIds"]'))
       .some((input) => input.checked);
+  }
+
+  function bindStatsAlert() {
+    const modal = document.getElementById('hrStatsAlertModal');
+    const closeButton = document.getElementById('hrStatsAlertClose');
+
+    if (!modal || !closeButton) {
+      return;
+    }
+
+    closeButton.addEventListener('click', hideStatsAlert);
+
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        hideStatsAlert();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        hideStatsAlert();
+      }
+    });
+  }
+
+  function showStatsAlert(message) {
+    const modal = document.getElementById('hrStatsAlertModal');
+    const messageElement = document.getElementById('hrStatsAlertMessage');
+    const closeButton = document.getElementById('hrStatsAlertClose');
+
+    if (!modal || !messageElement || !closeButton) {
+      return;
+    }
+
+    messageElement.textContent = message;
+    modal.classList.add('is-open');
+    closeButton.focus();
+  }
+
+  function hideStatsAlert() {
+    const modal = document.getElementById('hrStatsAlertModal');
+
+    if (modal) {
+      modal.classList.remove('is-open');
+    }
   }
 
   function closeDateRangeDropdowns(formElement) {

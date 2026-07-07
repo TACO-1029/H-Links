@@ -2,7 +2,13 @@ package com.hlinks.domain.career.controller;
 
 import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.service.CareerService;
+import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.domain.interest.service.InterestService;
+import com.hlinks.global.response.SliceResponse;
+import com.hlinks.domain.recommend.course.dto.CourseRecommendationRequest;
+import com.hlinks.domain.recommend.course.dto.CourseRecommendationResponse;
+import com.hlinks.domain.recommend.course.dto.LevelTestSkillResultRequest;
+import com.hlinks.domain.recommend.course.service.CourseRecommendationService;
 import com.hlinks.global.security.CustomUserDetails;
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.domain.career.exception.CareerErrorCode;
@@ -36,6 +42,7 @@ public class CareerController {
 
     private final CareerService careerService;
     private final InterestService interestService;
+    private final CourseRecommendationService courseRecommendationService;
     private final ObjectMapper objectMapper;
 
     @GetMapping
@@ -251,7 +258,44 @@ public class CareerController {
         model.addAttribute("lowestSkill", lowestSkillName.isEmpty() ? "핵심 기술" : lowestSkillName);
         model.addAttribute("userName", userDetails.getName());
         model.addAttribute("aiSummary", aiSummary);
+        model.addAttribute("recommendedCourses", recommendCourses(category, resultsList).getCourses());
         return "career/result";
+    }
+
+    private CourseRecommendationResponse recommendCourses(String category, List<Map<String, Object>> resultsList) {
+        if (resultsList == null || resultsList.isEmpty()) {
+            return emptyCourseRecommendation(category);
+        }
+
+        try {
+            CourseRecommendationRequest request = new CourseRecommendationRequest();
+            request.setCategory(category);
+            request.setLimit(4);
+            request.setResults(resultsList.stream()
+                    .map(this::toLevelTestSkillResultRequest)
+                    .toList());
+
+            return courseRecommendationService.recommendByLevelTest(request);
+        } catch (Exception e) {
+            log.warn("Failed to load course recommendations from level test result", e);
+            return emptyCourseRecommendation(category);
+        }
+    }
+
+    private CourseRecommendationResponse emptyCourseRecommendation(String category) {
+        return CourseRecommendationResponse.builder()
+                .category(category)
+                .requestedSkillCount(0)
+                .courses(List.of())
+                .build();
+    }
+
+    private LevelTestSkillResultRequest toLevelTestSkillResultRequest(Map<String, Object> result) {
+        LevelTestSkillResultRequest request = new LevelTestSkillResultRequest();
+        request.setSkillId(((Number) result.get("skillId")).longValue());
+        request.setScore(((Number) result.get("score")).intValue());
+        request.setSelectedDifficulty(String.valueOf(result.get("selectedDifficulty")));
+        return request;
     }
 
     @GetMapping("/dashboard")
@@ -296,6 +340,21 @@ public class CareerController {
 
         model.addAttribute("status", status);
         model.addAttribute("diagnosis", latestDiagnosis);
+        if (latestDiagnosis != null) {
+            try {
+                SliceResponse<CourseListResponseDto> recommendationSlice =
+                        careerService.getRecommendationCourseSlice(userId, latestDiagnosis.getDiagnosisId(), 0, 12);
+                model.addAttribute("recommendedCourses", recommendationSlice.getContent());
+                model.addAttribute("recommendationHasNext", recommendationSlice.isHasNext());
+                model.addAttribute("recommendationDiagnosisId", latestDiagnosis.getDiagnosisId());
+            } catch (Exception e) {
+                log.warn("Failed to load initial career recommendation courses - userId={}, diagnosisId={}",
+                        userId, latestDiagnosis.getDiagnosisId(), e);
+                model.addAttribute("recommendedCourses", List.of());
+                model.addAttribute("recommendationHasNext", false);
+                model.addAttribute("recommendationDiagnosisId", latestDiagnosis.getDiagnosisId());
+            }
+        }
         return "career/dashboard";
     }
 

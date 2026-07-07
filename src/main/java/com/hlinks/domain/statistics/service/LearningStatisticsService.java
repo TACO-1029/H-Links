@@ -1,11 +1,17 @@
 package com.hlinks.domain.statistics.service;
 
-import com.hlinks.domain.statistics.dto.KpiStatDto;
+import com.hlinks.domain.statistics.dto.ChartPointDto;
+import com.hlinks.domain.statistics.dto.ChartSeriesDto;
+import com.hlinks.domain.statistics.dto.ChartStatDto;
 import com.hlinks.domain.statistics.dto.DepartmentGrowthQuery;
+import com.hlinks.domain.statistics.dto.KcyParticipationRow;
+import com.hlinks.domain.statistics.dto.KpiStatDto;
 import com.hlinks.domain.statistics.dto.LearningKpiStats;
+import com.hlinks.domain.statistics.dto.LearningPeriodQuery;
 import com.hlinks.domain.statistics.dto.LearningStatisticsView;
 import com.hlinks.domain.statistics.dto.StatisticsBlockDto;
 import com.hlinks.domain.statistics.dto.StatisticsFilter;
+import com.hlinks.domain.statistics.dto.StatisticsPointRow;
 import com.hlinks.domain.statistics.dto.StatisticsScope;
 import com.hlinks.domain.statistics.dto.StatisticsSectionDto;
 import com.hlinks.domain.statistics.mapper.LearningStatisticsMapper;
@@ -16,7 +22,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -35,24 +45,141 @@ public class LearningStatisticsService {
                         StatisticsBlockDto.kpi(1, new KpiStatDto("bi bi-people-fill", "현재 수강 중 인원", number(currentKpis.activeLearners(), "명"), ratioHint(currentKpis.activeLearners(), currentKpis.totalLearners()), "")),
                         StatisticsBlockDto.kpi(1, new KpiStatDto("bi bi-mortarboard-fill", "전체 수료율", percent(currentKpis.completionRate()), previousPeriodHint(currentKpis.completionRate(), previousKpis.completionRate()), "blue")),
                         StatisticsBlockDto.kpi(1, new KpiStatDto("bi bi-pie-chart-fill", "평균 진도율", percent(currentKpis.averageProgressRate()), previousPeriodHint(currentKpis.averageProgressRate(), previousKpis.averageProgressRate()), "cyan")),
-                        StatisticsBlockDto.kpi(1, new KpiStatDto("bi bi-bullseye", "평균 퀴즈 정답률", percent(currentKpis.quizCorrectRate()), previousPeriodHint(currentKpis.quizCorrectRate(), previousKpis.quizCorrectRate()), "purple"))
+                        StatisticsBlockDto.kpi(1, new KpiStatDto("bi bi-question-circle", "평균 퀴즈 정답률", percent(currentKpis.quizCorrectRate()), previousPeriodHint(currentKpis.quizCorrectRate(), previousKpis.quizCorrectRate()), "purple"))
                 ),
                 List.of(
                         new StatisticsSectionDto("학습 활동", List.of(
                                 StatisticsBlockDto.chart(2, StatisticsChartFactory.chart("learning-hourly-pattern", "시간대별 수강 패턴", "수강자 수", "bar", "명", "수강자 수", learningStatisticsMapper.selectHourlyLearningPattern(filter))),
                                 StatisticsBlockDto.chart(2, StatisticsChartFactory.chart("learning-weekday-pattern", "요일별 학습 패턴", "수강자 수", "bar", "명", "수강자 수", learningStatisticsMapper.selectWeekdayLearningPattern(filter))),
-                                StatisticsBlockDto.chart(4, StatisticsChartFactory.chart("learning-weekly-hours", "주간 학습량 추이", "학습 이력 직원 기준", "line", "h", "평균 학습 시간", learningStatisticsMapper.selectWeeklyLearningHours(filter)))
+                                StatisticsBlockDto.chart(4, StatisticsChartFactory.chart("learning-weekly-hours", "기간 내 학습량 추이", "평균 학습 시간과 이동평균", "line", "h", "평균 학습 시간", learningStatisticsMapper.selectLearningHoursInPeriod(LearningPeriodQuery.from(filter))))
                         )),
                         new StatisticsSectionDto("참여 분석", List.of(
                                 StatisticsBlockDto.chart(2, StatisticsChartFactory.chart("learning-participation-funnel", "전직원 학습 참여 퍼널", "전체 임직원 대비 단계별 참여율", "funnel", "%", "참여율", learningStatisticsMapper.selectLearningParticipationFunnel(filter))),
-                                StatisticsBlockDto.chart(2, StatisticsChartFactory.chart("learning-kcy-participation", "KCY 개발성향별 학습 참여율", "선택 기간 내 학습 참여 사용자 기준", "donut", "%", "참여율", learningStatisticsMapper.selectLearningParticipationRateByKcy(filter)))
+                                StatisticsBlockDto.chart(1, kcyParticipationChart(
+                                        "learning-online-kcy-participation",
+                                        "온라인 학습 참여 KCY TOP 5",
+                                        "선택 기간 내 온라인 강의 참여자 기준",
+                                        filter.withCourseType("online")
+                                )),
+                                StatisticsBlockDto.chart(1, kcyParticipationChart(
+                                        "learning-offline-kcy-participation",
+                                        "오프라인 학습 참여 KCY TOP 5",
+                                        "선택 기간 내 오프라인 강의 참여자 기준",
+                                        filter.withCourseType("offline")
+                                ))
                         )),
                         new StatisticsSectionDto("성장 분석", List.of(
-                                StatisticsBlockDto.chart(1, StatisticsChartFactory.chart("learning-average-skill", "평균 역량", "Radar", "radar", "점", "평균 역량 점수", learningStatisticsMapper.selectAverageCompetencyScores(filter))),
-                                StatisticsBlockDto.chart(3, StatisticsChartFactory.chart("learning-competency-growth-in-period", "기간 내 역량 성장률", "선택 기간 단위별 평균 역량 성장률", "line", "%", "성장률", learningStatisticsMapper.selectCompetencyGrowthInPeriod(DepartmentGrowthQuery.from(filter))))
+                                StatisticsBlockDto.chart(1, averageCompetencyWithCompanyAverage(filter)),
+                                StatisticsBlockDto.chart(3, competencyGrowthFactors(filter))
                         ))
                 )
         );
+    }
+
+    private ChartStatDto kcyParticipationChart(String id, String title, String caption, StatisticsFilter filter) {
+        List<KcyParticipationRow> rows = learningStatisticsMapper.selectTopKcyParticipationByCourseType(filter);
+
+        return new ChartStatDto(
+                id,
+                title,
+                caption,
+                "horizontalBar",
+                "%",
+                List.of(new ChartSeriesDto("참여자 비중", rows.stream()
+                        .map(row -> new ChartPointDto(
+                                row.label(),
+                                safe(row.participationRate()),
+                                percent(row.participationRate()),
+                                row.participantCount()
+                        ))
+                        .toList()))
+        );
+    }
+
+    private ChartStatDto averageCompetencyWithCompanyAverage(StatisticsFilter filter) {
+        List<StatisticsPointRow> selectedRows = learningStatisticsMapper.selectAverageCompetencyScores(filter);
+        boolean hasDepartmentFilter = hasDepartmentFilter(filter);
+        List<StatisticsPointRow> companyRows = hasDepartmentFilter
+                ? learningStatisticsMapper.selectCompanyAverageCompetencyScores(filter)
+                : List.of();
+
+        Set<String> labels = new LinkedHashSet<>();
+        selectedRows.forEach(row -> labels.add(row.label()));
+        companyRows.forEach(row -> labels.add(row.label()));
+
+        List<ChartSeriesDto> series = List.of(
+                new ChartSeriesDto("선택 조건 평균", toAlignedPoints(labels, selectedRows)),
+                new ChartSeriesDto("전직원 평균", toAlignedPoints(labels, companyRows))
+        );
+
+        if (!hasDepartmentFilter) {
+            series = series.subList(0, 1);
+        }
+
+        return new ChartStatDto(
+                "learning-average-skill",
+                "평균 역량 점수",
+                "선택 조건 평균과 전직원 평균 비교",
+                "radar",
+                "점",
+                series
+        );
+    }
+
+    private boolean hasDepartmentFilter(StatisticsFilter filter) {
+        return filter.departmentId() != null || filter.hasDepartmentIds();
+    }
+
+    private ChartStatDto competencyGrowthFactors(StatisticsFilter filter) {
+        List<StatisticsPointRow> cumulativeGrowthRows = learningStatisticsMapper.selectCompetencyGrowthInPeriod(DepartmentGrowthQuery.from(filter));
+        List<StatisticsPointRow> completedCourseRows = learningStatisticsMapper.selectCompletedCourseCountsInPeriod(LearningPeriodQuery.from(filter));
+
+        Set<String> labels = new LinkedHashSet<>();
+        cumulativeGrowthRows.forEach(row -> labels.add(row.label()));
+        completedCourseRows.forEach(row -> labels.add(row.label()));
+
+        return new ChartStatDto(
+                "learning-competency-growth-in-period",
+                "기간 내 역량 성장 요인",
+                "월별 역량 증가폭과 수료 강의 수",
+                "growthFactors",
+                "",
+                List.of(
+                        new ChartSeriesDto("역량 증가폭", toPeriodIncreasePoints(labels, cumulativeGrowthRows)),
+                        new ChartSeriesDto("수료 강의 수", toAlignedPoints(labels, completedCourseRows, "건"))
+                )
+        );
+    }
+
+    private List<ChartPointDto> toPeriodIncreasePoints(Set<String> labels, List<StatisticsPointRow> rows) {
+        Map<String, BigDecimal> valuesByLabel = new LinkedHashMap<>();
+        rows.forEach(row -> valuesByLabel.put(row.label(), safe(row.value())));
+
+        BigDecimal[] previous = {BigDecimal.ZERO};
+        return labels.stream()
+                .map(label -> {
+                    BigDecimal current = valuesByLabel.getOrDefault(label, previous[0]);
+                    BigDecimal increase = current.subtract(previous[0]).setScale(1, RoundingMode.HALF_UP);
+                    previous[0] = current;
+                    return new ChartPointDto(label, increase, number(increase, "%p"));
+                })
+                .toList();
+    }
+
+    private List<ChartPointDto> toAlignedPoints(Set<String> labels, List<StatisticsPointRow> rows) {
+        return toAlignedPoints(labels, rows, "점");
+    }
+
+    private List<ChartPointDto> toAlignedPoints(Set<String> labels, List<StatisticsPointRow> rows, String unit) {
+        Map<String, BigDecimal> valuesByLabel = new LinkedHashMap<>();
+        rows.forEach(row -> valuesByLabel.put(row.label(), safe(row.value())));
+
+        return labels.stream()
+                .map(label -> {
+                    BigDecimal value = valuesByLabel.getOrDefault(label, BigDecimal.ZERO);
+                    return new ChartPointDto(label, value, number(value, unit));
+                })
+                .toList();
     }
 
     private StatisticsFilter previousPeriodFilter(StatisticsFilter filter) {

@@ -3,7 +3,7 @@
            ========================================================================== */
         body {
             background-color: #F8FAFC; /* 쾌적한 옅은 회색 배경 */
-            color: #0F172A;
+            color: #3B4043;
             font-family: "Pretendard", sans-serif;
             scroll-behavior: smooth; /* 기본 스크롤 메커니즘 최적화 */
         }
@@ -27,7 +27,7 @@
             transition: color 0.2s;
         }
         .back-anchor:hover {
-            color: #0F172A;
+            color: #3B4043;
         }
 
         /* 중, 하단 그리드 (좌 7 : 우 3) */
@@ -97,42 +97,54 @@
             color: #10B981;
             border: 1px solid #D1FAE5;
         }
-        .btn-share {
-            background: none;
-            border: none;
-            color: #94A3B8;
-            font-size: 20px;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        .btn-share:hover { color: #0F172A; }
-
-        /* 상단 (썸네일 + 타이틀 구조) */
+        /* 상단 이미지 카드 구조 */
         .info-box-hero {
-            padding: 0 32px 32px;
-            display: flex;
-            gap: 32px;
+            display: block;
         }
-        .hero-thumb {
-            width: 280px;
-            height: 180px;
-            border-radius: 12px;
+        .detail-img-wrapper {
+            position: relative;
+            width: 100%;
+            min-height: 260px;
+            aspect-ratio: 16 / 7;
+            background-color: #20866A;
+            overflow: hidden;
+        }
+        .card-img-custom {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            border: 1px solid #F1F5F9;
-            flex-shrink: 0;
+            position: absolute;
+            inset: 0;
         }
-        .hero-text-area {
+        .tags-overlay {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            max-width: calc(100% - 72px);
+            z-index: 10;
+        }
+        .badge-tag {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 10px;
+            border-radius: 6px;
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+        }
+        .course-summary-body {
+            padding: 22px 28px 28px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            justify-content: center;
+            gap: 10px;
         }
         .hero-title {
-            font-size: 26px;
+            font-size: 24px;
             font-weight: 800;
             line-height: 1.35;
             margin: 0;
-            color: #0F172A;
+            color: #3B4043;
         }
         .hero-desc {
             font-size: 15px;
@@ -143,6 +155,22 @@
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+        .instructor-text {
+            margin-top: 4px;
+            color: #6C757D;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .course-video-player {
+            padding: 0 28px 28px;
+        }
+        .course-video-player video {
+            width: 100%;
+            max-height: 520px;
+            border-radius: 12px;
+            background: #0F172A;
+            display: block;
         }
 
         /* 중상단 탭 선택 - 스크롤 위치 고정을 위해 상단 고정 가능 처리 가능성 인프라 */
@@ -162,8 +190,8 @@
             transition: all 0.2s;
         }
         .tab-item.active {
-            color: #0F172A;
-            border-bottom-color: #0F172A;
+            color: #3B4043;
+            border-bottom-color: #3B4043;
         }
 
         /* 중하단 강좌정보 목록 */
@@ -195,7 +223,7 @@
         }
         .detail-dd {
             font-size: 14px;
-            color: #0F172A;
+            color: #3B4043;
             font-weight: 500;
         }
 
@@ -216,7 +244,7 @@
             font-size: 20px;
             font-weight: 800;
             margin: 0;
-            color: #0F172A;
+            color: #3B4043;
         }
         .curr-count {
             background: #F1F5F9;
@@ -305,7 +333,7 @@
 }
         .btn-study-start { background: #10B981; color: #FFFFFF; } /* 초록색 */
         .btn-study-locked { background: #F1F5F9; color: #94A3B8; cursor: not-allowed; } /* 회색 */
-        .btn-offline-spot { background: #FFFFFF; color: #0F172A; border: 1px solid #E2E8F0; cursor: default; } /* 흰색 */
+        .btn-offline-spot { background: #FFFFFF; color: #3B4043; border: 1px solid #E2E8F0; cursor: default; } /* 흰색 */
 
         /* -----------------------------------------
            [우측] 끈끈이 작은 박스 (Sticky Sidebar)
@@ -336,7 +364,7 @@
         .sc-status-big {
             font-size: 24px;
             font-weight: 800;
-            color: #0F172A;
+            color: #3B4043;
         }
 
         /* 중단: 옅은회색 통계 박스 */
@@ -429,8 +457,37 @@
         .offline-course-state__value {
             display: block;
             font-size: 15px;
-            color: #0F172A;
+            color: #3B4043;
             font-weight: 800;
+        }
+        .offline-apply-unavailable {
+            display: grid;
+            justify-items: center;
+            gap: 8px;
+            padding: 14px;
+            border: 1px solid #FECACA;
+            border-radius: 8px;
+            background: #FEF2F2;
+            text-align: center;
+        }
+        .offline-apply-unavailable__badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 26px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: #FEE2E2;
+            color: #B91C1C;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .offline-apply-unavailable p {
+            margin: 0;
+            color: #991B1B;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.45;
         }
         .btn-cancel:hover { background: #FEF2F2; }
 
@@ -442,4 +499,27 @@
             background: #F1F5F9;
             padding: 16px;
             border-radius: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .right-column {
+                position: static;
+            }
+
+            .detail-img-wrapper {
+                min-height: 220px;
+                aspect-ratio: 4 / 3;
+            }
+
+            .course-summary-body {
+                padding: 20px;
+            }
+
+            .hero-title {
+                font-size: 22px;
+            }
         }

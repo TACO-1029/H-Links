@@ -53,16 +53,23 @@ public class CourseController {
 
         log.info("강의 목록 화면 진입 - 요청 카테고리: {}", categoryType);
 
-        // 1. Service를 통해 화면에 뿌려줄 강의 데이터 리스트 조회
-        List<CourseListResponseDto> courses = courseService.getCourseList(
+        // 1. 최초 화면은 12개만 렌더링하고 이후 데이터는 무한스크롤 API로 조회합니다.
+        var initialCourseSlice = courseService.getCourseSlice(
                 categoryType,
                 courseTypes != null ? courseTypes : List.of(),
                 skillIds != null ? skillIds : List.of(),
-                sort
+                null,
+                null,
+                null,
+                sort,
+                0,
+                12
         );
+        List<CourseListResponseDto> courses = initialCourseSlice.getContent();
 
         // 2. Thymeleaf 템플릿(HTML)에서 접근할 수 있도록 Model에 데이터 담기
         model.addAttribute("courses", courses);
+        model.addAttribute("initialHasNext", initialCourseSlice.isHasNext());
         model.addAttribute("skillGroups", courseService.getSkillFilterGroups());
         model.addAttribute("selectedCourseTypes", courseTypes != null ? courseTypes : List.of());
         model.addAttribute("selectedSkillIds", skillIds != null ? skillIds : List.of());

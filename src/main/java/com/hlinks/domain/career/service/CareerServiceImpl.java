@@ -4,7 +4,10 @@ import com.hlinks.domain.career.exception.CareerErrorCode;
 import com.hlinks.domain.career.mapper.CareerMapper;
 import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.dto.CareerSkillDto;
+import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.global.exception.BaseException;
+import com.hlinks.global.response.SliceResponse;
+import com.hlinks.global.response.code.ErrorResponseCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -106,6 +109,32 @@ public class CareerServiceImpl implements CareerService {
     @Override
     public List<CareerSkillDto> getAllActiveSkills() {
         return careerMapper.findAllActiveSkills();
+    }
+
+    @Override
+    public SliceResponse<CourseListResponseDto> getRecommendationCourseSlice(Long userId, Long diagnosisId, int page, int size) {
+        if (careerMapper.countDiagnosisByDiagnosisIdAndUserId(diagnosisId, userId) == 0) {
+            throw new BaseException(ErrorResponseCode.FORBIDDEN, "조회할 수 없는 커리어패스 추천 결과입니다.");
+        }
+
+        int normalizedPage = Math.max(page, 0);
+        int normalizedSize = normalizeSliceSize(size);
+        int limitPlusOne = normalizedSize + 1;
+        int offset = normalizedPage * normalizedSize;
+
+        List<CourseListResponseDto> rows =
+                careerMapper.findRecommendationCourseSlice(diagnosisId, offset, limitPlusOne);
+        boolean hasNext = rows.size() > normalizedSize;
+        List<CourseListResponseDto> content = hasNext ? rows.subList(0, normalizedSize) : rows;
+
+        return SliceResponse.of(content, normalizedPage, normalizedSize, hasNext);
+    }
+
+    private int normalizeSliceSize(int size) {
+        if (size <= 0) {
+            return 12;
+        }
+        return Math.min(size, 50);
     }
 
     @Override
@@ -240,7 +269,7 @@ public class CareerServiceImpl implements CareerService {
         // Generate AI feedback summary narrative
         StringBuilder scoreInfo = new StringBuilder();
         for (Map<String, Object> res : resultsList) {
-            scoreInfo.append(String.format("- 기술 ID: %s, 선택 난이도: %s, 획득 점수: %s점\n", 
+            scoreInfo.append(String.format("- 기술 ID: %s, 선택 난이도: %s, 획득 점수: %s점\n",
                     res.get("skillId"), res.get("selectedDifficulty"), res.get("score")));
         }
         String aiFeedback = aiLevelTestService.generateFeedbackSummary(categoryName, scoreInfo.toString());
@@ -253,7 +282,7 @@ public class CareerServiceImpl implements CareerService {
         try {
             String resultJson = objectMapper.writeValueAsString(finalJsonMap);
             log.info("레벨 테스트 채점 결과 JSON 도출: {}", resultJson);
-            
+
             // Persist the result in LLM Summary for next steps / dashboard
             careerMapper.updateLlmSummary(diagnosisId, resultJson);
         } catch (Exception e) {

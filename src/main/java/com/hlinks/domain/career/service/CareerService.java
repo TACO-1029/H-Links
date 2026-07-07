@@ -2,6 +2,9 @@ package com.hlinks.domain.career.service;
 
 import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.dto.CareerSkillDto;
+import com.hlinks.domain.course.dto.CourseListResponseDto;
+import com.hlinks.global.response.SliceResponse;
+
 import com.hlinks.domain.career.entity.LevelTestQuestion;
 import java.util.List;
 
@@ -36,6 +39,8 @@ public interface CareerService {
 
     // 전체 활성 스킬 목록 조회
     List<CareerSkillDto> getAllActiveSkills();
+
+    SliceResponse<CourseListResponseDto> getRecommendationCourseSlice(Long userId, Long diagnosisId, int page, int size);
 
     // 비동기로 레벨 테스트 생성
     void buildLevelTestAsync(Long diagnosisId, List<Long> skillIds, List<String> difficulties);

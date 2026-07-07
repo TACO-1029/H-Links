@@ -11,6 +11,8 @@ import com.hlinks.domain.statistics.dto.DepartmentGrowthQuery;
 import com.hlinks.domain.statistics.dto.OrganizationKpiStats;
 import com.hlinks.domain.statistics.dto.OrganizationStatisticsView;
 import com.hlinks.domain.statistics.dto.RankStatDto;
+import com.hlinks.domain.statistics.dto.RankTableDto;
+import com.hlinks.domain.statistics.dto.RankTableRowDto;
 import com.hlinks.domain.statistics.dto.StatisticsBlockDto;
 import com.hlinks.domain.statistics.dto.StatisticsFilter;
 import com.hlinks.domain.statistics.dto.StatisticsScope;
@@ -22,8 +24,10 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -35,8 +39,8 @@ public class OrganizationStatisticsService {
         OrganizationKpiStats kpis = organizationStatisticsMapper.selectOrganizationKpis(filter);
 
         return new OrganizationStatisticsView(
-                "조직 비교 통계",
-                "선택한 조직 단위로 학습 참여도와 역량 성장 흐름을 비교합니다.",
+                "부서 비교 통계",
+                "선택한 부서 단위로 학습 참여도와 역량 성장 흐름을 비교합니다.",
                 List.of(
                         StatisticsBlockDto.kpi(1, new KpiStatDto("bi bi-trophy-fill", "참여율 1위 부서", fallback(kpis.topParticipationDepartmentName(), "참여 데이터 없음"), percentWithAverageHint(kpis.topParticipationRate(), kpis.averageParticipationRate()), "")),
                         StatisticsBlockDto.kpi(1, new KpiStatDto("bi bi-mortarboard-fill", "수료율 1위 부서", fallback(kpis.topCompletionDepartmentName(), "수료 데이터 없음"), percentWithAverageHint(kpis.topCompletionRate(), kpis.averageCompletionRate()), "blue")),
@@ -44,7 +48,7 @@ public class OrganizationStatisticsService {
                         StatisticsBlockDto.kpi(1, new KpiStatDto("bi bi-graph-up-arrow", "성장률 1위 부서", fallback(kpis.topGrowthDepartmentName(), "성장 데이터 없음"), growthWithAverageHint(kpis.topGrowthRate(), kpis.averageGrowthRate()), "orange"))
                 ),
                 List.of(
-                        new StatisticsSectionDto("조직별 비교", List.of(
+                        new StatisticsSectionDto("부서별 비교", List.of(
                                 StatisticsBlockDto.chart(2, StatisticsChartFactory.chart("organization-department-participation", "부서별 학습 참여율", "참여 인원 / 대상 인원", "bar", "%", "참여율", organizationStatisticsMapper.selectDepartmentParticipationRate(filter))),
                                 StatisticsBlockDto.chart(2, StatisticsChartFactory.chart("organization-department-completion", "부서별 수료율", "수료자 비율", "bar", "%", "수료율", organizationStatisticsMapper.selectDepartmentCompletionRate(filter)))
                         )),
@@ -53,8 +57,8 @@ public class OrganizationStatisticsService {
                                 StatisticsBlockDto.chart(2, departmentGrowthLine(organizationStatisticsMapper.selectDepartmentGrowthRates(DepartmentGrowthQuery.from(filter))))
                         )),
                         new StatisticsSectionDto("교육 성과", List.of(
-                                StatisticsBlockDto.rank(1, "참여 우수 조직 TOP5", "참여율 기준", StatisticsChartFactory.ranks(organizationStatisticsMapper.selectTopParticipationDepartments(filter), "%")),
-                                StatisticsBlockDto.rank(3, "부서별 인기 강의 TOP5", "강의 신청 수 기준", departmentCourseRanks(organizationStatisticsMapper.selectPopularCoursesByDepartment(filter)))
+                                StatisticsBlockDto.rank(1, "참여 우수 부서 랭킹", "참여율 기준", StatisticsChartFactory.ranks(organizationStatisticsMapper.selectTopParticipationDepartments(filter), "%")),
+                                StatisticsBlockDto.rankTable(3, "부서별 인기 강의 랭킹", "강의 신청 수 기준", departmentCourseRankTable(organizationStatisticsMapper.selectPopularCoursesByDepartment(filter), filter))
                         ))
                 )
         );
@@ -81,7 +85,7 @@ public class OrganizationStatisticsService {
                 "organization-department-average-competency",
                 "부서별 평균 역량",
                 "5개 핵심 역량 평균 점수",
-                "radar",
+                "heatmap",
                 "점",
                 series
         );
@@ -106,8 +110,8 @@ public class OrganizationStatisticsService {
 
         return new ChartStatDto(
                 "organization-department-growth-rate",
-                "부서별 성장률",
-                "선택 기간 단위별 역량 성장률",
+                "부서별 성장률 순위 변화",
+                "월별 성장률 순위와 전사 평균 대비 여부",
                 "line",
                 "%",
                 series
@@ -124,6 +128,56 @@ public class OrganizationStatisticsService {
                         number(row.value(), "명")
                 ))
                 .toList();
+    }
+
+    private RankTableDto departmentCourseRankTable(List<DepartmentCourseRankRow> rows, StatisticsFilter filter) {
+        Set<String> departmentNames = new LinkedHashSet<>();
+        Map<Integer, Map<String, String>> courseTitlesByRankAndDepartment = new LinkedHashMap<>();
+
+        for (DepartmentCourseRankRow row : rows) {
+            departmentNames.add(row.departmentName());
+            courseTitlesByRankAndDepartment
+                    .computeIfAbsent(row.rank(), ignored -> new LinkedHashMap<>())
+                    .put(row.departmentName(), row.courseTitle());
+        }
+
+        List<String> columns = List.copyOf(departmentNames);
+        int titleMaxLength = courseTitleMaxLength(filter, columns.size());
+        List<RankTableRowDto> tableRows = java.util.stream.IntStream.rangeClosed(1, 5)
+                .mapToObj(rank -> {
+                    Map<String, String> courseTitlesByDepartment = courseTitlesByRankAndDepartment.getOrDefault(rank, Map.of());
+                    List<String> values = columns.stream()
+                            .map(departmentName -> shortenCourseTitle(courseTitlesByDepartment.get(departmentName), titleMaxLength))
+                            .toList();
+                    return new RankTableRowDto(rank + "위", values);
+                })
+                .toList();
+
+        return new RankTableDto(columns, tableRows);
+    }
+
+    private int courseTitleMaxLength(StatisticsFilter filter, int displayedDepartmentCount) {
+        int selectedDepartmentCount = filter != null && filter.hasDepartmentIds()
+                ? filter.departmentIds().size()
+                : displayedDepartmentCount;
+        int departmentCount = Math.max(1, Math.min(selectedDepartmentCount, 5));
+
+        return switch (departmentCount) {
+            case 1 -> 34;
+            case 2 -> 26;
+            case 3 -> 20;
+            case 4 -> 16;
+            default -> 13;
+        };
+    }
+
+    private String shortenCourseTitle(String title, int maxLength) {
+        if (title == null || title.isBlank()) {
+            return "-";
+        }
+
+        String trimmed = title.trim();
+        return trimmed.length() > maxLength ? trimmed.substring(0, maxLength) + "..." : trimmed;
     }
 
     private String badgeTone(int rank) {

@@ -1,7 +1,7 @@
 package com.hlinks.domain.statistics.mapper;
 
-import com.hlinks.domain.statistics.dto.CoursePeriodQuery;
-import com.hlinks.domain.statistics.dto.CoursePeriodSeriesRow;
+import com.hlinks.domain.statistics.dto.CourseStatusMonthlyRow;
+import com.hlinks.domain.statistics.dto.IncompleteCourseRow;
 import com.hlinks.domain.statistics.dto.PopularCourseRow;
 import com.hlinks.domain.statistics.dto.SkillPopularityChangeQuery;
 import com.hlinks.domain.statistics.dto.StatisticsFilter;
@@ -41,7 +41,7 @@ public interface CourseStatisticsMapper {
     List<PopularCourseRow> selectPopularCourses(StatisticsFilter filter);
 
     // 미수료 또는 이탈 신청 건수를 기준으로 강의 TOP5 랭킹 데이터를 조회합니다.
-    List<StatisticsRankRow> selectIncompleteCourses(StatisticsFilter filter);
+    List<IncompleteCourseRow> selectIncompleteCourses(StatisticsFilter filter);
 
     // 선택 기간의 수강 신청 수를 기준으로 세부 스킬 TOP5 데이터를 조회합니다.
     List<StatisticsPointRow> selectPopularSkills(StatisticsFilter filter);
@@ -50,8 +50,6 @@ public interface CourseStatisticsMapper {
     List<StatisticsPointRow> selectRisingSkills(SkillPopularityChangeQuery query);
 
     // 기간 단위별 수강 신청 및 수료 추이 데이터를 조회합니다.
-    List<CoursePeriodSeriesRow> selectApplicationCompletionTrend(CoursePeriodQuery query);
-
     // 기간 단위별 수강 신청 대비 수료 전환율 추이 데이터를 조회합니다.
-    List<StatisticsPointRow> selectApplicationCompletionConversionTrend(CoursePeriodQuery query);
+    List<CourseStatusMonthlyRow> selectMonthlyLearningStatusComposition(StatisticsFilter filter);
 }

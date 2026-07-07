@@ -121,83 +121,127 @@
         ORDER BY w.sort_order
     </select>
 
-    <select id="selectWeeklyLearningHours" resultType="com.hlinks.domain.statistics.dto.StatisticsPointRow">
-        SELECT TO_NUMBER(TO_CHAR(week_start, 'MM')) || '/' ||
-               TO_NUMBER(TO_CHAR(week_start, 'W')) || '주' AS label,
-               ROUND(AVG(user_play_seconds) / 3600, 1) AS value
-        FROM (
-            SELECT TRUNC(ll.EVENT_AT, 'IW') AS week_start,
+    <select id="selectLearningHoursInPeriod" resultType="com.hlinks.domain.statistics.dto.StatisticsPointRow">
+        WITH periods AS (
+            SELECT period_start,
+                   CASE #{periodUnit}
+                       WHEN 'DAY' THEN period_start + 1
+                       WHEN 'WEEK' THEN period_start + 7
+                       WHEN 'MONTH' THEN ADD_MONTHS(period_start, 1)
+                       ELSE ADD_MONTHS(period_start, 3)
+                   END AS period_end,
+                   CASE #{periodUnit}
+                       WHEN 'DAY' THEN TO_CHAR(period_start, 'MM/DD')
+                       WHEN 'WEEK' THEN TO_CHAR(period_start, 'MM/DD') || '주'
+                       WHEN 'MONTH' THEN TO_CHAR(period_start, 'YYYY-MM')
+                       ELSE TO_CHAR(period_start, 'YYYY') || ' Q' || TO_CHAR(period_start, 'Q')
+                   END AS period_label
+            FROM (
+                SELECT CASE #{periodUnit}
+                           WHEN 'DAY' THEN #{startDate} + LEVEL - 1
+                           WHEN 'WEEK' THEN TRUNC(#{startDate}, 'IW') + ((LEVEL - 1) * 7)
+                           WHEN 'MONTH' THEN ADD_MONTHS(TRUNC(#{startDate}, 'MM'), LEVEL - 1)
+                           ELSE ADD_MONTHS(TRUNC(#{startDate}, 'Q'), (LEVEL - 1) * 3)
+                       END AS period_start
+                FROM DUAL
+                CONNECT BY LEVEL &lt;= CASE #{periodUnit}
+                    WHEN 'DAY' THEN TRUNC(#{endDate}) - TRUNC(#{startDate}) + 1
+                    WHEN 'WEEK' THEN CEIL((TRUNC(#{endDate}) - TRUNC(#{startDate}, 'IW') + 1) / 7)
+                    WHEN 'MONTH' THEN FLOOR(MONTHS_BETWEEN(TRUNC(#{endDate}, 'MM'), TRUNC(#{startDate}, 'MM'))) + 1
+                    ELSE FLOOR(MONTHS_BETWEEN(TRUNC(#{endDate}, 'Q'), TRUNC(#{startDate}, 'Q')) / 3) + 1
+                END
+            )
+            WHERE period_start &lt; #{endDate} + 1
+        ),
+        user_period_hours AS (
+            SELECT p.period_start,
                    ll.USER_ID,
                    SUM(ll.PLAY_SECONDS) AS user_play_seconds
-            FROM LEARNING_LOG ll
+            FROM periods p
+            JOIN LEARNING_LOG ll
+              ON ll.EVENT_AT &gt;= p.period_start
+             AND ll.EVENT_AT &lt; p.period_end
             JOIN USERS u ON u.USER_ID = ll.USER_ID
             JOIN COURSE c ON c.COURSE_ID = ll.COURSE_ID
             WHERE ll.EVENT_AT &gt;= #{startDate}
               AND ll.EVENT_AT &lt; #{endDate} + 1
             <include refid="userFilter"/>
             <include refid="courseFilter"/>
-            GROUP BY TRUNC(ll.EVENT_AT, 'IW'), ll.USER_ID
+            GROUP BY p.period_start, ll.USER_ID
         )
-        GROUP BY week_start
-        ORDER BY week_start
+        SELECT p.period_label AS label,
+               NVL(ROUND(AVG(uph.user_play_seconds) / 3600, 1), 0) AS value
+        FROM periods p
+        LEFT JOIN user_period_hours uph ON uph.period_start = p.period_start
+        GROUP BY p.period_start, p.period_label
+        ORDER BY p.period_start
     </select>
-
     <select id="selectLearningParticipationFunnel" resultType="com.hlinks.domain.statistics.dto.StatisticsPointRow">
         WITH total_users AS (
-            SELECT COUNT(DISTINCT u.USER_ID) AS total_count
-            FROM USERS u
-            WHERE 1 = 1
-            <include refid="userFilter"/>
+        SELECT COUNT(DISTINCT u.USER_ID) AS total_count
+        FROM USERS u
+        WHERE u.STATUS = 'ACTIVE'
+        <include refid="userFilter"/>
         ),
+
+        base_applications AS (
+        SELECT DISTINCT
+        ca.APPLICATION_ID,
+        ca.USER_ID,
+        ca.COURSE_ID,
+        ca.APPLICATION_STATUS,
+        ca.APPLIED_AT
+        FROM COURSE_APPLICATION ca
+        JOIN USERS u ON u.USER_ID = ca.USER_ID
+        JOIN COURSE c ON c.COURSE_ID = ca.COURSE_ID
+        WHERE ca.APPLICATION_STATUS IN ('WAITING', 'APPROVED')
+        AND ca.APPLIED_AT &gt;= #{startDate}
+        AND ca.APPLIED_AT &lt; #{endDate} + 1
+        <include refid="userFilter"/>
+        <include refid="courseFilter"/>
+        ),
+
         funnel_counts AS (
-            SELECT 1 AS sort_order,
-                   '신청' AS label,
-                   COUNT(DISTINCT ca.USER_ID) AS participant_count
-            FROM COURSE_APPLICATION ca
-            JOIN USERS u ON u.USER_ID = ca.USER_ID
-            JOIN COURSE c ON c.COURSE_ID = ca.COURSE_ID
-            WHERE ca.APPLICATION_STATUS IN ('WAITING', 'APPROVED')
-              AND ca.APPLIED_AT &gt;= #{startDate}
-              AND ca.APPLIED_AT &lt; #{endDate} + 1
-            <include refid="userFilter"/>
-            <include refid="courseFilter"/>
-            UNION ALL
-            SELECT 2 AS sort_order,
-                   '학습 시작' AS label,
-                   COUNT(DISTINCT cls.USER_ID) AS participant_count
-            FROM COURSE_LEARNING_STATUS cls
-            JOIN USERS u ON u.USER_ID = cls.USER_ID
-            JOIN COURSE c ON c.COURSE_ID = cls.COURSE_ID
-            WHERE cls.STATUS != 'CANCELED'
-              AND cls.UPDATED_AT &gt;= #{startDate}
-              AND cls.UPDATED_AT &lt; #{endDate} + 1
-            <include refid="userFilter"/>
-            <include refid="courseFilter"/>
-            UNION ALL
-            SELECT 3 AS sort_order,
-                   '수료' AS label,
-                   COUNT(DISTINCT cls.USER_ID) AS participant_count
-            FROM COURSE_LEARNING_STATUS cls
-            JOIN USERS u ON u.USER_ID = cls.USER_ID
-            JOIN COURSE c ON c.COURSE_ID = cls.COURSE_ID
-            WHERE cls.STATUS = 'COMPLETED'
-              AND cls.UPDATED_AT &gt;= #{startDate}
-              AND cls.UPDATED_AT &lt; #{endDate} + 1
-            <include refid="userFilter"/>
-            <include refid="courseFilter"/>
+        SELECT 1 AS sort_order,
+        '신청' AS label,
+        COUNT(DISTINCT ba.USER_ID) AS participant_count
+        FROM base_applications ba
+
+        UNION ALL
+
+        SELECT 2 AS sort_order,
+        '학습 시작' AS label,
+        COUNT(DISTINCT ba.USER_ID) AS participant_count
+        FROM base_applications ba
+        JOIN COURSE_LEARNING_STATUS cls
+        ON cls.APPLICATION_ID = ba.APPLICATION_ID
+        WHERE ba.APPLICATION_STATUS = 'APPROVED'
+        AND cls.STATUS IN ('IN_PROGRESS', 'COMPLETED')
+        AND cls.STARTED_AT IS NOT NULL
+
+        UNION ALL
+
+        SELECT 3 AS sort_order,
+        '수료' AS label,
+        COUNT(DISTINCT ba.USER_ID) AS participant_count
+        FROM base_applications ba
+        JOIN COURSE_LEARNING_STATUS cls
+        ON cls.APPLICATION_ID = ba.APPLICATION_ID
+        WHERE ba.APPLICATION_STATUS = 'APPROVED'
+        AND cls.STATUS = 'COMPLETED'
+        AND cls.COMPLETED_AT IS NOT NULL
         )
+
         SELECT fc.label,
-               NVL(ROUND(fc.participant_count / NULLIF(tu.total_count, 0) * 100, 1), 0) AS value
+        NVL(ROUND(fc.participant_count / NULLIF(tu.total_count, 0) * 100, 1), 0) AS value
         FROM funnel_counts fc
         CROSS JOIN total_users tu
         ORDER BY fc.sort_order
     </select>
 
-    <select id="selectLearningParticipationRateByKcy" resultType="com.hlinks.domain.statistics.dto.StatisticsPointRow">
-        SELECT label,
-               NVL(ROUND(participant_count / NULLIF(SUM(participant_count) OVER (), 0) * 100, 1), 0) AS value
-        FROM (
-            SELECT NVL(u.KCY_RESULT, '미분류') AS label,
+    <select id="selectTopKcyParticipationByCourseType" resultType="com.hlinks.domain.statistics.dto.KcyParticipationRow">
+        WITH kcy_counts AS (
+            SELECT NVL(u.KCY_RESULT, 'Unclassified') AS label,
                    COUNT(DISTINCT u.USER_ID) AS participant_count
             FROM COURSE_LEARNING_STATUS cls
             JOIN USERS u ON u.USER_ID = cls.USER_ID
@@ -207,9 +251,33 @@
               AND cls.UPDATED_AT &lt; #{endDate} + 1
             <include refid="userFilter"/>
             <include refid="courseFilter"/>
-            GROUP BY NVL(u.KCY_RESULT, '미분류')
+            GROUP BY NVL(u.KCY_RESULT, 'Unclassified')
+        ),
+        total_count AS (
+            SELECT SUM(participant_count) AS total_participant_count
+            FROM kcy_counts
+        ),
+        ranked_counts AS (
+            SELECT label,
+                   participant_count,
+                   ROW_NUMBER() OVER (ORDER BY participant_count DESC, label) AS rank_order
+            FROM kcy_counts
+        ),
+        grouped_counts AS (
+            SELECT CASE WHEN rank_order &lt;= 5 THEN label ELSE '기타' END AS label,
+                   CASE WHEN rank_order &lt;= 5 THEN rank_order ELSE 6 END AS sort_order,
+                   SUM(participant_count) AS participant_count
+            FROM ranked_counts
+            GROUP BY CASE WHEN rank_order &lt;= 5 THEN label ELSE '기타' END,
+                     CASE WHEN rank_order &lt;= 5 THEN rank_order ELSE 6 END
         )
-        ORDER BY value DESC, label
+        SELECT label,
+               participant_count AS participantCount,
+               NVL(ROUND(participant_count / NULLIF(total_participant_count, 0) * 100, 1), 0) AS participationRate
+        FROM ranked_counts
+        CROSS JOIN total_count
+        WHERE rank_order &lt;= 5
+        ORDER BY participant_count DESC, label
     </select>
 
     <select id="selectAverageCompetencyScores" resultType="com.hlinks.domain.statistics.dto.StatisticsPointRow">
@@ -222,6 +290,19 @@
           AND ucs.CALCULATED_AT &gt;= #{startDate}
           AND ucs.CALCULATED_AT &lt; #{endDate} + 1
         <include refid="userFilter"/>
+        GROUP BY comp.COMPETENCY_NAME
+        ORDER BY comp.COMPETENCY_NAME
+    </select>
+
+    <select id="selectCompanyAverageCompetencyScores" resultType="com.hlinks.domain.statistics.dto.StatisticsPointRow">
+        SELECT comp.COMPETENCY_NAME AS label,
+               ROUND(AVG(ucs.SCORE), 1) AS value
+        FROM USER_COMPETENCY_SCORE ucs
+        JOIN COMPETENCY comp ON comp.COMPETENCY_ID = ucs.COMPETENCY_ID
+        JOIN USERS u ON u.USER_ID = ucs.USER_ID
+        WHERE comp.USE_YN = 'Y'
+          AND ucs.CALCULATED_AT &gt;= #{startDate}
+          AND ucs.CALCULATED_AT &lt; #{endDate} + 1
         GROUP BY comp.COMPETENCY_NAME
         ORDER BY comp.COMPETENCY_NAME
     </select>
@@ -283,6 +364,62 @@
         FROM periods p
         LEFT JOIN period_scores ps ON ps.period_start = p.period_start
         CROSS JOIN baseline_score bs
+        ORDER BY p.period_start
+    </select>
+
+    <select id="selectCompletedCourseCountsInPeriod" resultType="com.hlinks.domain.statistics.dto.StatisticsPointRow">
+        WITH periods AS (
+            SELECT period_start,
+                   CASE #{periodUnit}
+                       WHEN 'DAY' THEN period_start + 1
+                       WHEN 'WEEK' THEN period_start + 7
+                       WHEN 'MONTH' THEN ADD_MONTHS(period_start, 1)
+                       ELSE ADD_MONTHS(period_start, 3)
+                   END AS period_end,
+                   CASE #{periodUnit}
+                       WHEN 'DAY' THEN TO_CHAR(period_start, 'MM/DD')
+                       WHEN 'WEEK' THEN TO_CHAR(period_start, 'MM/DD') || '주'
+                       WHEN 'MONTH' THEN TO_CHAR(period_start, 'YYYY-MM')
+                       ELSE TO_CHAR(period_start, 'YYYY') || ' Q' || TO_CHAR(period_start, 'Q')
+                   END AS period_label
+            FROM (
+                SELECT CASE #{periodUnit}
+                           WHEN 'DAY' THEN #{startDate} + LEVEL - 1
+                           WHEN 'WEEK' THEN TRUNC(#{startDate}, 'IW') + ((LEVEL - 1) * 7)
+                           WHEN 'MONTH' THEN ADD_MONTHS(TRUNC(#{startDate}, 'MM'), LEVEL - 1)
+                           ELSE ADD_MONTHS(TRUNC(#{startDate}, 'Q'), (LEVEL - 1) * 3)
+                       END AS period_start
+                FROM DUAL
+                CONNECT BY LEVEL &lt;= CASE #{periodUnit}
+                    WHEN 'DAY' THEN TRUNC(#{endDate}) - TRUNC(#{startDate}) + 1
+                    WHEN 'WEEK' THEN CEIL((TRUNC(#{endDate}) - TRUNC(#{startDate}, 'IW') + 1) / 7)
+                    WHEN 'MONTH' THEN FLOOR(MONTHS_BETWEEN(TRUNC(#{endDate}, 'MM'), TRUNC(#{startDate}, 'MM'))) + 1
+                    ELSE FLOOR(MONTHS_BETWEEN(TRUNC(#{endDate}, 'Q'), TRUNC(#{startDate}, 'Q')) / 3) + 1
+                END
+            )
+            WHERE period_start &lt; #{endDate} + 1
+        ),
+        completed_counts AS (
+            SELECT p.period_start,
+                   COUNT(DISTINCT cls.COURSE_LEARNING_ID) AS completed_count
+            FROM periods p
+            JOIN COURSE_LEARNING_STATUS cls
+              ON cls.COMPLETED_AT &gt;= p.period_start
+             AND cls.COMPLETED_AT &lt; p.period_end
+            JOIN USERS u ON u.USER_ID = cls.USER_ID
+            JOIN COURSE c ON c.COURSE_ID = cls.COURSE_ID
+            WHERE cls.STATUS = 'COMPLETED'
+              AND cls.COMPLETED_AT IS NOT NULL
+              AND cls.COMPLETED_AT &gt;= #{startDate}
+              AND cls.COMPLETED_AT &lt; #{endDate} + 1
+            <include refid="userFilter"/>
+            <include refid="courseFilter"/>
+            GROUP BY p.period_start
+        )
+        SELECT p.period_label AS label,
+               NVL(cc.completed_count, 0) AS value
+        FROM periods p
+        LEFT JOIN completed_counts cc ON cc.period_start = p.period_start
         ORDER BY p.period_start
     </select>
 </mapper>

@@ -89,7 +89,7 @@
 
     <section id="courseResults" class="content-area" th:fragment="courseResults">
         <div class="content-toolbar">
-            <div class="total-count">조회된 강의 <span th:text="${courses != null ? courses.size() : 0}">0</span>건</div>
+            <div class="total-count">표시된 강의 <span id="renderedCourseCount" th:text="${courses != null ? courses.size() : 0}">0</span>건</div>
 
             <div class="toolbar-right">
                 <div class="select-custom-wrap">
@@ -131,8 +131,6 @@
                              alt="강의 썸네일"
                              class="card-thumbnail"
                              onerror="this.onerror=null; this.src='/images/common/hyundai_futurenet.webp';">
-                    </div>
-                    <div class="card-body">
                         <div class="card-badges">
                             <span class="badge"
                                   th:classappend="${course.courseType == 'ONLINE' ? 'badge-online' : 'badge-offline'}"
@@ -141,6 +139,8 @@
                             </span>
                             <span class="badge badge-status" th:text="${course.virtualStatus}">상시 운영</span>
                         </div>
+                    </div>
+                    <div class="card-body">
                         <h3 class="card-title" th:text="${course.courseTitle}">클라우드 네이티브 아키텍처</h3>
                         <div class="card-instructor"
                              th:text="|강사 : ${course.instructorName != null ? course.instructorName : '인재개발원'}|">강사 :
@@ -151,21 +151,103 @@
             </a>
 
         </div>
+        <div id="courseInfiniteSentinel"
+             class="course-infinite-sentinel"
+             th:data-has-next="${initialHasNext}">
+        </div>
     </section>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <script th:inline="javascript">
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', () => {
         const courseFilterForm = document.getElementById('courseFilterForm');
         let currentView = 'grid';
+        let currentPage = 0;
+        let hasNext = document.getElementById('courseInfiniteSentinel')?.dataset.hasNext === 'true';
+        let isLoading = false;
+        let observer = null;
+        const pageSize = 12;
+        const placeholderImage = '/images/common/hyundai_futurenet.webp';
 
-        function buildFilterParams() {
-            return new URLSearchParams(new FormData(courseFilterForm));
-        }
+        const buildFilterParams = () => {
+            const params = new URLSearchParams(new FormData(courseFilterForm));
+            params.set('page', String(currentPage));
+            params.set('size', String(pageSize));
+            return params;
+        };
 
-        function applyCurrentView() {
+        const escapeHtml = (value) => {
+            const div = document.createElement('div');
+            div.textContent = value ?? '';
+            return div.innerHTML;
+        };
+
+        const getCourseTypeLabel = (courseType) => {
+            if (courseType === 'ONLINE') {
+                return '온라인';
+            }
+            if (courseType === 'OFFLINE') {
+                return '오프라인';
+            }
+            return '유형 미정';
+        };
+
+        const getCourseTypeBadgeClass = (courseType) => courseType === 'ONLINE' ? 'badge-online' : 'badge-offline';
+
+        const renderCourseCard = (course) => {
+            const thumbnailUrl = course.thumbnailUrl || placeholderImage;
+            return `
+                <a href="/courses/${encodeURIComponent(course.courseId)}" class="course-card-link">
+                    <article class="course-card">
+                        <div class="card-thumb-wrap">
+                            <img src="${escapeHtml(thumbnailUrl)}"
+                                 alt="강의 썸네일"
+                                 class="card-thumbnail"
+                                 onerror="this.onerror=null; this.src='${placeholderImage}';">
+                            <div class="card-badges">
+                                <span class="badge ${getCourseTypeBadgeClass(course.courseType)}">${getCourseTypeLabel(course.courseType)}</span>
+                                <span class="badge badge-status">${escapeHtml(course.virtualStatus || '상태 확인 중')}</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title">${escapeHtml(course.courseTitle || '제목 없는 강의')}</h3>
+                            <div class="card-instructor">강사 : ${escapeHtml(course.instructorName || '인재개발원')}</div>
+                        </div>
+                    </article>
+                </a>
+            `;
+        };
+
+        const renderEmptyState = () => `
+            <div class="empty-state">
+                <svg class="empty-state-icon" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 7h2v6h-2zm0 8h2v2h-2z"/>
+                </svg>
+                <h4 class="empty-state-title">개설된 교육 콘텐츠가 없습니다.</h4>
+                <p class="empty-state-description">현재 카테고리의 신규 명품 강의를 기획 및 준비하고 있습니다.</p>
+            </div>
+        `;
+
+        const updateRenderedCount = () => {
+            const renderedCourseCount = document.getElementById('renderedCourseCount');
+            const courseContainer = document.getElementById('courseContainer');
+            if (renderedCourseCount && courseContainer) {
+                renderedCourseCount.textContent = String(courseContainer.querySelectorAll('.course-card-link').length);
+            }
+        };
+
+        const updateSentinel = (message) => {
+            const sentinel = document.getElementById('courseInfiniteSentinel');
+            if (!sentinel) {
+                return;
+            }
+            sentinel.innerHTML = `<span class="course-loading-message">${escapeHtml(message)}</span>`;
+            sentinel.classList.toggle('is-end', !hasNext);
+        };
+
+        const applyCurrentView = () => {
             const btnGrid = document.getElementById('btnGrid');
             const btnList = document.getElementById('btnList');
             const courseContainer = document.getElementById('courseContainer');
@@ -178,46 +260,55 @@
             btnList.classList.toggle('active', currentView === 'list');
             courseContainer.classList.toggle('view-grid', currentView === 'grid');
             courseContainer.classList.toggle('view-list', currentView === 'list');
-        }
+        };
 
-        function bindResultControls() {
+        const bindResultControls = () => {
             const btnGrid = document.getElementById('btnGrid');
             const btnList = document.getElementById('btnList');
             const courseSortSelect = document.getElementById('courseSortSelect');
 
             if (btnGrid) {
-                btnGrid.addEventListener('click', function () {
+                btnGrid.addEventListener('click', () => {
                     currentView = 'grid';
                     applyCurrentView();
                 });
             }
 
             if (btnList) {
-                btnList.addEventListener('click', function () {
+                btnList.addEventListener('click', () => {
                     currentView = 'list';
                     applyCurrentView();
                 });
             }
 
             if (courseSortSelect) {
-                courseSortSelect.addEventListener('change', reloadCourses);
+                courseSortSelect.addEventListener('change', () => reloadCourses());
             }
 
             applyCurrentView();
-        }
+        };
 
-        async function reloadCourses() {
+        const disconnectObserver = () => {
+            if (observer) {
+                observer.disconnect();
+            }
+        };
+
+        const loadCourses = async ({reset = false} = {}) => {
             if (!courseFilterForm) {
                 return;
             }
+            if (isLoading || (!hasNext && !reset)) {
+                return;
+            }
 
+            isLoading = true;
             const params = buildFilterParams();
             const queryString = params.toString();
-            const fragmentUrl = `/courses/fragments/list${queryString ? '?' + queryString : ''}`;
-            const pageUrl = `/courses${queryString ? '?' + queryString : ''}`;
+            const apiUrl = `/api/courses${queryString ? '?' + queryString : ''}`;
 
             try {
-                const response = await fetch(fragmentUrl, {
+                const response = await fetch(apiUrl, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
@@ -227,31 +318,87 @@
                     throw new Error(`Failed to load course list: ${response.status}`);
                 }
 
-                const html = await response.text();
-                const courseResults = document.getElementById('courseResults');
-                if (!courseResults) {
+                const data = await response.json();
+                const courseContainer = document.getElementById('courseContainer');
+                if (!courseContainer) {
                     return;
                 }
 
-                courseResults.outerHTML = html;
-                window.history.replaceState(null, '', pageUrl);
-                bindResultControls();
+                if (reset) {
+                    courseContainer.innerHTML = '';
+                }
+
+                const courses = Array.isArray(data.content) ? data.content : [];
+                if (courses.length === 0 && currentPage === 0) {
+                    courseContainer.innerHTML = renderEmptyState();
+                } else {
+                    courseContainer.insertAdjacentHTML('beforeend', courses.map(renderCourseCard).join(''));
+                }
+
+                hasNext = Boolean(data.hasNext);
+                currentPage = Number(data.page ?? currentPage);
+                updateRenderedCount();
+                applyCurrentView();
+
+                if (hasNext) {
+                    currentPage += 1;
+                    updateSentinel('더 많은 강의를 불러오는 중입니다.');
+                } else {
+                    disconnectObserver();
+                }
             } catch (error) {
                 console.error(error);
-                courseFilterForm.submit();
+                updateSentinel('강의를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+                disconnectObserver();
+            } finally {
+                isLoading = false;
             }
-        }
+        };
+
+        const reloadCourses = async () => {
+            currentPage = 0;
+            hasNext = true;
+            disconnectObserver();
+
+            const params = new URLSearchParams(new FormData(courseFilterForm));
+            const pageUrl = `/courses${params.toString() ? '?' + params.toString() : ''}`;
+            window.history.replaceState(null, '', pageUrl);
+
+            await loadCourses({reset: true});
+            initializeObserver();
+        };
+
+        const initializeObserver = () => {
+            const sentinel = document.getElementById('courseInfiniteSentinel');
+            if (!sentinel) {
+                return;
+            }
+            disconnectObserver();
+            if (!hasNext) {
+                return;
+            }
+            observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        loadCourses();
+                    }
+                });
+            }, {
+                rootMargin: '240px 0px'
+            });
+            observer.observe(sentinel);
+        };
 
         if (courseFilterForm) {
             courseFilterForm.querySelectorAll('input[name="skillIds"], input[name="courseTypes"]').forEach((checkbox) => {
-                checkbox.addEventListener('change', function () {
+                checkbox.addEventListener('change', () => {
                     reloadCourses();
                 });
             });
 
             const resetSkillFilterButton = document.getElementById('resetSkillFilterButton');
             if (resetSkillFilterButton) {
-                resetSkillFilterButton.addEventListener('click', function () {
+                resetSkillFilterButton.addEventListener('click', () => {
                     courseFilterForm.querySelectorAll('input[name="skillIds"]').forEach((checkbox) => {
                         checkbox.checked = false;
                     });
@@ -261,6 +408,9 @@
         }
 
         bindResultControls();
+        currentPage = hasNext ? 1 : 0;
+        updateRenderedCount();
+        initializeObserver();
     });
 </script>
 </body>

@@ -3,12 +3,14 @@
 
   const optionBuilders = {
     bar: buildBarOption,
+    stackedBar: buildStackedBarOption,
     horizontalBar: buildHorizontalBarOption,
     line: buildLineOption,
+    growthFactors: buildGrowthFactorsOption,
     radar: buildRadarOption,
     donut: buildDonutOption,
     funnel: buildFunnelOption,
-    heatmap: buildUnsupportedOption,
+    heatmap: buildHeatmapOption,
   };
 
   window.HrStatsCharts = {
@@ -63,7 +65,12 @@
 
   function buildBaseOption(chart) {
     return {
-      color: ['#009E7A', '#4F46E5', '#0891B2', '#8B5CF6'],
+      color: [
+        "#009E7A",
+        "#F1A400",
+        "#A0AB3B",
+        "#4DA866"
+      ],
       animationDuration: 500,
       textStyle: {
         color: '#334155',
@@ -146,17 +153,114 @@
     };
   }
 
-  function buildHorizontalBarOption(chart) {
+  function buildStackedBarOption(chart) {
     const series = normalizeSeries(chart);
-    const labels = extractLabels(series);
+    const labels = uniqueLabels(series);
 
     return {
       ...buildBaseOption(chart),
+      tooltip: {
+        trigger: 'axis',
+        confine: true,
+        backgroundColor: '#0F172A',
+        borderWidth: 0,
+        textStyle: {
+          color: '#FFFFFF',
+          fontSize: 12,
+        },
+        axisPointer: {
+          type: 'shadow',
+        },
+        formatter: (params) => {
+          const items = Array.isArray(params) ? params : [params];
+          const title = items[0]?.axisValue || '';
+          const lines = items
+            .map((item) => `${item.marker || ''}${escapeHtml(item.seriesName)}: ${escapeHtml(formatValue(item.value, chart.unit))}`);
+
+          return [escapeHtml(title), ...lines].join('<br>');
+        },
+      },
+      legend: {
+        bottom: 0,
+        left: 'center',
+        itemWidth: 14,
+        itemHeight: 10,
+        textStyle: {
+          color: '#475569',
+          fontSize: 12,
+        },
+      },
+      grid: {
+        top: 28,
+        right: 24,
+        bottom: 48,
+        left: 48,
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        data: labels,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: '#CBD5E1' } },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+          interval: 0,
+        },
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+          formatter: (value) => formatAxisValue(value, chart.unit),
+        },
+      },
+      series: series.map((item) => ({
+        name: item.name,
+        type: 'bar',
+        stack: 'total',
+        data: alignPoints(labels, normalizePoints(item)).map((point) => ({
+          value: numericValue(point.value),
+          displayValue: point.displayValue,
+        })),
+        barWidth: 28,
+        emphasis: {
+          focus: 'series',
+        },
+      })),
+    };
+  }
+
+  function buildHorizontalBarOption(chart) {
+    const series = normalizeSeries(chart);
+    const labels = extractLabels(series);
+    const kcyParticipationChart = isKcyParticipationChart(chart);
+
+    return {
+      ...buildBaseOption(chart),
+      tooltip: kcyParticipationChart ? {
+        trigger: 'item',
+        confine: true,
+        backgroundColor: '#0F172A',
+        borderWidth: 0,
+        textStyle: {
+          color: '#FFFFFF',
+          fontSize: 12,
+        },
+        formatter: (params) => {
+          const data = params.data || {};
+          return `${escapeHtml(data.label || params.name)}<br>` +
+            `참여자 수: ${Number(data.participantCount || 0).toLocaleString()}명<br>` +
+            `참여자 비중: ${escapeHtml(data.displayValue || formatValue(params.value, chart.unit))}`;
+        },
+      } : buildBaseOption(chart).tooltip,
       grid: {
         top: 24,
-        right: 22,
+        right: kcyParticipationChart ? 34 : 22,
         bottom: 18,
-        left: 110,
+        left: kcyParticipationChart ? 42 : 110,
         containLabel: true,
       },
       xAxis: {
@@ -186,7 +290,10 @@
         type: 'bar',
         data: normalizePoints(item).map((point) => ({
           value: numericValue(point.value),
+          label: point.label,
           displayValue: point.displayValue,
+          participantCount: point.participantCount,
+          itemStyle: horizontalBarItemStyle(chart, point),
         })),
         barWidth: 14,
         label: {
@@ -207,6 +314,14 @@
   }
 
   function buildLineOption(chart) {
+    if (chart.id === 'organization-department-growth-rate') {
+      return buildDepartmentGrowthBumpOption(chart);
+    }
+
+    if (chart.id === 'learning-weekly-hours') {
+      return buildWeeklyHoursMovingAverageOption(chart);
+    }
+
     const series = normalizeSeries(chart);
     const labels = extractLabels(series);
 
@@ -253,12 +368,467 @@
     };
   }
 
+  function buildWeeklyHoursMovingAverageOption(chart) {
+    const series = normalizeSeries(chart);
+    const firstSeries = series[0] || { name: '', points: [] };
+    const points = normalizePoints(firstSeries);
+    const labels = points.map((point) => point.label);
+    const values = points.map((point) => numericValue(point.value));
+    const movingAveragePoints = movingAverage(values, 3);
+
+    return {
+      ...buildBaseOption(chart),
+      color: ['#009E7A', '#F1A400'],
+      tooltip: {
+        trigger: 'axis',
+        confine: true,
+        backgroundColor: '#0F172A',
+        borderWidth: 0,
+        textStyle: {
+          color: '#FFFFFF',
+          fontSize: 12,
+        },
+        axisPointer: {
+          type: 'shadow',
+        },
+        valueFormatter: (value) => formatValue(value, chart.unit),
+      },
+      legend: {
+        bottom: 0,
+        left: 'center',
+        itemWidth: 14,
+        itemHeight: 10,
+        textStyle: {
+          color: '#475569',
+          fontSize: 12,
+        },
+      },
+      grid: {
+        top: 28,
+        right: 24,
+        bottom: 48,
+        left: 48,
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        data: labels,
+        boundaryGap: true,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: '#CBD5E1' } },
+        axisLabel: { color: '#475569', fontSize: 12 },
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+          formatter: (value) => formatAxisValue(value, chart.unit),
+        },
+      },
+      series: [
+        {
+          name: firstSeries.name || '평균 학습 시간',
+          type: 'bar',
+          data: points.map((point) => ({
+            value: numericValue(point.value),
+            displayValue: point.displayValue,
+          })),
+          barWidth: 22,
+          itemStyle: {
+            borderRadius: [5, 5, 0, 0],
+          },
+          label: {
+            show: true,
+            position: 'top',
+            color: '#334155',
+            fontSize: 11,
+            formatter: (params) => params.data.displayValue || formatValue(params.value, chart.unit),
+          },
+        },
+        {
+          name: '이동평균',
+          type: 'line',
+          data: movingAveragePoints.map((value) => ({
+            value,
+            displayValue: formatValue(value, chart.unit),
+          })),
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 7,
+          lineStyle: {
+            width: 3,
+            color: '#F1A400',
+          },
+          itemStyle: {
+            color: '#F1A400',
+          },
+          label: {
+            show: false,
+          },
+        },
+      ],
+    };
+  }
+
+  function buildDepartmentGrowthBumpOption(chart) {
+    const series = normalizeSeries(chart);
+    const labels = uniqueLabels(series);
+    const rankData = buildDepartmentGrowthRankData(series, labels);
+    const lastLabel = [...labels].reverse().find((label) => rankData.averageByLabel.has(label)) || labels[labels.length - 1];
+    const lastAverage = rankData.averageByLabel.get(lastLabel) || 0;
+    const lastAverageDisplay = formatSignedPercent(lastAverage);
+    const rankCount = Math.max(series.length, 1);
+
+    return {
+      ...buildBaseOption(chart),
+      color: [
+        '#009E7A',
+        '#2563EB',
+        '#F59E0B',
+        '#8B5CF6',
+        '#EF4444',
+        '#14B8A6',
+      ],
+      tooltip: {
+        trigger: 'item',
+        confine: true,
+        backgroundColor: '#0F172A',
+        borderWidth: 0,
+        textStyle: {
+          color: '#FFFFFF',
+          fontSize: 12,
+        },
+        formatter: (params) => {
+          const data = params.data || {};
+
+          return [
+            escapeHtml(data.periodLabel || params.name),
+            escapeHtml(data.departmentName || params.seriesName),
+            `순위: ${escapeHtml(formatRank(data.rank))}`,
+            `성장률: ${escapeHtml(data.growthDisplayValue)}`,
+            `전사 평균: ${escapeHtml(data.averageDisplayValue)}`,
+            escapeHtml(data.averageStatusLabel),
+          ].join('<br>');
+        },
+      },
+      graphic: {
+        type: 'text',
+        right: 8,
+        top: 0,
+        style: {
+          text: `전사 평균 성장률: ${lastAverageDisplay}`,
+          fill: '#475569',
+          font: '600 12px Pretendard, Noto Sans KR, sans-serif',
+        },
+      },
+      grid: {
+        top: 64,
+        right: 190,
+        bottom: 32,
+        left: 50,
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        data: labels,
+        boundaryGap: false,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: '#CBD5E1' } },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+        },
+      },
+      yAxis: {
+        type: 'value',
+        inverse: true,
+        min: 1,
+        max: rankCount,
+        interval: 1,
+        splitLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+          formatter: (value) => formatRank(value),
+        },
+      },
+      series: series.map((item) => ({
+        name: item.name,
+        type: 'line',
+        data: labels.map((label) => rankData.dataByDepartmentAndLabel.get(item.name)?.get(label) || null),
+        smooth: true,
+        connectNulls: false,
+        symbol: 'circle',
+        symbolSize: 5,
+        lineStyle: {
+          width: 2,
+        },
+        label: {
+          show: true,
+          position: 'right',
+          distance: 10,
+          color: '#334155',
+          fontSize: 11,
+          fontWeight: 700,
+          formatter: (params) => {
+            const data = params.data || {};
+            return data.isLastPoint
+              ? `${data.departmentName} ${data.growthDisplayValue} ${data.averageStatus}`
+              : '';
+          },
+        },
+        labelLayout: {
+          hideOverlap: true,
+          moveOverlap: 'shiftY',
+        },
+        emphasis: {
+          focus: 'series',
+        },
+      })),
+    };
+  }
+
+  function buildDepartmentGrowthRankData(series, labels) {
+    const orderByDepartment = new Map(series.map((item, index) => [item.name, index]));
+    const pointByDepartmentAndLabel = new Map();
+    const dataByDepartmentAndLabel = new Map();
+    const averageByLabel = new Map();
+    const finalLabel = labels[labels.length - 1];
+
+    series.forEach((item) => {
+      const pointsByLabel = new Map();
+
+      normalizePoints(item).forEach((point) => {
+        pointsByLabel.set(point.label, point);
+      });
+
+      pointByDepartmentAndLabel.set(item.name, pointsByLabel);
+      dataByDepartmentAndLabel.set(item.name, new Map());
+    });
+
+    labels.forEach((label) => {
+      const monthlyPoints = series
+        .map((item) => {
+          const point = pointByDepartmentAndLabel.get(item.name)?.get(label);
+
+          return point ? {
+            departmentName: item.name,
+            value: numericValue(point.value),
+            displayValue: point.displayValue || formatSignedPercent(numericValue(point.value)),
+          } : null;
+        })
+        .filter(Boolean);
+
+      if (!monthlyPoints.length) {
+        return;
+      }
+
+      const average = monthlyPoints.reduce((sum, point) => sum + point.value, 0) / monthlyPoints.length;
+      const averageDisplayValue = formatSignedPercent(average);
+      averageByLabel.set(label, average);
+
+      monthlyPoints
+        .sort((a, b) => {
+          if (b.value !== a.value) {
+            return b.value - a.value;
+          }
+
+          const orderDiff = orderByDepartment.get(a.departmentName) - orderByDepartment.get(b.departmentName);
+          return orderDiff !== 0 ? orderDiff : a.departmentName.localeCompare(b.departmentName, 'ko');
+        })
+        .forEach((point, index) => {
+          const rank = index + 1;
+          const isAboveAverage = point.value >= average;
+
+          dataByDepartmentAndLabel.get(point.departmentName).set(label, {
+            value: rank,
+            rank,
+            periodLabel: label,
+            departmentName: point.departmentName,
+            growthRate: point.value,
+            growthDisplayValue: point.displayValue,
+            averageGrowthRate: average,
+            averageDisplayValue,
+            averageStatus: isAboveAverage ? '▲ 평균 이상' : '▼ 평균 이하',
+            averageStatusLabel: isAboveAverage ? '평균 이상' : '평균 이하',
+            isLastPoint: label === finalLabel,
+          });
+        });
+    });
+
+    return {
+      averageByLabel,
+      dataByDepartmentAndLabel,
+    };
+  }
+
+  function horizontalBarItemStyle(chart, point) {
+    if (!isKcyParticipationChart(chart)) {
+      return undefined;
+    }
+
+    return {
+      color: '#009E7A',
+    };
+  }
+
+  function isKcyParticipationChart(chart) {
+    return chart.id === 'learning-online-kcy-participation' ||
+      chart.id === 'learning-offline-kcy-participation';
+  }
+
+  function buildGrowthFactorsOption(chart) {
+    const series = normalizeSeries(chart);
+    const growthSeries = series[0] || { name: '역량 증가폭', points: [] };
+    const completedSeries = series[1] || { name: '수료 강의 수', points: [] };
+    const labels = extractLabels(series);
+    const growthPoints = normalizePoints(growthSeries);
+    const completedPoints = normalizePoints(completedSeries);
+
+    return {
+      ...buildBaseOption(chart),
+      color: ['#009E7A', '#2563EB'],
+      tooltip: {
+        trigger: 'axis',
+        confine: true,
+        backgroundColor: '#0F172A',
+        borderWidth: 0,
+        textStyle: {
+          color: '#FFFFFF',
+          fontSize: 12,
+        },
+        axisPointer: {
+          type: 'shadow',
+        },
+      },
+      legend: {
+        bottom: 0,
+        left: 'center',
+        data: [growthSeries.name, completedSeries.name],
+        itemWidth: 14,
+        itemHeight: 10,
+        textStyle: {
+          color: '#475569',
+          fontSize: 12,
+        },
+      },
+      grid: {
+        top: 30,
+        right: 56,
+        bottom: 48,
+        left: 54,
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        data: labels,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: '#CBD5E1' } },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+        },
+      },
+      yAxis: [
+        {
+          type: 'value',
+          name: '역량 증가폭(%p)',
+          nameTextStyle: {
+            color: '#009E7A',
+            fontSize: 12,
+            fontWeight: 700,
+            align: 'left',
+          },
+          splitLine: { lineStyle: { color: '#E2E8F0' } },
+          axisLabel: {
+            color: '#009E7A',
+            fontSize: 12,
+            formatter: (value) => `${value}`,
+          },
+        },
+        {
+          type: 'value',
+          nameTextStyle: {
+            color: '#2563EB',
+            fontSize: 12,
+            fontWeight: 700,
+            align: 'right',
+          },
+          splitLine: { show: false },
+          axisLabel: {
+            color: '#2563EB',
+            fontSize: 12,
+            formatter: (value) => `${value}`,
+          },
+        },
+      ],
+      series: [
+        {
+          name: growthSeries.name,
+          type: 'bar',
+          yAxisIndex: 0,
+          data: growthPoints.map((point) => ({
+            value: numericValue(point.value),
+            displayValue: point.displayValue,
+          })),
+          barWidth: 40,
+          label: {
+            show: true,
+            position: 'top',
+            color: '#0F766E',
+            fontSize: 12,
+            fontWeight: 700,
+            formatter: (params) => params.data.displayValue || `${params.value}%p`,
+          },
+          itemStyle: {
+            color: '#009E7A',
+            borderRadius: [3, 3, 0, 0],
+          },
+        },
+        {
+          name: completedSeries.name,
+          type: 'line',
+          yAxisIndex: 1,
+          data: completedPoints.map((point) => ({
+            value: numericValue(point.value),
+            displayValue: point.displayValue,
+          })),
+          smooth: false,
+          symbol: 'circle',
+          symbolSize: 9,
+          lineStyle: {
+            color: '#2563EB',
+            width: 2,
+          },
+          itemStyle: {
+            color: '#2563EB',
+            borderColor: '#FFFFFF',
+            borderWidth: 2,
+          },
+          label: {
+            show: true,
+            position: 'right',
+            color: '#2563EB',
+            fontSize: 12,
+            fontWeight: 700,
+            formatter: (params) => params.data.displayValue || `${params.value}건`,
+          },
+        },
+      ],
+    };
+  }
+
   function buildRadarOption(chart) {
     const series = normalizeSeries(chart);
     const firstSeries = series[0] || { name: '', points: [] };
     const points = normalizePoints(firstSeries);
+    const isLearningAverageSkill = chart.id === 'learning-average-skill';
     const useRightLegend = chart.id === 'organization-department-average-competency';
-    const hideLegend = chart.id === 'learning-average-skill';
+    const useLearningComparisonLegend = isLearningAverageSkill && series.length > 1;
+    const hideLegend = isLearningAverageSkill && series.length < 2;
+    const legendNames = series.map((item, index) => radarSeriesName(chart, item, index));
     const maxValue = Math.max(
       ...series.flatMap((item) => normalizePoints(item).map((point) => numericValue(point.value))),
       100
@@ -271,15 +841,15 @@
         confine: true,
       },
       radar: {
-        radius: useRightLegend ? '60%' : '68%',
-        center: useRightLegend ? ['38%', '54%'] : ['50%', '54%'],
+        radius: useRightLegend ? '60%' : useLearningComparisonLegend ? '58%' : '68%',
+        center: useRightLegend ? ['38%', '54%'] : useLearningComparisonLegend ? ['50%', '60%'] : ['50%', '54%'],
         splitNumber: 4,
         axisName: {
           color: '#334155',
           fontSize: 12,
           lineHeight: 16,
         },
-        axisNameGap: useRightLegend ? 18 : 15,
+        axisNameGap: useRightLegend || useLearningComparisonLegend ? 20 : 15,
         splitLine: {
           lineStyle: { color: '#CBD5E1' },
         },
@@ -298,7 +868,10 @@
       },
       legend: {
         show: !hideLegend,
-        bottom: useRightLegend ? 'middle' : 0,
+        data: legendNames,
+        top: useLearningComparisonLegend ? 0 : undefined,
+        left: useLearningComparisonLegend ? 'center' : undefined,
+        bottom: useRightLegend ? 'middle' : useLearningComparisonLegend ? undefined : 0,
         right: useRightLegend ? 0 : undefined,
         orient: useRightLegend ? 'vertical' : 'horizontal',
         type: 'scroll',
@@ -311,18 +884,39 @@
       },
       series: [{
         type: 'radar',
-        data: series.map((item) => ({
-          value: normalizePoints(item).map((point) => numericValue(point.value)),
-          name: item.name,
-          areaStyle: {
-            opacity: 0.12,
-          },
-        })),
+        data: series.map((item, index) => {
+          const isCompanyAverage = chart.id === 'learning-average-skill' && index > 0;
+
+          return {
+            value: normalizePoints(item).map((point) => numericValue(point.value)),
+            name: radarSeriesName(chart, item, index),
+            areaStyle: {
+              color: isCompanyAverage ? 'rgba(148, 163, 184, 0.12)' : undefined,
+              opacity: isCompanyAverage ? 0.08 : 0.12,
+            },
+            lineStyle: {
+              color: isCompanyAverage ? '#CBD5E1' : undefined,
+              type: isCompanyAverage ? 'dashed' : 'solid',
+              width: 2,
+            },
+            itemStyle: {
+              color: isCompanyAverage ? '#CBD5E1' : undefined,
+            },
+          };
+        }),
         lineStyle: {
           width: 2,
         },
       }],
     };
+  }
+
+  function radarSeriesName(chart, series, index) {
+    if (chart.id !== 'learning-average-skill') {
+      return series.name;
+    }
+
+    return index > 0 ? '전사 평균' : '선택 그룹';
   }
 
   function buildDonutOption(chart) {
@@ -443,6 +1037,120 @@
     };
   }
 
+  function buildHeatmapOption(chart) {
+    const series = normalizeSeries(chart);
+    const departments = series.map((item) => item.name);
+    const competencies = uniqueLabels(series);
+    const useTopCompetencyLabels = chart.id === 'organization-department-average-competency';
+    const values = series.flatMap((item) => normalizePoints(item).map((point) => numericValue(point.value)));
+    const minValue = values.length ? Math.min(...values) : 0;
+    const maxValue = values.length ? Math.max(...values) : 100;
+    const valueByDepartmentAndCompetency = new Map();
+
+    series.forEach((item) => {
+      const pointsByCompetency = new Map();
+      normalizePoints(item).forEach((point) => {
+        pointsByCompetency.set(point.label, point);
+      });
+      valueByDepartmentAndCompetency.set(item.name, pointsByCompetency);
+    });
+
+    const heatmapData = departments.flatMap((department, departmentIndex) => (
+      competencies.map((competency, competencyIndex) => {
+        const point = valueByDepartmentAndCompetency.get(department)?.get(competency);
+        const value = point ? numericValue(point.value) : 0;
+
+        return {
+          value: [competencyIndex, departmentIndex, value],
+          displayValue: point?.displayValue || formatValue(value, chart.unit),
+          department,
+          competency,
+        };
+      })
+    ));
+
+    return {
+      ...buildBaseOption(chart),
+      tooltip: {
+        trigger: 'item',
+        confine: true,
+        backgroundColor: '#0F172A',
+        borderWidth: 0,
+        textStyle: {
+          color: '#FFFFFF',
+          fontSize: 12,
+        },
+        formatter: (params) => {
+          const data = params.data || {};
+          return `${escapeHtml(data.department)}<br>${escapeHtml(data.competency)}: ${escapeHtml(data.displayValue)}`;
+        },
+      },
+      grid: {
+        top: useTopCompetencyLabels ? 52 : 22,
+        right: 28,
+        bottom: useTopCompetencyLabels ? 22 : 30,
+        left: 12,
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        position: useTopCompetencyLabels ? 'top' : 'bottom',
+        data: competencies,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: '#CBD5E1' } },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+          interval: 0,
+        },
+      },
+      yAxis: {
+        type: 'category',
+        data: departments,
+        inverse: true,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: '#CBD5E1' } },
+        axisLabel: {
+          color: '#475569',
+          fontSize: 12,
+          width: 100,
+          overflow: 'truncate',
+        },
+      },
+      visualMap: {
+        show: false,
+        min: minValue,
+        max: maxValue,
+        inRange: {
+          color: ['#E8F7F2', '#9BE3CC', '#009E7A'],
+        },
+      },
+      series: [{
+        name: chart.title,
+        type: 'heatmap',
+        data: heatmapData,
+        label: {
+          show: true,
+          color: '#0F172A',
+          fontSize: 12,
+          fontWeight: 700,
+          formatter: (params) => params.data.displayValue,
+        },
+        itemStyle: {
+          borderColor: '#FFFFFF',
+          borderWidth: 2,
+          borderRadius: 4,
+        },
+        emphasis: {
+          itemStyle: {
+            borderColor: '#009E7A',
+            borderWidth: 2,
+          },
+        },
+      }],
+    };
+  }
+
   function buildUnsupportedOption(chart) {
     return {
       title: {
@@ -471,13 +1179,60 @@
     return firstSeries ? normalizePoints(firstSeries).map((point) => point.label) : [];
   }
 
+  function uniqueLabels(series) {
+    const labels = [];
+    const seen = new Set();
+
+    series.forEach((item) => {
+      normalizePoints(item).forEach((point) => {
+        if (!seen.has(point.label)) {
+          seen.add(point.label);
+          labels.push(point.label);
+        }
+      });
+    });
+
+    return labels;
+  }
+
+  function alignPoints(labels, points) {
+    const pointByLabel = new Map(points.map((point) => [point.label, point]));
+
+    return labels.map((label) => pointByLabel.get(label) || {
+      label,
+      value: 0,
+      displayValue: formatValue(0, ''),
+    });
+  }
+
   function numericValue(value) {
     const number = Number(value);
     return Number.isFinite(number) ? number : 0;
   }
 
+  function movingAverage(values, windowSize) {
+    return values.map((_, index) => {
+      const start = Math.max(0, index - windowSize + 1);
+      const windowValues = values.slice(start, index + 1);
+      const total = windowValues.reduce((sum, value) => sum + value, 0);
+
+      return Number((total / windowValues.length).toFixed(1));
+    });
+  }
+
   function formatValue(value, unit) {
     return `${Number(value).toLocaleString()}${unit || ''}`;
+  }
+
+  function formatSignedPercent(value) {
+    const number = numericValue(value);
+    const sign = number > 0 ? '+' : '';
+
+    return `${sign}${number.toFixed(1)}%`;
+  }
+
+  function formatRank(value) {
+    return `${Math.round(numericValue(value))}위`;
   }
 
   function truncateLabel(value, maxLength) {
@@ -495,5 +1250,14 @@
     }
 
     return Number(value).toLocaleString();
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
   }
 })();

@@ -203,6 +203,99 @@
         </choose>
     </select>
 
+    <select id="findCourseSlice"
+            resultType="com.hlinks.domain.course.dto.CourseListResponseDto">
+        SELECT
+        c.course_id AS courseId,
+        c.category_type AS categoryType,
+        c.course_type AS courseType,
+        c.course_title AS courseTitle,
+        c.instructor_name AS instructorName,
+        c.thumbnail_url AS thumbnailUrl,
+        CASE
+        WHEN c.course_type = 'ONLINE' THEN
+        CASE
+        WHEN onc.status = 'CANCELED' THEN '서비스 종료'
+        ELSE '상시 수강 가능'
+        END
+        WHEN c.course_type = 'OFFLINE' THEN
+        CASE
+        WHEN ofc.status = 'CANCELED' THEN '폐강'
+        WHEN SYSDATE &lt; ofc.apply_start_date THEN '모집 대기'
+        WHEN SYSDATE BETWEEN ofc.apply_start_date AND ofc.apply_end_date THEN '모집 중'
+        WHEN SYSDATE BETWEEN ofc.apply_end_date AND ofc.course_start_date THEN '모집 마감'
+        WHEN SYSDATE BETWEEN ofc.course_start_date AND ofc.course_end_date THEN '강의 진행 중'
+        WHEN SYSDATE &gt; ofc.course_end_date THEN '강의 종료'
+        ELSE '상태 불명'
+        END
+        ELSE '유형 오류'
+        END AS virtualStatus
+        FROM COURSE c
+        LEFT OUTER JOIN ONLINE_COURSE onc
+        ON c.course_id = onc.course_id
+        LEFT OUTER JOIN OFFLINE_COURSE ofc
+        ON c.course_id = ofc.course_id
+        <where>
+            (
+            (c.course_type = 'ONLINE' AND NVL(onc.status, 'OPEN') != 'HIDDEN')
+            OR
+            (c.course_type = 'OFFLINE' AND NVL(ofc.status, 'OPEN') != 'HIDDEN')
+            )
+            <if test="categoryType != null and categoryType != ''">
+                AND c.category_type = #{categoryType}
+            </if>
+            <if test="courseTypes != null and courseTypes.size() > 0">
+                AND c.course_type IN
+                <foreach collection="courseTypes" item="courseType" open="(" separator="," close=")">
+                    #{courseType}
+                </foreach>
+            </if>
+            <if test="skillIds != null and skillIds.size() > 0">
+                AND EXISTS (
+                    SELECT 1
+                    FROM COURSE_SKILL cs
+                    WHERE cs.COURSE_ID = c.COURSE_ID
+                      AND cs.SKILL_ID IN
+                      <foreach collection="skillIds" item="skillId" open="(" separator="," close=")">
+                          #{skillId}
+                      </foreach>
+                )
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    LOWER(c.course_title) LIKE '%' || LOWER(#{keyword}) || '%'
+                    OR LOWER(c.instructor_name) LIKE '%' || LOWER(#{keyword}) || '%'
+                )
+            </if>
+            <if test="availableOnly != null and availableOnly">
+                AND (
+                    (c.course_type = 'ONLINE' AND NVL(onc.status, 'OPEN') NOT IN ('CANCELED', 'HIDDEN'))
+                    OR
+                    (
+                        c.course_type = 'OFFLINE'
+                        AND NVL(ofc.status, 'OPEN') NOT IN ('CANCELED', 'HIDDEN')
+                        AND SYSDATE BETWEEN ofc.apply_start_date AND ofc.apply_end_date
+                        AND NVL(ofc.current_applicant_count, 0) &lt; NVL(ofc.capacity, 999999)
+                    )
+                )
+            </if>
+        </where>
+        <choose>
+            <when test="sort == 'popular'">
+                ORDER BY (
+                    SELECT COUNT(*)
+                    FROM COURSE_APPLICATION ca
+                    WHERE ca.COURSE_ID = c.COURSE_ID
+                      AND ca.APPLICATION_STATUS IN ('APPROVED', 'COMPLETED')
+                ) DESC, c.CREATED_AT DESC, c.COURSE_ID DESC
+            </when>
+            <otherwise>
+                ORDER BY c.CREATED_AT DESC, c.COURSE_ID DESC
+            </otherwise>
+        </choose>
+        OFFSET #{offset} ROWS FETCH NEXT #{limitPlusOne} ROWS ONLY
+    </select>
+
     <select id="findCourseDetailById" resultType="com.hlinks.domain.course.dto.CourseDetailResponseDto">
         SELECT
         C.COURSE_ID             AS courseId,
