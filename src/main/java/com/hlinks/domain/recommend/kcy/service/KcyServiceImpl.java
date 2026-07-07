@@ -1,5 +1,7 @@
 package com.hlinks.domain.recommend.kcy.service;
 
+import com.hlinks.domain.competency.service.CompetencyScoreService;
+import com.hlinks.domain.competency.type.CompetencyCalcType;
 import com.hlinks.domain.recommend.kcy.dto.KcyMatchCandidateDto;
 import com.hlinks.domain.recommend.kcy.dto.KcyOptionDto;
 import com.hlinks.domain.recommend.kcy.dto.KcyPartnerRecommendationDto;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class KcyServiceImpl implements KcyService {
 
+    private static final String REFERENCE_TYPE_KCY_TEST = "KCY_TEST";
     private static final int REQUIRED_QUESTION_COUNT = 11;
     private static final int RECOMMENDED_PARTNER_LIMIT = 3;
     private static final List<String> ANONYMOUS_NICKNAMES = List.of(
@@ -38,6 +41,7 @@ public class KcyServiceImpl implements KcyService {
     private static final int BASE_SCORE = 0;
 
     private final KcyMapper kcyMapper;
+    private final CompetencyScoreService competencyScoreService;
 
     @Override
     public List<KcyQuestionDto> getQuestions() {
@@ -224,6 +228,12 @@ public class KcyServiceImpl implements KcyService {
         if (updatedCount != 1) {
             throw new BaseException(KcyErrorCode.KCY_RESULT_SAVE_FAILED);
         }
+        competencyScoreService.applyActionScore(
+                userId,
+                CompetencyCalcType.KCY_TEST_TAKEN,
+                REFERENCE_TYPE_KCY_TEST,
+                userId
+        );
         return score;
     }
 

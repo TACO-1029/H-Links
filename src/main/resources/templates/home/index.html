@@ -380,10 +380,12 @@
         const publishedAt = formatDate(news && news.publishedAt);
         const imageUrl = toSafeUrl(news && news.urlToImage);
         const imageSrc = imageUrl === '#' ? '/images/home/news-placeholder.webp' : imageUrl;
+        const newsUrl = toSafeUrl(news && news.url);
+        const clickUrl = newsUrl === '#' ? '#' : `/api/dashboard/news/click?url=${encodeURIComponent(newsUrl)}`;
 
         return `
             <a class="home-news-card"
-               href="${escapeHtml(toSafeUrl(news && news.url))}"
+               href="${escapeHtml(clickUrl)}"
                target="_blank"
                rel="noopener noreferrer">
                 <img class="home-news-card__image"

@@ -9,12 +9,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.zip.CRC32;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CompetencyScoreService {
+
+    private static final String REFERENCE_TYPE_COURSE = "COURSE";
+    private static final String REFERENCE_TYPE_GLOBAL_NEWS = "GLOBAL_NEWS";
 
     private final CompetencyScorePolicy competencyScorePolicy;
     private final CompetencyScoreMapper competencyScoreMapper;
@@ -26,47 +31,147 @@ public class CompetencyScoreService {
             return false;
         }
 
-        return applyPolicy(userId, competencyId, calcType.getCode(), scoreDelta);
+        return applyPolicy(userId, competencyId, calcType.getCode(), scoreDelta, null, null);
+    }
+
+    @Transactional
+    public boolean applyScore(
+            Long userId,
+            Long competencyId,
+            CompetencyCalcType calcType,
+            String referenceType,
+            Long referenceId) {
+
+        BigDecimal scoreDelta = competencyScorePolicy.findScore(competencyId, calcType);
+        if (scoreDelta == null) {
+            return false;
+        }
+
+        return applyPolicy(userId, competencyId, calcType.getCode(), scoreDelta, referenceType, referenceId);
     }
 
     @Transactional
     public boolean applyActionScore(Long userId, CompetencyCalcType calcType) {
         List<CompetencyScorePolicyRow> policies = competencyScorePolicy.findActionPolicies(calcType);
-        return applyPolicies(userId, policies);
+        return applyPolicies(userId, policies, null, null);
+    }
+
+    @Transactional
+    public boolean applyActionScore(
+            Long userId,
+            CompetencyCalcType calcType,
+            String referenceType,
+            Long referenceId) {
+
+        List<CompetencyScorePolicyRow> policies = competencyScorePolicy.findActionPolicies(calcType);
+        return applyPolicies(userId, policies, referenceType, referenceId);
     }
 
     @Transactional
     public boolean applySkillCourseCompletionScore(Long userId, Long courseId) {
         List<CompetencyScorePolicyRow> policies = competencyScorePolicy.findSkillCourseCompletionPolicies(courseId);
-        return applyPolicies(userId, policies);
+        return applyPolicies(userId, policies, REFERENCE_TYPE_COURSE, courseId);
     }
 
-    private boolean applyPolicies(Long userId, List<CompetencyScorePolicyRow> policies) {
+    @Transactional
+    public boolean applyCourseCompletionActionScores(Long userId, Long courseId) {
+        boolean applied = false;
+        if (competencyScoreMapper.countRecommendedCourseForUser(userId, courseId) > 0) {
+            applied |= applyActionScore(
+                    userId,
+                    CompetencyCalcType.RECOMMENDED_COURSE_COMPLETE,
+                    REFERENCE_TYPE_COURSE,
+                    courseId
+            );
+        }
+        if (competencyScoreMapper.countFirstLearningSkillsForCourse(userId, courseId) > 0) {
+            applied |= applyActionScore(
+                    userId,
+                    CompetencyCalcType.FIRST_SKILL_LEARNING,
+                    REFERENCE_TYPE_COURSE,
+                    courseId
+            );
+        }
+        return applied;
+    }
+
+    @Transactional
+    public boolean applyGlobalNewsClickScore(Long userId, String newsUrl) {
+        if (userId == null || newsUrl == null || newsUrl.isBlank()) {
+            return false;
+        }
+        return applyActionScore(
+                userId,
+                CompetencyCalcType.GLOBAL_NEWS_CLICK,
+                REFERENCE_TYPE_GLOBAL_NEWS,
+                toReferenceId(newsUrl)
+        );
+    }
+
+    private boolean applyPolicies(
+            Long userId,
+            List<CompetencyScorePolicyRow> policies,
+            String referenceType,
+            Long referenceId) {
+
         boolean applied = false;
         for (CompetencyScorePolicyRow policy : policies) {
             if (policy == null) {
                 continue;
             }
-            applied |= applyPolicy(userId, policy.getCompetencyId(), policy.getCalcType(), policy.getScoreDelta());
+            applied |= applyPolicy(
+                    userId,
+                    policy.getCompetencyId(),
+                    policy.getCalcType(),
+                    policy.getScoreDelta(),
+                    referenceType,
+                    referenceId
+            );
         }
         return applied;
     }
 
-    private boolean applyPolicy(Long userId, Long competencyId, String calcType, BigDecimal scoreDelta) {
+    private boolean applyPolicy(
+            Long userId,
+            Long competencyId,
+            String calcType,
+            BigDecimal scoreDelta,
+            String referenceType,
+            Long referenceId) {
+
         if (userId == null || competencyId == null || calcType == null || scoreDelta == null) {
             return false;
         }
 
-        if (competencyScoreMapper.countScoreHistory(userId, competencyId, calcType) > 0) {
+        if (competencyScoreMapper.countScoreHistory(
+                userId,
+                competencyId,
+                calcType,
+                referenceType,
+                referenceId
+        ) > 0) {
             return false;
         }
 
-        int inserted = competencyScoreMapper.insertScoreHistory(userId, competencyId, calcType, scoreDelta);
+        int inserted = competencyScoreMapper.insertScoreHistory(
+                userId,
+                competencyId,
+                calcType,
+                scoreDelta,
+                referenceType,
+                referenceId
+        );
         if (inserted == 0) {
             return false;
         }
 
         competencyScoreMapper.upsertUserCompetencyScore(userId, competencyId, scoreDelta);
         return true;
+    }
+
+    private long toReferenceId(String value) {
+        CRC32 crc32 = new CRC32();
+        crc32.update(value.trim().getBytes(StandardCharsets.UTF_8));
+        return crc32.getValue();
     }
 }
