@@ -142,10 +142,53 @@
             </section>
             -->
 
-            <a class="kcy-result-back" th:href="@{/mypage}">
-                마이페이지 대시보드로 돌아가기
+            <a class="kcy-result-back" th:href="@{/}">
+                홈으로 돌아가기
             </a>
         </div>
+
+        <details class="kcy-result-card kcy-partner-recommend kcy-result-wide">
+            <summary class="kcy-partner-recommend__summary">
+                <div>
+                    <p class="kcy-result-card__eyebrow">KCY 보완 성향 매칭</p>
+                    <h2 id="kcy-partner-title">함께 공부하면 좋은 동료</h2>
+                    <p>검사 직후 참고할 수 있는 단발성 추천입니다.</p>
+                </div>
+                <div class="kcy-partner-recommend__actions">
+                    <span th:text="${#lists.size(kcyPartners)} + '명 추천'">3명 추천</span>
+                    <strong>펼쳐보기</strong>
+                </div>
+            </summary>
+
+            <div class="kcy-partner-grid" th:if="${!#lists.isEmpty(kcyPartners)}">
+                <article class="kcy-partner-card" th:each="partner : ${kcyPartners}">
+                    <div class="kcy-partner-card__top">
+                        <div>
+                            <strong th:text="${partner.displayName}">김수달</strong>
+                            <p>
+                                <span th:text="${partner.departmentName != null ? partner.departmentName : '소속 부서 미정'}">DX 부트캠프</span>
+                                <span aria-hidden="true">·</span>
+                                <span th:text="${partner.positionName != null ? partner.positionName : '직급 미정'}">매니저</span>
+                            </p>
+                        </div>
+                        <span th:text="${partner.grade}">S</span>
+                    </div>
+
+                    <div class="kcy-partner-card__chips">
+                        <span th:text="${partner.kcyCode + ' · ' + partner.kcyTitle}">OWCM · 정통파 설계자</span>
+                        <span th:text="${partner.gradeLabel}">찰떡 보완 페어</span>
+                    </div>
+
+                    <p class="kcy-partner-card__reason" th:text="${partner.reason}">
+                        실행과 설계 관점을 서로 보완할 수 있는 조합입니다.
+                    </p>
+                </article>
+            </div>
+
+            <p class="kcy-partner-empty" th:if="${#lists.isEmpty(kcyPartners)}">
+                아직 KCY 결과가 있는 추천 후보가 충분하지 않습니다.
+            </p>
+        </details>
     </section>
 </main>
 
