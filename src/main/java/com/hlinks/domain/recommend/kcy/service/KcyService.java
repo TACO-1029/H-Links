@@ -1,8 +1,6 @@
 package com.hlinks.domain.recommend.kcy.service;
 
-import com.hlinks.domain.recommend.kcy.dto.KcyQuestionDto;
-import com.hlinks.domain.recommend.kcy.dto.KcyPartnerRecommendationDto;
-import com.hlinks.domain.recommend.kcy.dto.KcyScoreDto;
+import com.hlinks.domain.recommend.kcy.dto.*;
 import com.hlinks.domain.recommend.kcy.type.KcyType;
 
 import java.util.List;
@@ -11,9 +9,9 @@ public interface KcyService {
 
     List<KcyQuestionDto> getQuestions();
 
-    com.hlinks.domain.recommend.kcy.dto.KcyAdaptiveResponse getNextAdaptiveQuestion(com.hlinks.domain.recommend.kcy.dto.KcyAdaptiveRequest request);
+    KcyAdaptiveResponse getNextAdaptiveQuestion(KcyAdaptiveRequest request);
 
-    KcyScoreDto submit(Long userId, com.hlinks.domain.recommend.kcy.dto.KcySubmitRequest request);
+    KcyScoreDto submit(Long userId, KcySubmitRequest request);
 
     KcyType getResult(Long userId);
 

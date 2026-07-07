@@ -678,7 +678,12 @@
 
         const lines = document.querySelectorAll('.token.is-highlighted');
         state.angerScoreTypes = []; // reset to avoid duplicate score accumulation on re-submit
-        lines.forEach(l => state.angerScoreTypes.push(l.getAttribute('data-type')));
+        lines.forEach(l => {
+            const type = l.getAttribute('data-type');
+            if (type) {
+                state.angerScoreTypes.push(type);
+            }
+        });
         
         // Hide review button area entirely to lock selection (consistent with MCQ cards)
         const footer = document.querySelector('#stage-hook .kcy-test-card__footer');

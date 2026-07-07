@@ -228,11 +228,11 @@ public class KcyServiceImpl implements KcyService {
     }
 
     private KcyScoreDto calculateCurrentScore(List<Long> optionIds, List<String> angerTypes, List<String> tetrisBlocks, Integer timeTaken, Integer fillRate) {
-        if (timeTaken != null && (timeTaken < 0 || timeTaken > 3600)) {
-            throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE);
+        if (timeTaken != null && (timeTaken < 0)) {
+            throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE, timeTaken.toString());
         }
         if (fillRate != null && (fillRate < 0 || fillRate > 100)) {
-            throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE);
+            throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE, fillRate.toString());
         }
         if (optionIds != null && !optionIds.isEmpty()) {
             List<KcyQuestionDto> activeQuestions = kcyMapper.findActiveQuestions();
@@ -254,9 +254,12 @@ public class KcyServiceImpl implements KcyService {
             }
         }
         if (angerTypes != null) {
-            java.util.Set<String> validAxes = java.util.Set.of("ACTION", "OUTLINE", "WIDE", "DEEP", "INDEPENDENT", "CORPORATE", "PROMPTER", "MANUAL");
+            Set<String> validAxes = Set.of("ACTION", "OUTLINE", "WIDE", "DEEP", "INDEPENDENT", "CORPORATE", "PROMPTER", "MANUAL");
             for (String type : angerTypes) {
-                if (type == null || !validAxes.contains(type)) {
+                if (type == null || "".equals(type)) {
+                    continue;
+                }
+                if (!validAxes.contains(type)) {
                     throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE);
                 }
             }
@@ -291,7 +294,9 @@ public class KcyServiceImpl implements KcyService {
         // 1. 하이라이터 훅 점수 추가 (MCQ 대비 가중치 미미하게 1점 부여)
         if (angerTypes != null) {
             for (String type : angerTypes) {
-                score.addScore(type, 1);
+                if (type != null && "".equals(type)) {
+                    score.addScore(type, 1);
+                }
             }
         }
 
