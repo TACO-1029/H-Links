@@ -234,6 +234,25 @@ public class KcyServiceImpl implements KcyService {
         if (fillRate != null && (fillRate < 0 || fillRate > 100)) {
             throw new IllegalArgumentException("Invalid fillRate value");
         }
+        if (optionIds != null && !optionIds.isEmpty()) {
+            List<KcyQuestionDto> activeQuestions = kcyMapper.findActiveQuestions();
+            if (activeQuestions != null && !activeQuestions.isEmpty()) {
+                List<Long> qIds = activeQuestions.stream()
+                        .map(KcyQuestionDto::getKcyQuestionId)
+                        .collect(Collectors.toList());
+                List<KcyOptionDto> activeOptions = kcyMapper.findOptionsByQuestionIds(qIds);
+                if (activeOptions != null) {
+                    java.util.Set<Long> validOptionIds = activeOptions.stream()
+                            .map(KcyOptionDto::getKcyOptionId)
+                            .collect(Collectors.toSet());
+                    for (Long optId : optionIds) {
+                        if (optId == null || !validOptionIds.contains(optId)) {
+                            throw new IllegalArgumentException("Invalid option ID: " + optId);
+                        }
+                    }
+                }
+            }
+        }
         if (angerTypes != null) {
             java.util.Set<String> validAxes = java.util.Set.of("ACTION", "OUTLINE", "WIDE", "DEEP", "INDEPENDENT", "CORPORATE", "PROMPTER", "MANUAL");
             for (String type : angerTypes) {
