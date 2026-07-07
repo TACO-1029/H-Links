@@ -229,10 +229,10 @@ public class KcyServiceImpl implements KcyService {
 
     private KcyScoreDto calculateCurrentScore(List<Long> optionIds, List<String> angerTypes, List<String> tetrisBlocks, Integer timeTaken, Integer fillRate) {
         if (timeTaken != null && (timeTaken < 0 || timeTaken > 3600)) {
-            throw new IllegalArgumentException("Invalid timeTaken value");
+            throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE);
         }
         if (fillRate != null && (fillRate < 0 || fillRate > 100)) {
-            throw new IllegalArgumentException("Invalid fillRate value");
+            throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE);
         }
         if (optionIds != null && !optionIds.isEmpty()) {
             List<KcyQuestionDto> activeQuestions = kcyMapper.findActiveQuestions();
@@ -247,7 +247,7 @@ public class KcyServiceImpl implements KcyService {
                             .collect(Collectors.toSet());
                     for (Long optId : optionIds) {
                         if (optId == null || !validOptionIds.contains(optId)) {
-                            throw new IllegalArgumentException("Invalid option ID: " + optId);
+                            throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE);
                         }
                     }
                 }
@@ -257,14 +257,14 @@ public class KcyServiceImpl implements KcyService {
             java.util.Set<String> validAxes = java.util.Set.of("ACTION", "OUTLINE", "WIDE", "DEEP", "INDEPENDENT", "CORPORATE", "PROMPTER", "MANUAL");
             for (String type : angerTypes) {
                 if (type == null || !validAxes.contains(type)) {
-                    throw new IllegalArgumentException("Invalid anger type: " + type);
+                    throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE);
                 }
             }
         }
         if (tetrisBlocks != null) {
             for (String blockId : tetrisBlocks) {
                 if (blockId == null || TetrisBlockRegistry.findById(blockId) == null) {
-                    throw new IllegalArgumentException("Invalid tetris block ID: " + blockId);
+                    throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE);
                 }
             }
         }
