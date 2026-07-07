@@ -1,6 +1,6 @@
 body {
     background: #F8FAFC;
-    color: #0F172A;
+    color: #3B4043;
     font-family: "Pretendard", sans-serif;
 }
 
@@ -22,7 +22,7 @@ body {
 }
 
 .chapter-back:hover {
-    color: #0F172A;
+    color: #3B4043;
 }
 
 .chapter-layout {

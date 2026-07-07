@@ -1,7 +1,7 @@
 .site-footer {
   width: 100%;
-  background: var(--color-bg-surface);
-  border-top: 1px solid var(--color-border-default);
+  background: #2F3A3F;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   justify-content: center;
 }
@@ -41,7 +41,7 @@
 .site-footer__logo-main {
   font-size: var(--text-xl);
   font-weight: var(--font-bold);
-  color: var(--color-text-primary);
+  color: var(--white);
 }
 
 .site-footer__logo-accent {
@@ -52,7 +52,7 @@
   margin: 0;
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .site-footer__nav {
@@ -65,7 +65,7 @@
 .site-footer__nav a {
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.72);
   text-decoration: none;
   transition: color 160ms ease;
 }
@@ -81,7 +81,7 @@
   text-align: right;
   font-size: var(--text-xs);
   font-weight: var(--font-medium);
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.56);
   white-space: nowrap;
 }
 

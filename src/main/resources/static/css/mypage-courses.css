@@ -41,7 +41,7 @@
     gap: 8px;
     font-size: 18px;
     font-weight: 700;
-    color: #0F172A;
+    color: #3B4043;
     margin: 0;
 }
 .section-badge {
@@ -73,7 +73,7 @@
 }
 .filter-btn.is-active, .filter-btn:hover {
     background: #E2E8F0;
-    color: #0F172A;
+    color: #3B4043;
 }
 
 /* 수강 강의 카드 */
@@ -116,7 +116,7 @@
 .course-item-title {
     font-size: 16px;
     font-weight: 700;
-    color: #0F172A;
+    color: #3B4043;
     margin: 0 0 12px 0;
     white-space: nowrap;
     overflow: hidden;
@@ -270,7 +270,7 @@
 .right-card-title {
     font-size: 14px;
     font-weight: 700;
-    color: #0F172A;
+    color: #3B4043;
     margin: 0;
 }
 .right-card-badge {
@@ -416,7 +416,7 @@
 .quiz-score {
     font-size: 14px;
     font-weight: 800;
-    color: #0F172A;
+    color: #3B4043;
 }
 .quiz-course-title {
     font-size: 12px;
@@ -481,7 +481,7 @@
 .modal-title {
     font-size: 16px;
     font-weight: 700;
-    color: #0F172A;
+    color: #3B4043;
     margin: 0;
 }
 .btn-modal-close {
