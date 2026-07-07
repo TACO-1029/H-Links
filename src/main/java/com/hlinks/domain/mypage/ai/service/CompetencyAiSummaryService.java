@@ -33,24 +33,31 @@ public class CompetencyAiSummaryService {
             List<MyCompetencyEvaluationDto.ActionPlanDto> actionPlans
     ) {
         if (!StringUtils.hasText(properties.getApiKey())) {
+            log.info("Competency AI summary API key is empty. Returning fallback summary.");
             return buildFallback(scores, growthFactors, actionPlans);
         }
 
+        String rawResponse = null;
         try {
-            String rawResponse = createRestClient().post()
+            rawResponse = createRestClient().post()
                     .uri(properties.getApiUrl())
                     .header("Authorization", "Bearer " + properties.getApiKey())
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(createRequestBody(buildPrompt(scores, recentHistories, growthFactors, actionPlans)))
                     .retrieve()
                     .body(String.class);
+            log.debug("Competency AI summary rawResponse={}", rawResponse);
+
+            String content = extractMessageContent(rawResponse);
+            log.debug("Competency AI summary messageContent={}", content);
 
             CompetencyAiSummaryResponse response = objectMapper.readValue(
-                    extractMessageContent(rawResponse),
+                    content,
                     CompetencyAiSummaryResponse.class
             );
 
             if (!StringUtils.hasText(response.getHeadline())) {
+                log.warn("Competency AI summary response has no headline. Returning fallback summary. content={}", content);
                 return buildFallback(scores, growthFactors, actionPlans);
             }
 
@@ -59,12 +66,14 @@ public class CompetencyAiSummaryService {
                     .strength(defaultText(response.getStrength(), "현재 점수 기준 강점 역량을 안정적으로 유지하고 있습니다."))
                     .improvement(defaultText(response.getImprovement(), "조직 평균보다 낮은 역량을 중심으로 학습 우선순위를 잡아보세요."))
                     .nextAction(defaultText(response.getNextAction(), "추천 강의와 최근 성장 요인을 참고해 다음 학습을 선택해보세요."))
+                    .growthPotential(defaultText(response.getGrowthPotential(), "현재 점수와 최근 학습 이력을 바탕으로 약한 역량부터 보완하면 성장 가능성이 있습니다."))
                     .fallback(false)
                     .build();
         } catch (Exception e) {
-            log.warn("Failed to generate competency AI summary. provider={}, model={}",
+            log.warn("Failed to generate competency AI summary. provider={}, model={}, rawResponse={}",
                     properties.getProvider(),
                     properties.getModel(),
+                    rawResponse,
                     e
             );
             return buildFallback(scores, growthFactors, actionPlans);
@@ -97,18 +106,26 @@ public class CompetencyAiSummaryService {
     ) {
         StringBuilder prompt = new StringBuilder();
         prompt.append("""
-                아래 사용자의 역량 점수와 최근 학습 반영 이력을 바탕으로 한국어 요약을 작성하세요.
-                응답 JSON 형식:
-                {
-                  "headline": "한 문장 요약",
-                  "strength": "강점 요약",
-                  "improvement": "보완 방향",
-                  "nextAction": "다음 행동 제안"
-                }
-                각 값은 80자 이내로 작성하세요.
-
-                [역량 점수]
-                """);
+            아래 사용자의 역량 점수와 최근 학습 반영 이력을 바탕으로 한국어 요약을 작성하세요.
+    
+            응답 JSON 형식:
+            {
+              "headline": "2~3줄 분량의 종합 요약",
+              "strength": "강점 요약",
+              "improvement": "보완 방향",
+              "growthPotential": "성장 가능성 요약",
+              "nextAction": "다음 행동 제안"
+            }
+    
+            작성 규칙:
+            - 반드시 위 JSON 키를 모두 포함하세요.
+            - headline은 120~180자 정도로 2~3문장 작성하세요.
+            - strength, improvement, growthPotential, nextAction은 각각 80자 이내로 작성하세요.
+            - growthPotential은 현재 점수, 최근 성장 요인, 추천 액션을 바탕으로 앞으로 어떤 역량이 더 성장할 수 있는지 작성하세요.
+            - 과장하지 말고, 제공된 데이터에 근거해서 작성하세요.
+    
+            [역량 점수]
+            """);
 
         for (MyCompetencyEvaluationDto.CompetencyScoreDto score : scores) {
             prompt.append("- ")
@@ -193,21 +210,40 @@ public class CompetencyAiSummaryService {
         MyCompetencyEvaluationDto.CompetencyScoreDto weakest = scores.stream()
                 .min(Comparator.comparingDouble(MyCompetencyEvaluationDto.CompetencyScoreDto::getUserScore))
                 .orElse(null);
-        String nextAction = actionPlans.isEmpty()
-                ? "최근 이력을 바탕으로 낮은 역량과 연결된 학습을 1개 선택해보세요."
-                : actionPlans.get(0).getCourseTitle() + " 수강을 우선 추천합니다.";
-        String growthText = growthFactors.isEmpty()
-                ? "최근 30일 상승 이력은 아직 적지만, 다음 학습으로 변화를 만들 수 있습니다."
-                : growthFactors.get(0).getCalcTypeLabel() + "이 최근 성장에 가장 크게 기여했습니다.";
+
+        String weakestName = weakest == null ? "낮은 역량" : weakest.getCompetencyName();
+        String strongestName = strongest == null ? "강점 역량" : strongest.getCompetencyName();
+
+        String topGrowthFactor = growthFactors.isEmpty()
+                ? null
+                : growthFactors.get(0).getCalcTypeLabel();
+
+        String firstActionTitle = actionPlans.isEmpty()
+                ? null
+                : actionPlans.get(0).getCourseTitle();
+
+        String growthText = topGrowthFactor == null
+                ? "최근 반영된 성장 이력은 아직 많지 않습니다. 현재 점수를 기준으로 부족한 역량을 하나씩 보완해가면 전체 균형을 만들 수 있습니다."
+                : "최근에는 " + topGrowthFactor + " 활동이 역량 향상에 가장 크게 반영되었습니다. "
+                  + strongestName + "은 안정적으로 유지되고 있으며, " + weakestName + "을 보완하면 전체 균형이 더 좋아집니다.";
+
+        String nextAction = firstActionTitle == null
+                ? weakestName + "과 연결된 학습을 1개 선택해 시작해보는 것을 추천합니다."
+                : "'" + firstActionTitle + "' 학습을 먼저 진행해보는 것을 추천합니다.";
+
+        String growthPotential = firstActionTitle == null
+                ? weakestName + "을 중심으로 학습 이력이 쌓이면 종합 점수 개선 가능성이 있습니다."
+                : "'" + firstActionTitle + "' 학습을 완료하면 " + weakestName + " 보완에 도움이 될 수 있습니다.";
 
         return MyCompetencyEvaluationDto.AiSummaryDto.builder()
                 .headline(growthText)
                 .strength(strongest == null
                         ? "현재 역량 점수 데이터를 수집 중입니다."
-                        : strongest.getCompetencyName() + "이 가장 안정적인 강점입니다.")
+                        : "나의 가장 안정적인 강점은 "+ strongest.getCompetencyName() + " 입니다.")
                 .improvement(weakest == null
                         ? "추가 학습 이력이 쌓이면 보완 방향이 더 선명해집니다."
                         : weakest.getCompetencyName() + "을 우선 보완하면 전체 균형이 좋아집니다.")
+                .growthPotential(growthPotential)
                 .nextAction(nextAction)
                 .fallback(true)
                 .build();

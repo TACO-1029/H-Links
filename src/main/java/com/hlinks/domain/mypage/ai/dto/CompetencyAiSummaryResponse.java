@@ -12,5 +12,6 @@ public class CompetencyAiSummaryResponse {
     private String headline;
     private String strength;
     private String improvement;
+    private String growthPotential;
     private String nextAction;
 }
