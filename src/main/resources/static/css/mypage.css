@@ -4,9 +4,7 @@
 }
 
 .mypage-shell {
-    width: min(100%, 1120px);
-    margin: 0 auto;
-    padding: 48px 24px 72px;
+    padding-block: 48px 72px;
 }
 
 .mypage-hero {
@@ -510,7 +508,7 @@
 
 @media (max-width: 1024px) {
     .mypage-shell {
-        padding-top: 36px;
+        padding-block-start: 36px;
     }
 
     .mypage-hero {
@@ -533,7 +531,7 @@
 
 @media (max-width: 720px) {
     .mypage-shell {
-        padding: 28px 16px 56px;
+        padding-block: 28px 56px;
     }
 
     .mypage-hero {

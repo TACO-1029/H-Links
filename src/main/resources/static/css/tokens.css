@@ -3,7 +3,7 @@
     src: url("/fonts/Pretendard-Regular.woff2") format("woff2");
     font-style: normal;
     font-weight: 400;
-    font-display: swap;
+    font-display: out;
 }
 
 @font-face {
@@ -11,7 +11,7 @@
     src: url("/fonts/Pretendard-Medium.woff2") format("woff2");
     font-style: normal;
     font-weight: 500;
-    font-display: swap;
+    font-display: out;
 }
 
 @font-face {
@@ -19,7 +19,7 @@
     src: url("/fonts/Pretendard-SemiBold.woff2") format("woff2");
     font-style: normal;
     font-weight: 600;
-    font-display: swap;
+    font-display: out;
 }
 
 @font-face {
@@ -27,7 +27,7 @@
     src: url("/fonts/Pretendard-Bold.woff2") format("woff2");
     font-style: normal;
     font-weight: 700;
-    font-display: swap;
+    font-display: out;
 }
 
 :root {

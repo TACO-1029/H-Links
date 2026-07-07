@@ -4,9 +4,7 @@
 }
 
 .home-shell {
-    width: min(100%, 1120px);
-    margin: 0 auto;
-    padding: 64px 24px;
+    padding-block: 64px;
 }
 
 .home-news__username {
@@ -16,6 +14,7 @@
 
 .hr-shell {
     width: min(100%, 1840px);
+    margin-inline: auto;
     padding: 48px 48px 96px;
 }
 
@@ -1179,7 +1178,7 @@
 
 @media (max-width: 768px) {
     .home-shell {
-        padding: 40px 20px;
+        padding-block: 40px;
     }
 
     .hr-shell {

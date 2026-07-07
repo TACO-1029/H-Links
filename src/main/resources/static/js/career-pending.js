@@ -1,6 +1,31 @@
 let pollAttempts = 0;
 const maxAttempts = 30; // Max 30 attempts
 const baseDelay = 2000; // Base delay: 2 seconds
+const pendingTitles = [
+    '테스트 문항을 구성하고 있습니다.',
+    '난이도에 맞춰 문제를 조절 중입니다.',
+    '최적의 학습 경험을 준비하고 있습니다.',
+    '잠시만 기다려 주세요, 곧 시작합니다!'
+];
+
+function rotatePendingTitle() {
+    const titleElement = document.querySelector('.pending-title');
+    if (!titleElement) {
+        return;
+    }
+
+    let currentTitleIndex = 0;
+
+    setInterval(() => {
+        titleElement.classList.add('is-fading');
+
+        setTimeout(() => {
+            currentTitleIndex = (currentTitleIndex + 1) % pendingTitles.length;
+            titleElement.textContent = pendingTitles[currentTitleIndex];
+            titleElement.classList.remove('is-fading');
+        }, 280);
+    }, 2200);
+}
 
 function pollStatus() {
     pollAttempts++;
@@ -31,6 +56,8 @@ function pollStatus() {
             setTimeout(pollStatus, errorDelay);
         });
 }
+
+rotatePendingTitle();
 
 // Start polling
 setTimeout(pollStatus, baseDelay);

@@ -8,6 +8,11 @@ body {
     min-height: 100%;
 }
 
+html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+}
+
 body {
     font-family: var(--font-sans);
     font-size: var(--text-base);
@@ -15,6 +20,13 @@ body {
     line-height: var(--leading-normal);
     color: var(--color-text-primary);
     background: var(--color-bg-page);
+}
+
+.layout-container {
+    width: min(100%, 1200px);
+    margin-inline: auto;
+    padding-inline: 24px;
+    box-sizing: border-box;
 }
 
 button,
@@ -37,4 +49,10 @@ button {
 img {
     max-width: 100%;
     display: block;
+}
+
+@media (max-width: 640px) {
+    .layout-container {
+        padding-inline: 16px;
+    }
 }
