@@ -6,6 +6,7 @@ import com.hlinks.domain.interest.service.InterestService;
 import com.hlinks.domain.course.dto.CourseApplicationListResponseDto;
 import com.hlinks.domain.course.service.CourseService;
 import com.hlinks.domain.mypage.dto.MyCourseStatusResponseDto;
+import com.hlinks.domain.mypage.service.MyCompetencyEvaluationService;
 import com.hlinks.domain.recommend.kcy.service.KcyService;
 import com.hlinks.domain.recommend.kcy.type.KcyType;
 import com.hlinks.global.response.SuccessResponse;
@@ -33,6 +34,7 @@ public class MyPageController {
     private final InterestService interestService;
     private final CourseService courseService; // [이슈 #44] CourseService 주입 추가
     private final CoffeeChatService coffeeChatService;
+    private final MyCompetencyEvaluationService myCompetencyEvaluationService;
 
     @GetMapping("/mypage")
     public String myInfo(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
@@ -80,6 +82,17 @@ public class MyPageController {
         model.addAttribute("receivedCoffeeChatRequests", coffeeChatService.getReceivedRequests(userDetails.getUserId()));
 
         return "mypage/coffee-chats";
+    }
+
+    @GetMapping("/mypage/evaluation")
+    public String myCompetencyEvaluation(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        Long userId = userDetails.getUserId();
+        model.addAttribute("activeMenu", "mypage");
+        model.addAttribute("activeSubMenu", "myEvaluation");
+        addMyPageHeroModel(userDetails, model);
+        model.addAttribute("evaluation", myCompetencyEvaluationService.getEvaluation(userId));
+
+        return "mypage/evaluation";
     }
 
     // ========================================================

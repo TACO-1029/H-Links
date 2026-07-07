@@ -28,7 +28,7 @@ public enum CompetencyCalcType {
     GLOBAL_IT_LECTURE_COMPLETE("GLOBAL_IT_LECTURE_COMPLETE", "글로벌 IT 강의 수료"),
     LANGUAGE_LECTURE_COMPLETE("LANGUAGE_LECTURE_COMPLETE", "어학 강의 수료"),
     LANGUAGE_SCORE_REGISTERED("LANGUAGE_SCORE_REGISTERED", "어학 점수 등록"),
-    UNKNOWN("UNKNOWN", "알 수 없음");
+    UNKNOWN("UNKNOWN", "기타 점수 반영");
 
     private final String code;
     private final String label;

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>H-Links | 내 역량 평가</title>
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+    <link rel="stylesheet" th:href="@{/css/applications.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage-evaluation.css}">
+</head>
+<body class="mypage-page">
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="mypage-shell layout-container">
+    <section class="mypage-hero" aria-labelledby="mypage-title">
+        <div class="mypage-hero__identity">
+            <div class="mypage-avatar mypage-avatar--large" aria-hidden="true"
+                 th:text="${#authentication.principal.name != null ? #strings.substring(#authentication.principal.name, 0, 1) : 'H'}">
+                H
+            </div>
+            <div class="mypage-hero__text">
+                <span class="mypage-badge" th:text="|사번 ${#authentication.principal.username}|">사번 EMP-0000</span>
+                <h1 id="mypage-title" class="mypage-hero__title">
+                    <span th:text="${#authentication.principal.name}">사용자명</span>
+                    <span th:text="${#authentication.principal.positionName}">사원</span>
+                </h1>
+                <p class="mypage-hero__meta">
+                    <span th:text="${#authentication.principal.departmentName}">소속 부서</span>
+                    <span aria-hidden="true">·</span>
+                    <span th:text="${#authentication.principal.jobName}">직무</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="mypage-summary" aria-label="학습 요약">
+            <article class="mypage-summary-card">
+                <span class="mypage-summary-card__label">수강 중</span>
+                <strong class="mypage-summary-card__value" th:text="${inProgressCount}">0</strong>
+            </article>
+            <article class="mypage-summary-card">
+                <span class="mypage-summary-card__label">수료 완료</span>
+                <strong class="mypage-summary-card__value mypage-summary-card__value--blue" th:text="${completedCount}">0</strong>
+            </article>
+        </div>
+    </section>
+
+    <div class="mypage-content-layout">
+        <aside class="mypage-aside-nav">
+            <h3 class="mypage-aside-nav__title">마이페이지</h3>
+            <ul class="mypage-aside-nav__list">
+                <li><a th:href="@{/mypage}" class="mypage-aside-nav__link">내 정보</a></li>
+                <li><a th:href="@{/mypage/courses}" class="mypage-aside-nav__link">수강현황</a></li>
+                <li><a th:href="@{/mypage/applications}" class="mypage-aside-nav__link">신청 내역</a></li>
+                <li><a th:href="@{/mypage/evaluation}" class="mypage-aside-nav__link is-active">역량 평가</a></li>
+            </ul>
+        </aside>
+
+        <section class="mypage-main-content my-evaluation" aria-label="내 역량 평가">
+            <div class="my-evaluation__top">
+                <article class="evaluation-card evaluation-card--profile">
+                    <div class="evaluation-card__heading">
+                        <div>
+                            <p class="evaluation-eyebrow">종합 역량 진단</p>
+                            <h2>나의 역량 프로파일</h2>
+                            <p th:text="${evaluation.lastCalculatedAt}">2026.07.07</p>
+                        </div>
+                        <div class="total-score">
+                            <span>종합 점수</span>
+                            <strong><span th:text="${evaluation.totalScore}">70</span><small>/100</small></strong>
+                        </div>
+                    </div>
+
+                    <div class="radar-wrap" aria-label="역량 레이더 차트">
+                        <div id="myCompetencyRadarChart" class="radar-chart" role="img" aria-label="내 역량과 조직 평균 비교"></div>
+                    </div>
+
+                    <div class="radar-legend">
+                        <span><i class="legend-dot legend-dot--user"></i>내 역량</span>
+                        <span><i class="legend-dot legend-dot--average"></i>조직 평균</span>
+                    </div>
+                </article>
+
+
+                    <article class="evaluation-card evaluation-card--ai">
+                        <div class="evaluation-card__heading">
+                            <div>
+                                <p class="evaluation-eyebrow">AI 역량 분석</p>
+                                <h2>나의 역량 요약</h2>
+                            </div>
+                            <span class="ai-state" th:text="${evaluation.aiSummary.fallback ? '기본 분석' : 'AI 분석'}">AI 분석</span>
+                        </div>
+                        <p class="ai-headline" th:text="${evaluation.aiSummary.headline}">최근 성장 요약</p>
+                        <dl class="ai-summary-list">
+                            <div>
+                                <dt>강점</dt>
+                                <dd th:text="${evaluation.aiSummary.strength}">강점 요약</dd>
+                            </div>
+                            <div>
+                                <dt>보완 방향</dt>
+                                <dd th:text="${evaluation.aiSummary.improvement}">보완 방향</dd>
+                            </div>
+                            <div>
+                                <dt>다음 행동</dt>
+                                <dd th:text="${evaluation.aiSummary.nextAction}">다음 행동</dd>
+                            </div>
+                        </dl>
+                    </article>
+
+                    <article class="evaluation-card evaluation-card--recommend">
+                        <p class="evaluation-eyebrow">역량을 더 높이고 싶다면?</p>
+                        <h2>다음 추천 학습</h2>
+                        <div class="action-list">
+                            <div class="action-item" th:each="action : ${evaluation.actionPlans}">
+                                <div>
+                                    <span class="action-chip" th:text="${action.primarySkillName}">역량</span>
+                                    <h3 th:text="${action.courseTitle}">추천 액션</h3>
+                                    <p th:text="${action.reason}">추천 사유</p>
+                                </div>
+                                <a th:if="${action.courseId != null}"
+                                   th:href="@{/courses/{courseId}(courseId=${action.courseId})}"
+                                   class="action-link">보기</a>
+                            </div>
+                        </div>
+                    </article>
+
+            </div>
+
+            <div class="evaluation-bottom">
+                <article class="evaluation-card evaluation-card--full">
+                    <div class="evaluation-card__heading">
+                        <div>
+                            <p class="evaluation-eyebrow">최근 활동</p>
+                            <h2>역량 성장 이력</h2>
+                        </div>
+                    </div>
+
+                    <div class="history-list" th:if="${!#lists.isEmpty(evaluation.recentHistories)}">
+                        <div class="history-item" th:each="history : ${evaluation.recentHistories}">
+                            <div>
+                                <strong th:text="|${history.calcTypeLabel} - ${history.competencyName}|">
+                                    퀴즈 만점 - 직무역량
+                                </strong>
+                                <span th:text="${history.calculatedAt}">2026.07.07 09:22</span>
+                            </div>
+
+                            <b th:text="|+${#numbers.formatDecimal(history.scoreDelta, 1, 2)}점|">
+                                +1.50점
+                            </b>
+                        </div>
+                    </div>
+
+                    <div class="evaluation-empty" th:if="${#lists.isEmpty(evaluation.recentHistories)}">
+                        아직 반영된 역량 점수 이력이 없습니다.
+                    </div>
+                </article>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script id="myCompetencyRadarData" type="application/json" th:utext="${evaluation.radarChartDataJson}">{"labels":[],"userScores":[],"organizationScores":[]}</script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js" defer></script>
+<script th:src="@{/js/mypage-evaluation.js}" defer></script>
+</body>
+</html>

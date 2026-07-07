@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.zip.CRC32;
 
@@ -20,6 +21,9 @@ public class CompetencyScoreService {
 
     private static final String REFERENCE_TYPE_COURSE = "COURSE";
     private static final String REFERENCE_TYPE_GLOBAL_NEWS = "GLOBAL_NEWS";
+    private static final String REFERENCE_TYPE_LEARNING_STREAK = "LEARNING_STREAK";
+    private static final int STREAK_7_DAYS = 7;
+    private static final int STREAK_30_DAYS = 30;
 
     private final CompetencyScorePolicy competencyScorePolicy;
     private final CompetencyScoreMapper competencyScoreMapper;
@@ -108,6 +112,23 @@ public class CompetencyScoreService {
         );
     }
 
+    @Transactional
+    public int applyLearningStreakRewards() {
+        return applyLearningStreakRewards(LocalDate.now());
+    }
+
+    @Transactional
+    public int applyLearningStreakRewards(LocalDate targetDate) {
+        if (targetDate == null) {
+            return 0;
+        }
+
+        int appliedCount = 0;
+        appliedCount += applyLearningStreakReward(targetDate, STREAK_7_DAYS, CompetencyCalcType.STREAK_7);
+        appliedCount += applyLearningStreakReward(targetDate, STREAK_30_DAYS, CompetencyCalcType.STREAK_30);
+        return appliedCount;
+    }
+
     private boolean applyPolicies(
             Long userId,
             List<CompetencyScorePolicyRow> policies,
@@ -167,6 +188,23 @@ public class CompetencyScoreService {
 
         competencyScoreMapper.upsertUserCompetencyScore(userId, competencyId, scoreDelta);
         return true;
+    }
+
+    private int applyLearningStreakReward(LocalDate targetDate, int streakDays, CompetencyCalcType calcType) {
+        List<Long> userIds = competencyScoreMapper.findLearningStreakUserIds(targetDate, streakDays);
+        int appliedCount = 0;
+        for (Long userId : userIds) {
+            boolean applied = applyActionScore(
+                    userId,
+                    calcType,
+                    REFERENCE_TYPE_LEARNING_STREAK,
+                    userId
+            );
+            if (applied) {
+                appliedCount++;
+            }
+        }
+        return appliedCount;
     }
 
     private long toReferenceId(String value) {

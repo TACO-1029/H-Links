@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Mapper
@@ -27,6 +28,11 @@ public interface CompetencyScoreMapper {
     int countFirstLearningSkillsForCourse(
             @Param("userId") Long userId,
             @Param("courseId") Long courseId
+    );
+
+    List<Long> findLearningStreakUserIds(
+            @Param("targetDate") LocalDate targetDate,
+            @Param("streakDays") int streakDays
     );
 
     int countScoreHistory(

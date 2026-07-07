@@ -108,6 +108,20 @@
           )
     </select>
 
+    <select id="findLearningStreakUserIds" resultType="long">
+        SELECT streak.USER_ID
+        FROM (
+            SELECT
+                ll.USER_ID,
+                COUNT(DISTINCT TRUNC(ll.EVENT_AT)) AS ACTIVE_DAYS
+            FROM LEARNING_LOG ll
+            WHERE ll.EVENT_AT &gt;= #{targetDate} - (#{streakDays} - 1)
+              AND ll.EVENT_AT &lt; #{targetDate} + 1
+            GROUP BY ll.USER_ID
+        ) streak
+        WHERE streak.ACTIVE_DAYS = #{streakDays}
+    </select>
+
     <select id="countScoreHistory" resultType="int">
         SELECT COUNT(*)
         FROM COMPETENCY_SCORE_HISTORY

@@ -14,14 +14,6 @@
   <link rel="stylesheet" th:href="@{/css/footer.css}">
   <link rel="stylesheet" th:href="@{/css/home.css}">
   <style>
-    .hr-dashboard {
-      display: grid;
-      grid-template-columns: 220px minmax(0, 1320px);
-      gap: 32px;
-      width: 100%;
-      align-items: start;
-    }
-
     .hr-quiz-panel {
       display: grid;
       gap: 20px;
@@ -618,10 +610,6 @@
     }
 
     @media (max-width: 1024px) {
-      .hr-dashboard {
-        grid-template-columns: 1fr;
-      }
-
       .hr-quiz-table-wrap {
         overflow-x: auto;
       }
@@ -683,7 +671,7 @@
 <div th:replace="~{fragments/header :: header}"></div>
 
 <main class="home-shell hr-shell">
-  <div class="hr-dashboard">
+  <div class="hr-layout">
     <div th:replace="~{fragments/hr-sidebar :: sidebar('ai-quiz')}"></div>
 
     <section class="hr-quiz-panel" aria-labelledby="aiQuizTitle">

@@ -15,14 +15,6 @@
   <link rel="stylesheet" th:href="@{/css/home.css}">
   <link rel="stylesheet" th:href="@{/css/hr-stats.css}">
   <style>
-    .hr-dashboard {
-      display: grid;
-      grid-template-columns: 220px minmax(0, 1320px);
-      gap: 32px;
-      align-items: start;
-      width: 100%;
-    }
-
     .hr-dashboard-main {
       display: grid;
       gap: 24px;
@@ -68,18 +60,13 @@
       font-weight: var(--font-semibold);
     }
 
-    @media (max-width: 1024px) {
-      .hr-dashboard {
-        grid-template-columns: 1fr;
-      }
-    }
   </style>
 </head>
 <body class="home-page">
 <div th:replace="~{fragments/header :: header}"></div>
 
 <main class="home-shell hr-shell">
-  <div class="hr-dashboard">
+  <div class="hr-layout">
     <div th:replace="~{fragments/hr-sidebar :: sidebar('dashboard')}"></div>
 
     <section class="hr-dashboard-main" aria-labelledby="hrDashboardTitle">

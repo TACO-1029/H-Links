@@ -18,6 +18,14 @@
     padding: 48px 48px 96px;
 }
 
+.hr-layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1320px);
+    gap: 32px;
+    align-items: start;
+    width: 100%;
+}
+
 .hr-sidebar {
     position: sticky;
     top: 24px;
@@ -1183,6 +1191,10 @@
 
     .hr-shell {
         padding: 40px 28px 72px;
+    }
+
+    .hr-layout {
+        grid-template-columns: 1fr;
     }
 
     .hr-sidebar {
