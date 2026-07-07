@@ -17,6 +17,20 @@ public class KcyScoreDto {
     private int prompterScore;
     private int manualScore;
 
+    public void addScore(String type, int amount) {
+        if (type == null) return;
+        switch (type.toUpperCase()) {
+            case "ACTION" -> actionScore += amount;
+            case "OUTLINE" -> outlineScore += amount;
+            case "WIDE" -> wideScore += amount;
+            case "DEEP" -> deepScore += amount;
+            case "INDEPENDENT" -> independentScore += amount;
+            case "CORPORATE" -> corporateScore += amount;
+            case "PROMPTER" -> prompterScore += amount;
+            case "MANUAL" -> manualScore += amount;
+        }
+    }
+
     public KcyType toKcyType() {
         String code = getActionOrOutlineCode()
                 + getWideOrDeepCode()

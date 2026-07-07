@@ -38,26 +38,29 @@ public class KcyController {
     }
 
     // 사용자가 고른 답변을 제출합니다. 앞에서 넘겨준 KcySubmitRequest 객체가 여기로 다시 들어옵니다.
+    @PostMapping("/kcy/adaptive-flow")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public com.hlinks.domain.recommend.kcy.dto.KcyAdaptiveResponse getNextAdaptiveQuestion(
+            @org.springframework.web.bind.annotation.RequestBody com.hlinks.domain.recommend.kcy.dto.KcyAdaptiveRequest request) {
+        return kcyService.getNextAdaptiveQuestion(request);
+    }
+
     @PostMapping("/kcy")
     public String submit(
-            @Valid KcySubmitRequest request,
+            @Valid com.hlinks.domain.recommend.kcy.dto.KcySubmitRequest request,
             BindingResult bindingResult,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes,
             Model model
     ) {
-
         if (bindingResult.hasErrors()) {
-            model.addAttribute("activeMenu", "kcy");
-            model.addAttribute("activeSubMenu", "kcy");
-            model.addAttribute("questions", kcyService.getQuestions());
-
-            return "recommend/kcy/test";
+            redirectAttributes.addFlashAttribute("errorMessage", "제출된 답변 데이터에 오류가 있습니다.");
+            return "redirect:/kcy";
         }
-        // 결과 가져옵니다. 이떄 공유된 userDetails에서 값을 꺼내옵니다.
+
         KcyScoreDto score = kcyService.submit(
                 userDetails.getUserId(),
-                request.getSelectedOptionIds()
+                request
         );
         KcyType type = score.toKcyType();
 
