@@ -16,6 +16,7 @@ import com.hlinks.domain.recommend.kcy.type.KcyType;
 import com.hlinks.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -32,7 +33,7 @@ import java.util.List;
 public class CoffeeChatServiceImpl implements CoffeeChatService {
 
     private final CoffeeChatMapper coffeeChatMapper;
-    private final JavaMailSender javaMailSender;
+    private final ObjectProvider<JavaMailSender> javaMailSenderProvider;
 
     @Value("${hlinks.coffee-chat.mail.enabled:false}")
     private boolean mailEnabled;
@@ -179,8 +180,9 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
     ) {
         String subject = "[H-LINKs] " + requester.getName() + " 님이 커피챗을 신청했습니다";
         String content = buildMailContent(requester, receiver, receiverType, matchGrade, message);
+        JavaMailSender javaMailSender = javaMailSenderProvider.getIfAvailable();
 
-        if (!mailEnabled || !StringUtils.hasText(mailHost)) {
+        if (!mailEnabled || !StringUtils.hasText(mailHost) || javaMailSender == null) {
             insertMailLog(requestId, receiver, subject, content, MailSendStatus.SKIPPED, "메일 발송 설정이 비활성화되어 있습니다.");
             return MailSendStatus.SKIPPED;
         }
