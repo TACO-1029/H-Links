@@ -268,7 +268,7 @@
     <li th:each="rank : ${block.ranks}">
       <span class="hr-stats-rank__meta" th:text="${rank.rank}">1</span>
       <span class="hr-stats-rank__badge badge rounded-pill"
-            th:if="${rank.badgeText != null and !#strings.isEmpty(rank.badgeText)}"
+            th:if="${rank.badgeText != null and !#strings.isEmpty(rank.badgeText) and rank.badgeText != '조직'}"
             th:classappend="${rank.badgeTone}"
             th:text="${rank.badgeText}">Backend</span>
       <span class="hr-stats-rank__label" th:text="${rank.label}">Spring Boot 입문</span>

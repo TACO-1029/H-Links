@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.mypage.mapper.MyCompetencyEvaluationMapper">
+
+    <select id="findCompetencyScores"
+            resultType="com.hlinks.domain.mypage.dto.MyCompetencyEvaluationDto$CompetencyScoreDto">
+        SELECT
+            c.COMPETENCY_ID AS competencyId,
+            c.COMPETENCY_NAME AS competencyName,
+            c.DESCRIPTION AS description,
+            NVL(ucs.SCORE, 70) AS userScore,
+            NVL(org_avg.AVG_SCORE, 70) AS organizationAverageScore,
+            NVL(c.STANDARD_SCORE, 100) AS targetScore,
+            NVL(ucs.SCORE, 70) - NVL(org_avg.AVG_SCORE, 70) AS gapToOrganization,
+            NVL(c.STANDARD_SCORE, 100) - NVL(ucs.SCORE, 70) AS gapToTarget,
+            ROW_NUMBER() OVER (ORDER BY c.COMPETENCY_ID) AS displayOrder
+        FROM COMPETENCY c
+        LEFT JOIN USER_COMPETENCY_SCORE ucs
+          ON ucs.COMPETENCY_ID = c.COMPETENCY_ID
+         AND ucs.USER_ID = #{userId}
+        LEFT JOIN (
+            SELECT
+                COMPETENCY_ID,
+                ROUND(AVG(SCORE), 1) AS AVG_SCORE
+            FROM USER_COMPETENCY_SCORE
+            GROUP BY COMPETENCY_ID
+        ) org_avg
+          ON org_avg.COMPETENCY_ID = c.COMPETENCY_ID
+        WHERE c.USE_YN = 'Y'
+        ORDER BY c.COMPETENCY_ID
+    </select>
+
+    <select id="findLastCalculatedAt" resultType="string">
+        SELECT TO_CHAR(MAX(CALCULATED_AT), 'YYYY.MM.DD')
+        FROM (
+            SELECT CALCULATED_AT
+            FROM USER_COMPETENCY_SCORE
+            WHERE USER_ID = #{userId}
+            UNION ALL
+            SELECT CALCULATED_AT
+            FROM COMPETENCY_SCORE_HISTORY
+            WHERE USER_ID = #{userId}
+        )
+    </select>
+
+    <select id="findRecentHistories"
+            resultType="com.hlinks.domain.mypage.dto.MyCompetencyEvaluationDto$ScoreHistoryDto">
+        SELECT *
+        FROM (
+            SELECT
+                history.HISTORY_ID AS historyId,
+                history.COMPETENCY_ID AS competencyId,
+                comp.COMPETENCY_NAME AS competencyName,
+                history.SCORE AS score,
+                history.SCORE_DELTA AS scoreDelta,
+                history.CALC_TYPE AS calcType,
+                history.REFERENCE_TYPE AS referenceType,
+                history.REFERENCE_ID AS referenceId,
+                TO_CHAR(history.CALCULATED_AT, 'YYYY.MM.DD HH24:MI') AS calculatedAt
+            FROM (
+                SELECT
+                    csh.HISTORY_ID,
+                    csh.USER_ID,
+                    csh.COMPETENCY_ID,
+                    csh.SCORE,
+                    GREATEST(
+                        csh.SCORE - NVL(
+                            LAG(csh.SCORE) OVER (
+                                PARTITION BY csh.USER_ID, csh.COMPETENCY_ID
+                                ORDER BY csh.CALCULATED_AT, csh.HISTORY_ID
+                            ),
+                            70
+                        ),
+                        0
+                    ) AS SCORE_DELTA,
+                    csh.CALC_TYPE,
+                    csh.REFERENCE_TYPE,
+                    csh.REFERENCE_ID,
+                    csh.CALCULATED_AT
+                FROM COMPETENCY_SCORE_HISTORY csh
+                WHERE csh.USER_ID = #{userId}
+            ) history
+            JOIN COMPETENCY comp
+              ON comp.COMPETENCY_ID = history.COMPETENCY_ID
+            ORDER BY history.CALCULATED_AT DESC, history.HISTORY_ID DESC
+        )
+        WHERE ROWNUM &lt;= 5
+    </select>
+
+    <select id="findGrowthFactors"
+            resultType="com.hlinks.domain.mypage.dto.MyCompetencyEvaluationDto$GrowthFactorDto">
+        SELECT *
+        FROM (
+            SELECT
+                recent.CALC_TYPE AS calcType,
+                ROUND(SUM(recent.SCORE_DELTA), 2) AS scoreDelta,
+                COUNT(*) AS eventCount,
+                TO_CHAR(MAX(recent.CALCULATED_AT), 'YYYY.MM.DD') AS latestCalculatedAt
+            FROM (
+                SELECT
+                    history.CALC_TYPE,
+                    history.CALCULATED_AT,
+                    GREATEST(
+                        history.SCORE - NVL(
+                            LAG(history.SCORE) OVER (
+                                PARTITION BY history.USER_ID, history.COMPETENCY_ID
+                                ORDER BY history.CALCULATED_AT, history.HISTORY_ID
+                            ),
+                            70
+                        ),
+                        0
+                    ) AS SCORE_DELTA
+                FROM COMPETENCY_SCORE_HISTORY history
+                WHERE history.USER_ID = #{userId}
+            ) recent
+            WHERE recent.CALCULATED_AT &gt;= SYSDATE - 30
+              AND recent.SCORE_DELTA &gt; 0
+              AND recent.CALC_TYPE != 'UNKNOWN'
+            GROUP BY recent.CALC_TYPE
+            ORDER BY SUM(recent.SCORE_DELTA) DESC, MAX(recent.CALCULATED_AT) DESC
+        )
+        WHERE ROWNUM &lt;= 4
+    </select>
+
+    <select id="findRecommendedCoursesForWeakCompetencies"
+            resultType="com.hlinks.domain.mypage.dto.MyCompetencyEvaluationDto$ActionPlanDto">
+        WITH competency_scores AS (
+            SELECT
+                c.COMPETENCY_ID,
+                NVL(ucs.SCORE, 70) AS USER_SCORE
+            FROM COMPETENCY c
+            LEFT JOIN USER_COMPETENCY_SCORE ucs
+              ON ucs.COMPETENCY_ID = c.COMPETENCY_ID
+             AND ucs.USER_ID = #{userId}
+            WHERE c.USE_YN = 'Y'
+        ),
+        weak_competencies AS (
+            SELECT *
+            FROM (
+                SELECT
+                    COMPETENCY_ID,
+                    USER_SCORE
+                FROM competency_scores
+                ORDER BY USER_SCORE ASC, COMPETENCY_ID ASC
+            )
+            WHERE ROWNUM &lt;= 3
+        ),
+        candidates AS (
+            SELECT
+                c.COURSE_ID AS courseId,
+                c.COURSE_TITLE AS courseTitle,
+                c.COURSE_TYPE AS courseType,
+                skill.SKILL_NAME AS primarySkillName,
+                SUM((100 - weak.USER_SCORE) * NVL(cs.WEIGHT, 0) * scs.SCORE_DELTA) AS recommendationScore,
+                ROW_NUMBER() OVER (
+                    PARTITION BY c.COURSE_ID
+                    ORDER BY SUM((100 - weak.USER_SCORE) * NVL(cs.WEIGHT, 0) * scs.SCORE_DELTA) DESC
+                ) AS courseRank
+            FROM weak_competencies weak
+            JOIN SKILL_COMPETENCY_SCORE scs
+              ON scs.COMPETENCY_ID = weak.COMPETENCY_ID
+             AND scs.USE_YN = 'Y'
+            JOIN COURSE_SKILL cs
+              ON cs.SKILL_ID = scs.SKILL_ID
+             AND NVL(cs.WEIGHT, 0) &gt; 0
+            JOIN COURSE c
+              ON c.COURSE_ID = cs.COURSE_ID
+            JOIN SKILL skill
+              ON skill.SKILL_ID = cs.SKILL_ID
+            LEFT JOIN COURSE_LEARNING_STATUS cls
+              ON cls.COURSE_ID = c.COURSE_ID
+             AND cls.USER_ID = #{userId}
+             AND cls.STATUS = 'COMPLETED'
+            LEFT JOIN ONLINE_COURSE online_course
+              ON online_course.COURSE_ID = c.COURSE_ID
+            LEFT JOIN OFFLINE_COURSE offline_course
+              ON offline_course.COURSE_ID = c.COURSE_ID
+            WHERE cls.COURSE_LEARNING_ID IS NULL
+              AND (
+                  (c.COURSE_TYPE = 'ONLINE' AND NVL(online_course.STATUS, 'OPEN') != 'HIDDEN')
+                  OR
+                  (c.COURSE_TYPE = 'OFFLINE' AND NVL(offline_course.STATUS, 'OPEN') != 'HIDDEN')
+              )
+            GROUP BY c.COURSE_ID, c.COURSE_TITLE, c.COURSE_TYPE, skill.SKILL_NAME
+        ),
+        ranked_courses AS (
+            SELECT
+                courseId,
+                courseTitle,
+                courseType,
+                primarySkillName,
+                recommendationScore,
+                ROW_NUMBER() OVER (ORDER BY recommendationScore DESC, courseId DESC) AS rowRank
+            FROM candidates
+            WHERE courseRank = 1
+              AND recommendationScore &gt; 0
+        )
+        SELECT
+            'COURSE' AS type,
+            courseId,
+            courseTitle,
+            courseType,
+            primarySkillName,
+            ROUND(recommendationScore, 2) AS recommendationScore,
+            primarySkillName || ' 역량 보완에 도움이 되는 추천 강의입니다.' AS reason
+        FROM ranked_courses
+        WHERE rowRank &lt;= #{limit}
+    </select>
+</mapper>

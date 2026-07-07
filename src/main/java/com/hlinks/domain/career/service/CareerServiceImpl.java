@@ -4,6 +4,8 @@ import com.hlinks.domain.career.exception.CareerErrorCode;
 import com.hlinks.domain.career.mapper.CareerMapper;
 import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.dto.CareerSkillDto;
+import com.hlinks.domain.competency.service.CompetencyScoreService;
+import com.hlinks.domain.competency.type.CompetencyCalcType;
 import com.hlinks.domain.course.dto.CourseListResponseDto;
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.global.response.SliceResponse;
@@ -32,9 +34,12 @@ import java.util.ArrayList;
 @Transactional(readOnly = true)
 public class CareerServiceImpl implements CareerService {
 
+    private static final String REFERENCE_TYPE_CAREER_DIAGNOSIS = "CAREER_DIAGNOSIS";
+
     private final CareerMapper careerMapper;
     private final AiLevelTestService aiLevelTestService;
     private final ObjectMapper objectMapper;
+    private final CompetencyScoreService competencyScoreService;
 
     @Override
     public boolean hasDiagnosis(Long userId) {
@@ -285,6 +290,12 @@ public class CareerServiceImpl implements CareerService {
 
             // Persist the result in LLM Summary for next steps / dashboard
             careerMapper.updateLlmSummary(diagnosisId, resultJson);
+            competencyScoreService.applyActionScore(
+                    userId,
+                    CompetencyCalcType.LEVEL_TEST_TAKEN,
+                    REFERENCE_TYPE_CAREER_DIAGNOSIS,
+                    diagnosisId
+            );
         } catch (Exception e) {
             log.error("Failed to serialize scoring result JSON", e);
             throw new RuntimeException("결과 데이터 저장 중 오류가 발생했습니다.", e);
