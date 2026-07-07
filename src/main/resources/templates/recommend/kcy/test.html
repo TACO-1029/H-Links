@@ -304,6 +304,7 @@
         timeTaken: 0,
         fillRate: 0,
         bypassEarlyStop: false,
+        tetrisFinished: false,
         history: [],        // State history snapshots for Undo
         questionHistory: [] // MCQ question DTO history snapshots for Undo
     };
@@ -659,7 +660,8 @@
         // Push initial state snapshot for Undo support at Q1
         state.history.push({
             selectedOptionIds: [...state.selectedOptionIds],
-            angerScoreTypes: [...state.angerScoreTypes]
+            angerScoreTypes: [...state.angerScoreTypes],
+            tetrisFinished: state.tetrisFinished
         });
 
         const lines = document.querySelectorAll('.token.is-highlighted');
@@ -684,7 +686,8 @@
         // Push current states to history snapshots for Undo
         state.history.push({
             selectedOptionIds: [...state.selectedOptionIds],
-            angerScoreTypes: [...state.angerScoreTypes]
+            angerScoreTypes: [...state.angerScoreTypes],
+            tetrisFinished: state.tetrisFinished
         });
 
         // Add user response to flow
@@ -706,6 +709,7 @@
         const lastState = state.history.pop();
         state.selectedOptionIds = lastState.selectedOptionIds;
         state.angerScoreTypes = lastState.angerScoreTypes;
+        state.tetrisFinished = lastState.tetrisFinished || false;
 
         // Pop last question from question history
         state.questionHistory.pop();
@@ -752,7 +756,8 @@
                 tiebreakerBlocks: state.tiebreakerBlocks,
                 timeTaken: state.timeTaken,
                 fillRate: state.fillRate,
-                bypassEarlyStop: state.bypassEarlyStop || false
+                bypassEarlyStop: state.bypassEarlyStop || false,
+                tetrisFinished: state.tetrisFinished || false
             })
         })
         .then(res => res.json())
@@ -899,7 +904,7 @@
         // 드래그 중인 블록의 description 툴팁 표시
         const blockId = activeDrag.id;
         const blockData = allBlocks.find(b => b.id === blockId);
-        if (blockData && blockData.description) {
+        if (blockData && blockData.description && blockData.description.trim() !== '') {
             const toast = document.getElementById('tetris-tooltip-toast');
             if (toast) {
                 toast.innerHTML = `<strong>💡 ${blockData.name}</strong>: ${blockData.description}`;
@@ -1043,6 +1048,15 @@
         // 2. 사용자 말풍선으로 테트리스 배포 상황 피드백 노출
         const nextStep = state.selectedOptionIds.length + 1;
         appendUserMessage(`[프로젝트 배포 완료] 총 ${state.tiebreakerBlocks.length}개의 맞춤 기술 스택을 구성하여 배포했습니다.`, nextStep);
+
+        // Push state snapshot right before marking tetrisFinished = true to allow undo back to tetris board
+        state.history.push({
+            selectedOptionIds: [...state.selectedOptionIds],
+            angerScoreTypes: [...state.angerScoreTypes],
+            tetrisFinished: state.tetrisFinished
+        });
+
+        state.tetrisFinished = true; // Mark tetris phase as fully finished
 
         // 3. 백엔드에 테트리스 배치 정보와 함께 다음 적응형 질문 요청
         requestNextAdaptive();

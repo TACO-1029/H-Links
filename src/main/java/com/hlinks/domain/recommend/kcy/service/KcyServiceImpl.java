@@ -20,8 +20,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class KcyServiceImpl implements KcyService {
 
-    private static final int MIN_MCQ_FOR_EARLY_STOP = 2;
-    private static final int MAX_MCQ_LIMIT = 6;
+    private static final int MIN_MCQ_FOR_EARLY_STOP = 5;
+    private static final int MAX_MCQ_LIMIT = 9;
     private static final int SCORE_DIFF_THRESHOLD = 3;
 
     private final KcyMapper kcyMapper;
@@ -50,8 +50,8 @@ public class KcyServiceImpl implements KcyService {
 
     @Override
     public KcyAdaptiveResponse getNextAdaptiveQuestion(KcyAdaptiveRequest request) {
-        // 조건 1: 코드 리뷰는 끝났으나 테트리스 배치 데이터가 아직 없는 경우 -> 즉시 테트리스 단계 개시
-        if (request.getTiebreakerBlocks() == null || request.getTiebreakerBlocks().isEmpty()) {
+        // 조건 1: 코드 리뷰는 끝났으나 테트리스 배포가 아직 완료되지 않은 경우 -> 즉시 테트리스 단계 개시
+        if (request.getTetrisFinished() == null || !request.getTetrisFinished()) {
             List<TetrisBlockDto> allBlocks = Arrays.stream(TetrisBlockRegistry.values())
                     .map(TetrisBlockRegistry::toDto)
                     .collect(Collectors.toList());
@@ -83,10 +83,11 @@ public class KcyServiceImpl implements KcyService {
         
         int answeredCount = request.getSelectedOptionIds() != null ? request.getSelectedOptionIds().size() : 0;
         
-        // 조기 종료 조건: MCQ를 2문항 이상 풀었고 모든 축 격차가 3점 이상으로 확실히 결정된 경우
+        // 조기 종료 조건: MCQ를 5문항 이상 풀었고 모든 축 격차가 20%p 이상으로 확실히 결정된 경우
         // 단, 사용자가 우회를 희망하여 bypassEarlyStop = true 로 오면 건너뛴다.
         if (answeredCount >= MIN_MCQ_FOR_EARLY_STOP && isAllAxesDetermined(currentScore)) {
-            if (request.getBypassEarlyStop() == null || !request.getBypassEarlyStop()) {
+            Boolean bes = request.getBypassEarlyStop();
+            if (bes == null || !bes) {
                 return KcyAdaptiveResponse.builder()
                         .status("EARLY_STOP_PROMPT")
                         .currentCount(answeredCount)
@@ -96,12 +97,16 @@ public class KcyServiceImpl implements KcyService {
         }
 
         // 최대 문항 수 제한 도달 조건: MCQ를 6문항 다 푼 경우
+        // 단, 사용자가 우회를 희망하여 bypassEarlyStop = true 로 오면 최대 11문항 풀을 다 풀 때까지 계속 진행
         if (answeredCount >= MAX_MCQ_LIMIT) {
-            return KcyAdaptiveResponse.builder()
-                    .status("FINAL_SUBMIT_PHASE")
-                    .currentCount(answeredCount)
-                    .totalPredictCount(answeredCount)
-                    .build();
+            Boolean bes = request.getBypassEarlyStop();
+            if (bes == null || !bes) {
+                return KcyAdaptiveResponse.builder()
+                        .status("EARLY_STOP_PROMPT")
+                        .currentCount(answeredCount)
+                        .totalPredictCount(answeredCount)
+                        .build();
+            }
         }
 
         // 안 푼 문제 중에서 Swing Range 가 가장 큰 문항 찾기
@@ -308,10 +313,12 @@ public class KcyServiceImpl implements KcyService {
     }
 
     private boolean isAllAxesDetermined(KcyScoreDto score) {
-        return isAxisDetermined(score.getActionScore(), score.getOutlineScore()) &&
-               isAxisDetermined(score.getWideScore(), score.getDeepScore()) &&
-               isAxisDetermined(score.getIndependentScore(), score.getCorporateScore()) &&
-               isAxisDetermined(score.getPrompterScore(), score.getManualScore());
+        int determinedCount = 0;
+        if (isAxisDetermined(score.getActionScore(), score.getOutlineScore())) determinedCount++;
+        if (isAxisDetermined(score.getWideScore(), score.getDeepScore())) determinedCount++;
+        if (isAxisDetermined(score.getIndependentScore(), score.getCorporateScore())) determinedCount++;
+        if (isAxisDetermined(score.getPrompterScore(), score.getManualScore())) determinedCount++;
+        return determinedCount >= 2;
     }
 
     private boolean isAxisDetermined(int a, int b) {

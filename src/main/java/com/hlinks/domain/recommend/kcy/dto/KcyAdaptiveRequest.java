@@ -14,4 +14,5 @@ public class KcyAdaptiveRequest {
     private Integer timeTaken; // 테트리스 소요 시간
     private Integer fillRate; // 테트리스 채움 비율
     private Boolean bypassEarlyStop; // 조기 종료 우회 여부
+    private Boolean tetrisFinished; // 테트리스 완료 여부 플래그
 }
