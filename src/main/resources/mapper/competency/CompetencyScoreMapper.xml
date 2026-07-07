@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.competency.mapper.CompetencyScoreMapper">
+
+    <select id="findActionPolicyScore" resultType="java.math.BigDecimal">
+        SELECT SCORE_DELTA
+        FROM COMPETENCY_ACTION_SCORE_POLICY
+        WHERE COMPETENCY_ID = #{competencyId}
+          AND CALC_TYPE = #{calcType}
+          AND USE_YN = 'Y'
+    </select>
+
+    <select id="findActionPolicies" resultType="com.hlinks.domain.competency.dto.CompetencyScorePolicyRow">
+        SELECT
+            COMPETENCY_ID AS competencyId,
+            CALC_TYPE AS calcType,
+            SCORE_DELTA AS scoreDelta
+        FROM COMPETENCY_ACTION_SCORE_POLICY
+        WHERE CALC_TYPE = #{calcType}
+          AND USE_YN = 'Y'
+        ORDER BY COMPETENCY_ID
+    </select>
+
+    <select id="findSkillCourseCompletionPolicies" resultType="com.hlinks.domain.competency.dto.CompetencyScorePolicyRow">
+        WITH course_skills AS (
+            SELECT cs.SKILL_ID
+            FROM COURSE_SKILL cs
+            WHERE cs.COURSE_ID = #{courseId}
+            UNION
+            SELECT chs.SKILL_ID
+            FROM COURSE_CHAPTER cc
+            JOIN CHAPTER_SKILL chs
+              ON chs.CHAPTER_ID = cc.CHAPTER_ID
+            WHERE cc.COURSE_ID = #{courseId}
+              AND cc.USE_YN = 'Y'
+        )
+        SELECT
+            scs.COMPETENCY_ID AS competencyId,
+            scs.CALC_TYPE AS calcType,
+            MAX(scs.SCORE_DELTA) AS scoreDelta
+        FROM SKILL_COMPETENCY_SCORE scs
+        WHERE scs.USE_YN = 'Y'
+          AND EXISTS (
+              SELECT 1
+              FROM course_skills course_skill
+              JOIN SKILL skill
+                ON skill.SKILL_ID = course_skill.SKILL_ID
+              WHERE course_skill.SKILL_ID = scs.SKILL_ID
+                 OR skill.PARENT_SKILL_ID = scs.SKILL_ID
+          )
+        GROUP BY scs.COMPETENCY_ID, scs.CALC_TYPE
+        ORDER BY scs.COMPETENCY_ID, scs.CALC_TYPE
+    </select>
+
+    <select id="countScoreHistory" resultType="int">
+        SELECT COUNT(*)
+        FROM COMPETENCY_SCORE_HISTORY
+        WHERE USER_ID = #{userId}
+          AND COMPETENCY_ID = #{competencyId}
+          AND CALC_TYPE = #{calcType}
+    </select>
+
+    <insert id="insertScoreHistory">
+        INSERT INTO COMPETENCY_SCORE_HISTORY (
+            HISTORY_ID,
+            USER_ID,
+            COMPETENCY_ID,
+            SCORE,
+            CALC_TYPE,
+            CALCULATED_AT
+        )
+        SELECT
+            COMPETENCY_SCORE_HISTORY_SEQ.NEXTVAL,
+            #{userId},
+            #{competencyId},
+            LEAST(100, NVL((
+                SELECT ucs.SCORE
+                FROM USER_COMPETENCY_SCORE ucs
+                WHERE ucs.USER_ID = #{userId}
+                  AND ucs.COMPETENCY_ID = #{competencyId}
+            ), 70) + #{scoreDelta}),
+            #{calcType},
+            SYSDATE
+        FROM DUAL
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM COMPETENCY_SCORE_HISTORY csh
+            WHERE csh.USER_ID = #{userId}
+              AND csh.COMPETENCY_ID = #{competencyId}
+              AND csh.CALC_TYPE = #{calcType}
+        )
+    </insert>
+
+    <update id="upsertUserCompetencyScore">
+        MERGE INTO USER_COMPETENCY_SCORE target
+        USING (
+            SELECT
+                #{userId} AS USER_ID,
+                #{competencyId} AS COMPETENCY_ID,
+                #{scoreDelta} AS SCORE_DELTA
+            FROM DUAL
+        ) source
+        ON (
+            target.USER_ID = source.USER_ID
+            AND target.COMPETENCY_ID = source.COMPETENCY_ID
+        )
+        WHEN MATCHED THEN
+            UPDATE SET
+                target.SCORE = LEAST(100, target.SCORE + source.SCORE_DELTA),
+                target.CALCULATED_AT = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT (
+                USER_SCORE_ID,
+                USER_ID,
+                COMPETENCY_ID,
+                SCORE,
+                CALCULATED_AT
+            ) VALUES (
+                USER_COMPETENCY_SCORE_SEQ.NEXTVAL,
+                source.USER_ID,
+                source.COMPETENCY_ID,
+                LEAST(100, 70 + source.SCORE_DELTA),
+                SYSDATE
+            )
+    </update>
+</mapper>
