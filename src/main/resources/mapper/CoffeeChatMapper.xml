@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.coffeechat.mapper.CoffeeChatMapper">
+
+    <select id="findEmailNotifyYnByUserId" resultType="string">
+        SELECT EMAIL_NOTIFY_YN
+        FROM USER_COFFEE_CHAT_SETTING
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <update id="upsertCoffeeChatSetting">
+        MERGE INTO USER_COFFEE_CHAT_SETTING setting
+        USING (
+            SELECT
+                #{userId} AS USER_ID,
+                #{emailNotifyYn} AS EMAIL_NOTIFY_YN
+            FROM DUAL
+        ) source
+        ON (setting.USER_ID = source.USER_ID)
+        WHEN MATCHED THEN
+            UPDATE SET
+                setting.EMAIL_NOTIFY_YN = source.EMAIL_NOTIFY_YN,
+                setting.UPDATED_AT = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT (
+                USER_ID,
+                EMAIL_NOTIFY_YN,
+                CREATED_AT
+            ) VALUES (
+                source.USER_ID,
+                source.EMAIL_NOTIFY_YN,
+                SYSDATE
+            )
+    </update>
+
+    <select id="findUserProfileForCoffeeChat"
+            resultType="com.hlinks.domain.coffeechat.dto.CoffeeChatUserProfileDto">
+        SELECT
+            u.USER_ID AS userId,
+            u.NAME AS name,
+            u.EMAIL AS email,
+            u.KCY_RESULT AS kcyResult,
+            NVL(setting.EMAIL_NOTIFY_YN, 'N') AS emailNotifyYn
+        FROM USERS u
+        LEFT JOIN USER_COFFEE_CHAT_SETTING setting
+          ON setting.USER_ID = u.USER_ID
+        WHERE u.USER_ID = #{userId}
+          AND u.STATUS = 'ACTIVE'
+    </select>
+
+    <select id="countRequestedCoffeeChat" resultType="int">
+        SELECT COUNT(*)
+        FROM KCY_COFFEE_CHAT_REQUEST
+        WHERE REQUESTER_USER_ID = #{requesterUserId}
+          AND RECEIVER_USER_ID = #{receiverUserId}
+          AND STATUS = 'REQUESTED'
+    </select>
+
+    <select id="nextCoffeeChatRequestId" resultType="long">
+        SELECT KCY_COFFEE_CHAT_REQUEST_SEQ.NEXTVAL FROM DUAL
+    </select>
+
+    <insert id="insertCoffeeChatRequest">
+        INSERT INTO KCY_COFFEE_CHAT_REQUEST (
+            COFFEE_CHAT_REQUEST_ID,
+            REQUESTER_USER_ID,
+            RECEIVER_USER_ID,
+            REQUESTER_KCY_CODE,
+            RECEIVER_KCY_CODE,
+            MATCH_GRADE,
+            MESSAGE,
+            STATUS,
+            CREATED_AT
+        ) VALUES (
+            #{requestId},
+            #{requesterUserId},
+            #{receiverUserId},
+            #{requesterKcyCode},
+            #{receiverKcyCode},
+            #{matchGrade},
+            #{message},
+            #{status},
+            SYSDATE
+        )
+    </insert>
+
+    <select id="nextMailLogId" resultType="long">
+        SELECT MAIL_SEND_LOG_SEQ.NEXTVAL FROM DUAL
+    </select>
+
+    <insert id="insertMailSendLog">
+        INSERT INTO MAIL_SEND_LOG (
+            MAIL_LOG_ID,
+            REQUEST_ID,
+            RECEIVER_USER_ID,
+            TO_EMAIL,
+            SUBJECT,
+            CONTENT,
+            SEND_STATUS,
+            ERROR_MESSAGE,
+            CREATED_AT,
+            SENT_AT
+        ) VALUES (
+            #{mailLogId},
+            #{requestId},
+            #{receiverUserId},
+            #{toEmail},
+            #{subject},
+            #{content},
+            #{sendStatus},
+            #{errorMessage},
+            SYSDATE,
+            CASE WHEN #{sendStatus} = 'SENT' THEN SYSDATE ELSE NULL END
+        )
+    </insert>
+
+    <update id="updateMailSendLogStatus">
+        UPDATE MAIL_SEND_LOG
+        SET
+            SEND_STATUS = #{sendStatus},
+            ERROR_MESSAGE = #{errorMessage},
+            SENT_AT = CASE WHEN #{sendStatus} = 'SENT' THEN SYSDATE ELSE SENT_AT END
+        WHERE MAIL_LOG_ID = #{mailLogId}
+    </update>
+
+    <select id="findSentRequests"
+            resultType="com.hlinks.domain.coffeechat.dto.CoffeeChatHistoryDto">
+        SELECT *
+        FROM (
+            SELECT
+                request.COFFEE_CHAT_REQUEST_ID AS requestId,
+                receiver.USER_ID AS partnerUserId,
+                receiver.NAME AS partnerName,
+                department.DEPARTMENT_NAME AS partnerDepartmentName,
+                position.POSITION_NAME AS partnerPositionName,
+                request.REQUESTER_KCY_CODE AS requesterKcyCode,
+                request.RECEIVER_KCY_CODE AS receiverKcyCode,
+                request.MATCH_GRADE AS matchGrade,
+                request.MESSAGE AS message,
+                request.STATUS AS status,
+                TO_CHAR(request.CREATED_AT, 'YYYY.MM.DD') AS createdAt
+            FROM KCY_COFFEE_CHAT_REQUEST request
+            JOIN USERS receiver
+              ON receiver.USER_ID = request.RECEIVER_USER_ID
+            LEFT JOIN DEPARTMENT department
+              ON department.DEPARTMENT_ID = receiver.DEPARTMENT_ID
+            LEFT JOIN POSITION position
+              ON position.POSITION_ID = receiver.POSITION_ID
+            WHERE request.REQUESTER_USER_ID = #{userId}
+            ORDER BY request.CREATED_AT DESC, request.COFFEE_CHAT_REQUEST_ID DESC
+        )
+        WHERE ROWNUM <![CDATA[<=]]> 5
+    </select>
+
+    <select id="findReceivedRequests"
+            resultType="com.hlinks.domain.coffeechat.dto.CoffeeChatHistoryDto">
+        SELECT *
+        FROM (
+            SELECT
+                request.COFFEE_CHAT_REQUEST_ID AS requestId,
+                requester.USER_ID AS partnerUserId,
+                requester.NAME AS partnerName,
+                department.DEPARTMENT_NAME AS partnerDepartmentName,
+                position.POSITION_NAME AS partnerPositionName,
+                request.REQUESTER_KCY_CODE AS requesterKcyCode,
+                request.RECEIVER_KCY_CODE AS receiverKcyCode,
+                request.MATCH_GRADE AS matchGrade,
+                request.MESSAGE AS message,
+                request.STATUS AS status,
+                TO_CHAR(request.CREATED_AT, 'YYYY.MM.DD') AS createdAt
+            FROM KCY_COFFEE_CHAT_REQUEST request
+            JOIN USERS requester
+              ON requester.USER_ID = request.REQUESTER_USER_ID
+            LEFT JOIN DEPARTMENT department
+              ON department.DEPARTMENT_ID = requester.DEPARTMENT_ID
+            LEFT JOIN POSITION position
+              ON position.POSITION_ID = requester.POSITION_ID
+            WHERE request.RECEIVER_USER_ID = #{userId}
+            ORDER BY request.CREATED_AT DESC, request.COFFEE_CHAT_REQUEST_ID DESC
+        )
+        WHERE ROWNUM <![CDATA[<=]]> 5
+    </select>
+
+    <update id="updateReceivedRequestStatus">
+        UPDATE KCY_COFFEE_CHAT_REQUEST
+        SET
+            STATUS = #{status},
+            UPDATED_AT = SYSDATE
+        WHERE COFFEE_CHAT_REQUEST_ID = #{requestId}
+          AND RECEIVER_USER_ID = #{receiverUserId}
+          AND STATUS = 'REQUESTED'
+    </update>
+
+    <delete id="deleteReceivedRequest">
+        DELETE FROM KCY_COFFEE_CHAT_REQUEST
+        WHERE COFFEE_CHAT_REQUEST_ID = #{requestId}
+          AND RECEIVER_USER_ID = #{receiverUserId}
+          AND STATUS = 'REQUESTED'
+    </delete>
+
+    <delete id="deleteMailLogsByReceivedRequest">
+        DELETE FROM MAIL_SEND_LOG
+        WHERE REQUEST_ID IN (
+            SELECT COFFEE_CHAT_REQUEST_ID
+            FROM KCY_COFFEE_CHAT_REQUEST
+            WHERE COFFEE_CHAT_REQUEST_ID = #{requestId}
+              AND RECEIVER_USER_ID = #{receiverUserId}
+              AND STATUS = 'REQUESTED'
+        )
+    </delete>
+
+</mapper>
