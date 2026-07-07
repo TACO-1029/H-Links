@@ -37,12 +37,6 @@
             margin-bottom: 40px;
         }
 
-        .banner-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-
         .banner-title {
             font-size: 30px;
             font-weight: 800;
@@ -88,9 +82,7 @@
         .main-layout {
             display: flex;
             gap: 40px;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px 80px 24px;
+            padding-bottom: 80px;
         }
 
         /* [UI 개선] 좌측 필터 사이드바 서면 현대화 */
