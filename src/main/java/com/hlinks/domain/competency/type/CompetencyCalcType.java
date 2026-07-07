@@ -1,0 +1,39 @@
+package com.hlinks.domain.competency.type;
+
+import lombok.Getter;
+
+@Getter
+public enum CompetencyCalcType {
+    CAREER_PATH_COMPLETE("CAREER_PATH_COMPLETE", "커리어패스 강의 수료"),
+    TECH_SPECIAL_COMPLETE("TECH_SPECIAL_COMPLETE", "기술 특화 강의 수료"),
+    QUIZ_PERFECT("QUIZ_PERFECT", "퀴즈 만점"),
+    CAREER_HIGH_COMPLETE("CAREER_HIGH_COMPLETE", "커리어 하이 강의 수료"),
+    LEVEL_TEST_TAKEN("LEVEL_TEST_TAKEN", "레벨 테스트 응시"),
+    STREAK_7("STREAK_7", "7일 연속 학습"),
+    STREAK_30("STREAK_30", "30일 연속 학습"),
+    RECOMMENDED_COURSE_COMPLETE("RECOMMENDED_COURSE_COMPLETE", "추천 강의 수료"),
+    FIRST_SKILL_LEARNING("FIRST_SKILL_LEARNING", "첫 스킬 학습"),
+    OFFLINE_SPECIAL_COMPLETE("OFFLINE_SPECIAL_COMPLETE", "오프라인 특강 수료"),
+    KCY_MATCH_REQUEST("KCY_MATCH_REQUEST", "KCY 매칭 요청"),
+    TEAMWORK_LECTURE_COMPLETE("TEAMWORK_LECTURE_COMPLETE", "팀워크 강의 수료"),
+    PRESENTATION_LECTURE_COMPLETE("PRESENTATION_LECTURE_COMPLETE", "프레젠테이션 강의 수료"),
+    LEADERSHIP_LECTURE_COMPLETE("LEADERSHIP_LECTURE_COMPLETE", "리더십 강의 수료"),
+    COMMUNICATION_LECTURE_COMPLETE("COMMUNICATION_LECTURE_COMPLETE", "커뮤니케이션 강의 수료"),
+    PROJECT_MANAGEMENT_COMPLETE("PROJECT_MANAGEMENT_COMPLETE", "프로젝트 관리 강의 수료"),
+    AI_LECTURE_COMPLETE("AI_LECTURE_COMPLETE", "AI 강의 수료"),
+    NEW_TECH_LECTURE_COMPLETE("NEW_TECH_LECTURE_COMPLETE", "신기술 강의 수료"),
+    PLANNING_UX_COMPLETE("PLANNING_UX_COMPLETE", "기획/UX 강의 수료"),
+    GLOBAL_NEWS_CLICK("GLOBAL_NEWS_CLICK", "글로벌 뉴스 클릭"),
+    GLOBAL_IT_LECTURE_COMPLETE("GLOBAL_IT_LECTURE_COMPLETE", "글로벌 IT 강의 수료"),
+    LANGUAGE_LECTURE_COMPLETE("LANGUAGE_LECTURE_COMPLETE", "어학 강의 수료"),
+    LANGUAGE_SCORE_REGISTERED("LANGUAGE_SCORE_REGISTERED", "어학 점수 등록"),
+    UNKNOWN("UNKNOWN", "알 수 없음");
+
+    private final String code;
+    private final String label;
+
+    CompetencyCalcType(String code, String label) {
+        this.code = code;
+        this.label = label;
+    }
+}
