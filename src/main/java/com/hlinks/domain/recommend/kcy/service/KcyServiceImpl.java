@@ -1,10 +1,14 @@
 package com.hlinks.domain.recommend.kcy.service;
 
+import com.hlinks.domain.recommend.kcy.dto.KcyMatchCandidateDto;
 import com.hlinks.domain.recommend.kcy.dto.KcyOptionDto;
+import com.hlinks.domain.recommend.kcy.dto.KcyPartnerRecommendationDto;
 import com.hlinks.domain.recommend.kcy.dto.KcyQuestionDto;
 import com.hlinks.domain.recommend.kcy.dto.KcyScoreDto;
 import com.hlinks.domain.recommend.kcy.exception.KcyErrorCode;
 import com.hlinks.domain.recommend.kcy.mapper.KcyMapper;
+import com.hlinks.domain.recommend.kcy.type.KcyCompatibilityPolicy;
+import com.hlinks.domain.recommend.kcy.type.KcyMatchGrade;
 import com.hlinks.domain.recommend.kcy.type.KcyType;
 import com.hlinks.global.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,10 @@ import java.util.*;
 public class KcyServiceImpl implements KcyService {
 
     private static final int REQUIRED_QUESTION_COUNT = 11;
+    private static final int RECOMMENDED_PARTNER_LIMIT = 3;
+    private static final List<String> ANONYMOUS_NICKNAMES = List.of(
+            "두더지", "고양이", "강아지", "수달", "토끼", "햄스터", "판다", "여우"
+    );
 
     private final KcyMapper kcyMapper;
     // DB에서 따로 조회한 문항과 선택지를 화면에서 쓰기 좋은 구조로 다시 조립하는 메서드.
@@ -110,5 +118,72 @@ public class KcyServiceImpl implements KcyService {
         }
 
         return KcyType.from(kcyResult);
+    }
+
+    @Override
+    public List<KcyPartnerRecommendationDto> getRecommendedPartners(Long userId) {
+        KcyType myType = getResult(userId);
+
+        if (myType == null) {
+            return List.of();
+        }
+
+        return kcyMapper.findKcyMatchCandidates(userId).stream()
+                .map(candidate -> toPartnerRecommendation(myType, candidate))
+                .filter(Objects::nonNull)
+                .sorted(Comparator
+                        .comparingInt(KcyPartnerRecommendationDto::getScore).reversed()
+                        .thenComparing(KcyPartnerRecommendationDto::getUserId, Comparator.reverseOrder()))
+                .limit(RECOMMENDED_PARTNER_LIMIT)
+                .toList();
+    }
+
+    private KcyPartnerRecommendationDto toPartnerRecommendation(KcyType myType, KcyMatchCandidateDto candidate) {
+        KcyType partnerType;
+
+        try {
+            partnerType = KcyType.from(candidate.getKcyResult());
+        } catch (BaseException e) {
+            return null;
+        }
+
+        KcyMatchGrade grade = KcyCompatibilityPolicy.gradeOf(myType, partnerType);
+
+        return KcyPartnerRecommendationDto.builder()
+                .userId(candidate.getUserId())
+                .name(candidate.getName())
+                .displayName(toAnonymousName(candidate.getName(), candidate.getUserId()))
+                .departmentName(candidate.getDepartmentName())
+                .jobName(candidate.getJobName())
+                .positionName(candidate.getPositionName())
+                .kcyCode(partnerType.getCode())
+                .kcyTitle(partnerType.getTitle())
+                .grade(grade.name())
+                .gradeLabel(grade.getLabel())
+                .score(grade.getScore())
+                .reason(KcyCompatibilityPolicy.reasonOf(myType, partnerType, grade))
+                .build();
+    }
+
+    private String toAnonymousName(String name, Long userId) {
+        String familyName = resolveFamilyName(name);
+        int nicknameIndex = Math.floorMod(Objects.hashCode(userId), ANONYMOUS_NICKNAMES.size());
+
+        return familyName + ANONYMOUS_NICKNAMES.get(nicknameIndex);
+    }
+
+    private String resolveFamilyName(String name) {
+        if (name == null || name.isBlank()) {
+            return "동료";
+        }
+
+        String trimmedName = name.trim();
+        String[] nameParts = trimmedName.split("\\s+");
+
+        if (nameParts.length > 1) {
+            return nameParts[nameParts.length - 1];
+        }
+
+        return trimmedName.substring(0, 1);
     }
 }
