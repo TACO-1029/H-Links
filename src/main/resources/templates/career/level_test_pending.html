@@ -38,12 +38,16 @@
 <main class="career-pending-container">
     <div class="pending-card">
         <!-- 중앙 문구 및 로딩 애니메이션 -->
-        <h1 class="pending-title">테스트 문항을 구성하고 있습니다.</h1>
+        <h1 class="pending-title" aria-live="polite">테스트 문항을 구성하고 있습니다.</h1>
         
-        <div class="loading-dots">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
+        <div class="pending-lottie" aria-hidden="true">
+            <lottie-player th:src="@{/lottie/ai-generate.json}"
+                           src="/lottie/ai-generate.json"
+                           background="transparent"
+                           speed="1"
+                           loop
+                           autoplay>
+            </lottie-player>
         </div>
 
         <!-- 하단 생성 조건 -->
@@ -80,6 +84,7 @@
     const diagnosisId = /*[[${diagnosisId}]]*/ 0;
     /*]]>*/
 </script>
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 <script th:src="@{/js/career-pending.js}"></script>
 </body>
 </html>
