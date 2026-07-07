@@ -57,9 +57,9 @@ public final class KcyCompatibilityPolicy {
                 "AASASSSSBBACABSB",
                 "AAASSSSSBBCABABS",
                 "SAAASSSSACBBSBAB",
-                "ASAAASSSCABBBSBA",
-                "SSSSAASAABSBBBAC",
-                "SSSSAASABABSBBCA",
+                "ASAASSSSCABBBSBA",
+                "SSSAAASAABSBBBAC",
+                "SSSSAAASBABSBBCA",
                 "SSSSSAAASBABACBB",
                 "SSSSASAABSBACABB"
         };
@@ -69,6 +69,7 @@ public final class KcyCompatibilityPolicy {
         for (int rowIndex = 0; rowIndex < TYPE_ORDER.length; rowIndex++) {
             Map<KcyType, KcyMatchGrade> row = new EnumMap<>(KcyType.class);
             String grades = gradeRows[rowIndex];
+            validateGradeRow(rowIndex, grades);
 
             for (int columnIndex = 0; columnIndex < TYPE_ORDER.length; columnIndex++) {
                 row.put(TYPE_ORDER[columnIndex], KcyMatchGrade.from(grades.charAt(columnIndex)));
@@ -77,6 +78,30 @@ public final class KcyCompatibilityPolicy {
             table.put(TYPE_ORDER[rowIndex], row);
         }
 
+        validateSymmetric(table);
+
         return table;
+    }
+
+    private static void validateGradeRow(int rowIndex, String grades) {
+        if (grades.length() != TYPE_ORDER.length) {
+            throw new IllegalStateException("KCY compatibility row length is invalid. rowIndex=" + rowIndex);
+        }
+    }
+
+    private static void validateSymmetric(Map<KcyType, Map<KcyType, KcyMatchGrade>> table) {
+        for (KcyType myType : TYPE_ORDER) {
+            for (KcyType partnerType : TYPE_ORDER) {
+                KcyMatchGrade forwardGrade = table.get(myType).get(partnerType);
+                KcyMatchGrade reverseGrade = table.get(partnerType).get(myType);
+
+                if (forwardGrade != reverseGrade) {
+                    throw new IllegalStateException(
+                            "KCY compatibility table must be symmetric. myType="
+                                    + myType + ", partnerType=" + partnerType
+                    );
+                }
+            }
+        }
     }
 }
