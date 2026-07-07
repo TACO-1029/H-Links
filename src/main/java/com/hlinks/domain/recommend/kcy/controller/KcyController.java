@@ -80,6 +80,8 @@ public class KcyController {
             return "redirect:/kcy";
         }
 
+        model.addAttribute("kcyPartners", kcyService.getRecommendedPartners(userDetails.getUserId()));
+
         return "recommend/kcy/result";
     }
 }

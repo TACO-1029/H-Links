@@ -2,6 +2,7 @@ package com.hlinks.domain.recommend.kcy.mapper;
 
 
 import com.hlinks.domain.recommend.kcy.dto.KcyOptionDto;
+import com.hlinks.domain.recommend.kcy.dto.KcyMatchCandidateDto;
 import com.hlinks.domain.recommend.kcy.dto.KcyQuestionDto;
 import com.hlinks.domain.recommend.kcy.dto.KcyScoreDto;
 import org.apache.ibatis.annotations.Mapper;
@@ -24,4 +25,6 @@ public interface KcyMapper {
     int updateUserKcyResult(@Param("userId") Long userId, @Param("kcyResult") String kcyResult);
 
     String findKcyResultByUserId(@Param("userId") Long userId);
+
+    List<KcyMatchCandidateDto> findKcyMatchCandidates(@Param("userId") Long userId);
 }

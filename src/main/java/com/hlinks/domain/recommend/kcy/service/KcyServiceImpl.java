@@ -1,8 +1,15 @@
 package com.hlinks.domain.recommend.kcy.service;
 
+import com.hlinks.domain.recommend.kcy.dto.KcyMatchCandidateDto;
+import com.hlinks.domain.recommend.kcy.dto.KcyOptionDto;
+import com.hlinks.domain.recommend.kcy.dto.KcyPartnerRecommendationDto;
+import com.hlinks.domain.recommend.kcy.dto.KcyQuestionDto;
+import com.hlinks.domain.recommend.kcy.dto.KcyScoreDto;
 import com.hlinks.domain.recommend.kcy.dto.*;
 import com.hlinks.domain.recommend.kcy.exception.KcyErrorCode;
 import com.hlinks.domain.recommend.kcy.mapper.KcyMapper;
+import com.hlinks.domain.recommend.kcy.type.KcyCompatibilityPolicy;
+import com.hlinks.domain.recommend.kcy.type.KcyMatchGrade;
 import com.hlinks.domain.recommend.kcy.type.KcyType;
 import com.hlinks.domain.recommend.kcy.type.TetrisBlockRegistry;
 import com.hlinks.global.exception.BaseException;
@@ -20,6 +27,11 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class KcyServiceImpl implements KcyService {
 
+    private static final int REQUIRED_QUESTION_COUNT = 11;
+    private static final int RECOMMENDED_PARTNER_LIMIT = 3;
+    private static final List<String> ANONYMOUS_NICKNAMES = List.of(
+            "두더지", "고양이", "강아지", "수달", "토끼", "햄스터", "판다", "여우"
+    );
     private static final int MIN_MCQ_FOR_EARLY_STOP = 5;
     private static final int MAX_MCQ_LIMIT = 9;
     private static final int SCORE_DIFF_THRESHOLD = 3;
@@ -67,23 +79,23 @@ public class KcyServiceImpl implements KcyService {
 
         // 조건 2: 테트리스가 배포되었거나 이미 MCQ 진행 중인 경우
         List<KcyQuestionDto> allQuestions = getQuestions();
-        
+
         KcyScoreDto currentScore = calculateCurrentScore(
-                request.getSelectedOptionIds(), 
-                request.getAngerScoreTypes(), 
-                request.getTiebreakerBlocks(), 
-                request.getTimeTaken(), 
+                request.getSelectedOptionIds(),
+                request.getAngerScoreTypes(),
+                request.getTiebreakerBlocks(),
+                request.getTimeTaken(),
                 request.getFillRate()
         );
-        
+
         log.info("[KCY DEBUG] Current Scores - A/O(Action/Outline): {}/{}, W/D(Wide/Deep): {}/{}, I/C(Independent/Corporate): {}/{}, P/M(Prompter/Manual): {}/{}",
                 currentScore.getActionScore(), currentScore.getOutlineScore(),
                 currentScore.getWideScore(), currentScore.getDeepScore(),
                 currentScore.getIndependentScore(), currentScore.getCorporateScore(),
                 currentScore.getPrompterScore(), currentScore.getManualScore());
-        
+
         int answeredCount = request.getSelectedOptionIds() != null ? request.getSelectedOptionIds().size() : 0;
-        
+
         // 조기 종료 조건: MCQ를 5문항 이상 풀었고 모든 축 격차가 20%p 이상으로 확실히 결정된 경우
         // 단, 사용자가 우회를 희망하여 bypassEarlyStop = true 로 오면 건너뛴다.
         if (answeredCount >= MIN_MCQ_FOR_EARLY_STOP && isAllAxesDetermined(currentScore)) {
@@ -112,10 +124,10 @@ public class KcyServiceImpl implements KcyService {
 
         // 안 푼 문제 중에서 Swing Range 가 가장 큰 문항 찾기
         List<Long> answeredQuestionIds = getAnsweredQuestionIds(allQuestions, request.getSelectedOptionIds());
-        
+
         // 1. 가장 확정이 부족한(격차가 가장 작은) 축 선택
         String targetAxis = selectWeakestAxis(currentScore);
-        
+
         // 2. 안 푼 문항들 중에서 해당 축에 대해 Swing Range가 가장 큰 문항 검색
         KcyQuestionDto nextQ = findBestAdaptiveQuestion(allQuestions, answeredQuestionIds, targetAxis);
 
@@ -199,10 +211,10 @@ public class KcyServiceImpl implements KcyService {
         }
 
         KcyScoreDto score = calculateCurrentScore(
-            request.getSelectedOptionIds(), 
-            request.getAngerScoreTypes(), 
-            request.getTiebreakerBlocks(), 
-            request.getTimeTaken(), 
+            request.getSelectedOptionIds(),
+            request.getAngerScoreTypes(),
+            request.getTiebreakerBlocks(),
+            request.getTimeTaken(),
             request.getFillRate()
         );
 
@@ -274,7 +286,7 @@ public class KcyServiceImpl implements KcyService {
         int width = block.getWidth();
         int height = block.getHeight();
         int diff = Math.abs(width - height);
-        
+
         if (diff == 0) {
             // 정사각형 블록 -> WIDE 1점 반영
             score.addScore("WIDE", 1);
@@ -288,7 +300,7 @@ public class KcyServiceImpl implements KcyService {
         List<TetrisBlockDto> blocks = new ArrayList<>();
         int pDiff = Math.abs(score.getPrompterScore() - score.getManualScore());
         int aDiff = Math.abs(score.getActionScore() - score.getOutlineScore());
-        
+
         // Tiebreaker logic
         if (pDiff < SCORE_DIFF_THRESHOLD) {
             // Need Prompter vs Manual tiebreaker blocks
@@ -347,5 +359,72 @@ public class KcyServiceImpl implements KcyService {
         String kcyResult = kcyMapper.findKcyResultByUserId(userId);
         if (kcyResult == null || kcyResult.isBlank()) return null;
         return KcyType.from(kcyResult);
+    }
+
+    @Override
+    public List<KcyPartnerRecommendationDto> getRecommendedPartners(Long userId) {
+        KcyType myType = getResult(userId);
+
+        if (myType == null) {
+            return List.of();
+        }
+
+        return kcyMapper.findKcyMatchCandidates(userId).stream()
+                .map(candidate -> toPartnerRecommendation(myType, candidate))
+                .filter(Objects::nonNull)
+                .sorted(Comparator
+                        .comparingInt(KcyPartnerRecommendationDto::getScore).reversed()
+                        .thenComparing(KcyPartnerRecommendationDto::getUserId, Comparator.reverseOrder()))
+                .limit(RECOMMENDED_PARTNER_LIMIT)
+                .toList();
+    }
+
+    private KcyPartnerRecommendationDto toPartnerRecommendation(KcyType myType, KcyMatchCandidateDto candidate) {
+        KcyType partnerType;
+
+        try {
+            partnerType = KcyType.from(candidate.getKcyResult());
+        } catch (BaseException e) {
+            return null;
+        }
+
+        KcyMatchGrade grade = KcyCompatibilityPolicy.gradeOf(myType, partnerType);
+
+        return KcyPartnerRecommendationDto.builder()
+                .userId(candidate.getUserId())
+                .name(candidate.getName())
+                .displayName(toAnonymousName(candidate.getName(), candidate.getUserId()))
+                .departmentName(candidate.getDepartmentName())
+                .jobName(candidate.getJobName())
+                .positionName(candidate.getPositionName())
+                .kcyCode(partnerType.getCode())
+                .kcyTitle(partnerType.getTitle())
+                .grade(grade.name())
+                .gradeLabel(grade.getLabel())
+                .score(grade.getScore())
+                .reason(KcyCompatibilityPolicy.reasonOf(myType, partnerType, grade))
+                .build();
+    }
+
+    private String toAnonymousName(String name, Long userId) {
+        String familyName = resolveFamilyName(name);
+        int nicknameIndex = Math.floorMod(Objects.hashCode(userId), ANONYMOUS_NICKNAMES.size());
+
+        return familyName + ANONYMOUS_NICKNAMES.get(nicknameIndex);
+    }
+
+    private String resolveFamilyName(String name) {
+        if (name == null || name.isBlank()) {
+            return "동료";
+        }
+
+        String trimmedName = name.trim();
+        String[] nameParts = trimmedName.split("\\s+");
+
+        if (nameParts.length > 1) {
+            return nameParts[nameParts.length - 1];
+        }
+
+        return trimmedName.substring(0, 1);
     }
 }
