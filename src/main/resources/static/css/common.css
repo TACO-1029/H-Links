@@ -8,6 +8,11 @@ body {
     min-height: 100%;
 }
 
+html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+}
+
 body {
     font-family: var(--font-sans);
     font-size: var(--text-base);
