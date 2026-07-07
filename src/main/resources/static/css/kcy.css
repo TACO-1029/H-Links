@@ -1233,10 +1233,10 @@
 }
 
 .teams-sidebar {
+    display: none !important;
     width: 220px;
     background: #202225; /* MS Teams style dark charcoal */
     color: #a3a3a3;
-    display: flex;
     flex-direction: column;
     flex-shrink: 0;
     text-align: left;
@@ -1703,9 +1703,9 @@
 
 /* MS Teams Vertical App Bar */
 .teams-app-bar {
+    display: none !important;
     width: 68px;
     background: #202225; /* Dark background */
-    display: flex;
     flex-direction: column;
     align-items: center;
     padding-top: 12px;
@@ -1923,4 +1923,28 @@
 
 .teams-app-item:hover .teams-app-svg {
     transform: scale(1.05);
+}
+
+/* Custom Confirmation Modal overlay & card styles */
+.kcy-modal-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.kcy-modal-card button {
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.kcy-modal-card button:active {
+    transform: scale(0.97);
+}
+
+/* Shuffling Micro-animation */
+@keyframes bounceShuffle {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-5px) rotate(-1.5deg); }
+    50% { transform: translateY(2px) rotate(1.5deg); }
+    75% { transform: translateY(-2px); }
+}
+.is-shuffling {
+    animation: bounceShuffle 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
 }

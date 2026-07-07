@@ -275,6 +275,17 @@
             </div>
         </form>
     </section>
+    <!-- Custom Modal for Confirmation -->
+    <div id="kcy-confirm-modal" class="kcy-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s ease;">
+        <div class="kcy-modal-card" style="background: #ffffff; border-radius: 12px; padding: 24px; max-width: 380px; width: 90%; box-shadow: 0 8px 24px rgba(0,0,0,0.15); text-align: center; transform: scale(0.9); transition: transform 0.2s ease;">
+            <h3 style="margin-top: 0; color: #242424; font-size: 16px; font-weight: 700;">초기화하시겠습니까?</h3>
+            <p style="color: #616161; font-size: 13px; margin: 12px 0 20px;">배치된 모든 기술 블록을 초기화하고<br>처음 상태로 되돌립니다.</p>
+            <div style="display: flex; gap: 8px; justify-content: center;">
+                <button id="modal-btn-cancel" style="background: #f3f2f1; color: #242424; border: 1px solid #d2d0ce; padding: 8px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1; font-size: 13px;">취소</button>
+                <button id="modal-btn-confirm" style="background: #e81123; color: #ffffff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1; font-size: 13px;">초기화</button>
+            </div>
+        </div>
+    </div>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
@@ -347,7 +358,7 @@
     /* MS Teams Conversation Message Utilities                       */
     /* ============================================================= */
     const userName = "[[${#authentication.principal.name}]]" || '개발자';
-    const botAvatar = '/images/kcy/awcp.webp';
+    const botAvatar = '/images/secretary.png';
     const userAvatar = '/images/kcy/odcp.webp';
 
     function appendBotMessage(text, stepIndex, immediateAnimate) {
@@ -385,9 +396,6 @@
         const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const html = `
             <div class="teams-message outgoing step-${stepIndex}">
-                <div class="teams-avatar">
-                    <img src="${userAvatar}" alt="나">
-                </div>
                 <div class="teams-msg-content">
                     <div class="teams-msg-header">
                         <span class="teams-sender">나</span>
@@ -506,7 +514,7 @@
         // Enqueue welcome dialogue sequences with dynamic delays
         enqueueMessages([
             { text: "안녕하세요! H-Links 커리어 진단 워크스페이스에 오신 것을 환영합니다. 👋", stepIndex: 0 },
-            { text: "OOO님! 방금 신입 직원분께서 코드리뷰를 요청하셨어요. 어떤 부분들을 중점적으로 피드백주시겠나요?", stepIndex: 0 },
+            { text: "방금 신입 직원분께서 코드리뷰를 요청하셨어요. 어떤 부분들을 중점적으로 피드백주시겠나요?", stepIndex: 0 },
             { isHookCard: true, stepIndex: 0 }
         ]);
     }
@@ -836,6 +844,15 @@
     let dragOffset = { x: 0, y: 0 };
 
     function shuffleInventory() {
+        const shelf = document.getElementById('shelf');
+        if (shelf) {
+            shelf.classList.remove('is-shuffling');
+            shelf.getBoundingClientRect(); // Force reflow
+            shelf.classList.add('is-shuffling');
+            setTimeout(() => {
+                shelf.classList.remove('is-shuffling');
+            }, 450);
+        }
         // 1. 현재 보드판에 이미 드롭(배치) 완료된 블록의 아이디를 수집
         const placedIds = Object.keys(blockStates).filter(id => blockStates[id].isPlaced);
         
@@ -878,16 +895,45 @@
     }
 
     function resetSprintBoard() {
-        if (!confirm("배치된 모든 기술 블록을 초기화하시겠습니까?")) return;
-        
-        const gridBoard = document.getElementById('grid-board');
-        const placedBlocks = gridBoard.querySelectorAll('.draggable-block');
-        placedBlocks.forEach(b => b.remove());
-        
-        occupied = Array(4).fill(null).map(() => Array(4).fill(false));
-        blockStates = {};
-        
-        shuffleInventory();
+        showConfirmModal(() => {
+            const gridBoard = document.getElementById('grid-board');
+            const placedBlocks = gridBoard.querySelectorAll('.draggable-block');
+            placedBlocks.forEach(b => b.remove());
+            
+            occupied = Array(4).fill(null).map(() => Array(4).fill(false));
+            blockStates = {};
+            
+            shuffleInventory();
+        });
+    }
+
+    function showConfirmModal(onConfirm) {
+        const modal = document.getElementById('kcy-confirm-modal');
+        const card = modal.querySelector('.kcy-modal-card');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        const btnCancel = document.getElementById('modal-btn-cancel');
+
+        modal.style.display = 'flex';
+        modal.getBoundingClientRect(); // Force reflow
+        modal.style.opacity = '1';
+        card.style.transform = 'scale(1)';
+
+        const closeModal = () => {
+            modal.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 200);
+        };
+
+        btnConfirm.onclick = () => {
+            closeModal();
+            if (onConfirm) onConfirm();
+        };
+
+        btnCancel.onclick = () => {
+            closeModal();
+        };
     }
 
     function startDrag(e) {
