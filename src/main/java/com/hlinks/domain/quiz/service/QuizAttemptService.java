@@ -2,6 +2,8 @@ package com.hlinks.domain.quiz.service;
 
 import com.hlinks.domain.course.mapper.CourseMapper;
 import com.hlinks.domain.course.type.LearningStatus;
+import com.hlinks.domain.competency.service.CompetencyScoreService;
+import com.hlinks.domain.competency.type.CompetencyCalcType;
 import com.hlinks.domain.quiz.dto.ChapterQuizOptionResponse;
 import com.hlinks.domain.quiz.dto.ChapterQuizPageResponse;
 import com.hlinks.domain.quiz.dto.ChapterQuizQuestionResponse;
@@ -35,9 +37,11 @@ public class QuizAttemptService {
     private static final int MIN_QUIZ_PROGRESS_RATE = 95;
     private static final String CORRECT_YN = "Y";
     private static final String WRONG_YN = "N";
+    private static final String REFERENCE_TYPE_QUIZ_ATTEMPT = "QUIZ_ATTEMPT";
 
     private final QuizMapper quizMapper;
     private final CourseMapper courseMapper;
+    private final CompetencyScoreService competencyScoreService;
 
     public ChapterQuizPageResponse getChapterQuizPage(Long courseId, Long chapterId, Long userId) {
         QuizAttemptTargetDto target = validateAttemptTarget(courseId, chapterId, userId);
@@ -86,11 +90,23 @@ public class QuizAttemptService {
                 LearningStatus.COMPLETED.name()
         );
         courseMapper.updateCourseLearningProgress(target.getCourseLearningId(), courseId);
-        courseMapper.completeCourseLearningIfAllChaptersCompleted(
+        int completedCourseCount = courseMapper.completeCourseLearningIfAllChaptersCompleted(
                 target.getCourseLearningId(),
                 courseId,
                 LearningStatus.COMPLETED.name()
         );
+        if (correctCount == quizzes.size()) {
+            competencyScoreService.applyActionScore(
+                    userId,
+                    CompetencyCalcType.QUIZ_PERFECT,
+                    REFERENCE_TYPE_QUIZ_ATTEMPT,
+                    attemptId
+            );
+        }
+        if (completedCourseCount > 0) {
+            competencyScoreService.applySkillCourseCompletionScore(userId, courseId);
+            competencyScoreService.applyCourseCompletionActionScores(userId, courseId);
+        }
 
         return attemptId;
     }

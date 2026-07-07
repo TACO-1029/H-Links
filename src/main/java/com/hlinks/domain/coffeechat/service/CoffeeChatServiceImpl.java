@@ -1,5 +1,7 @@
 package com.hlinks.domain.coffeechat.service;
 
+import com.hlinks.domain.competency.service.CompetencyScoreService;
+import com.hlinks.domain.competency.type.CompetencyCalcType;
 import com.hlinks.domain.coffeechat.dto.CoffeeChatCreateRequest;
 import com.hlinks.domain.coffeechat.dto.CoffeeChatCreateResponse;
 import com.hlinks.domain.coffeechat.dto.CoffeeChatHistoryDto;
@@ -32,8 +34,11 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class CoffeeChatServiceImpl implements CoffeeChatService {
 
+    private static final String REFERENCE_TYPE_KCY_COFFEE_CHAT_REQUEST = "KCY_COFFEE_CHAT_REQUEST";
+
     private final CoffeeChatMapper coffeeChatMapper;
     private final ObjectProvider<JavaMailSender> javaMailSenderProvider;
+    private final CompetencyScoreService competencyScoreService;
 
     @Value("${hlinks.coffee-chat.mail.enabled:false}")
     private boolean mailEnabled;
@@ -102,6 +107,12 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
                 matchGrade.name(),
                 message,
                 CoffeeChatRequestStatus.REQUESTED.name()
+        );
+        competencyScoreService.applyActionScore(
+                requesterUserId,
+                CompetencyCalcType.KCY_MATCH_REQUEST,
+                REFERENCE_TYPE_KCY_COFFEE_CHAT_REQUEST,
+                requestId
         );
 
         MailSendStatus mailStatus = sendCoffeeChatMail(requestId, requester, receiver, receiverType, matchGrade, message);

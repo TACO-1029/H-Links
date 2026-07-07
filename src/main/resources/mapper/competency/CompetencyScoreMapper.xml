@@ -24,34 +24,102 @@
     </select>
 
     <select id="findSkillCourseCompletionPolicies" resultType="com.hlinks.domain.competency.dto.CompetencyScorePolicyRow">
-        WITH course_skills AS (
-            SELECT cs.SKILL_ID
+        WITH course_skill_count AS (
+            SELECT COUNT(*) AS skill_count
             FROM COURSE_SKILL cs
             WHERE cs.COURSE_ID = #{courseId}
-            UNION
-            SELECT chs.SKILL_ID
+        ),
+        course_skill_source AS (
+            SELECT
+                cs.SKILL_ID,
+                NVL(cs.WEIGHT, 0) AS WEIGHT
+            FROM COURSE_SKILL cs
+            WHERE cs.COURSE_ID = #{courseId}
+              AND NVL(cs.WEIGHT, 0) &gt; 0
+        ),
+        chapter_skill_raw AS (
+            SELECT
+                chs.SKILL_ID,
+                SUM(NVL(chs.WEIGHT, 0)) AS RAW_WEIGHT
             FROM COURSE_CHAPTER cc
             JOIN CHAPTER_SKILL chs
               ON chs.CHAPTER_ID = cc.CHAPTER_ID
             WHERE cc.COURSE_ID = #{courseId}
               AND cc.USE_YN = 'Y'
+              AND NVL(chs.WEIGHT, 0) &gt; 0
+              AND (SELECT skill_count FROM course_skill_count) = 0
+            GROUP BY chs.SKILL_ID
+        ),
+        chapter_skill_source AS (
+            SELECT
+                csr.SKILL_ID,
+                csr.RAW_WEIGHT / NULLIF(SUM(csr.RAW_WEIGHT) OVER (), 0) AS WEIGHT
+            FROM chapter_skill_raw csr
+        ),
+        course_skills AS (
+            SELECT SKILL_ID, WEIGHT
+            FROM course_skill_source
+            UNION ALL
+            SELECT SKILL_ID, WEIGHT
+            FROM chapter_skill_source
         )
         SELECT
             scs.COMPETENCY_ID AS competencyId,
             scs.CALC_TYPE AS calcType,
-            MAX(scs.SCORE_DELTA) AS scoreDelta
+            SUM(scs.SCORE_DELTA * course_skill.WEIGHT) AS scoreDelta
         FROM SKILL_COMPETENCY_SCORE scs
+        JOIN course_skills course_skill
+          ON 1 = 1
+        JOIN SKILL skill
+          ON skill.SKILL_ID = course_skill.SKILL_ID
         WHERE scs.USE_YN = 'Y'
-          AND EXISTS (
-              SELECT 1
-              FROM course_skills course_skill
-              JOIN SKILL skill
-                ON skill.SKILL_ID = course_skill.SKILL_ID
-              WHERE course_skill.SKILL_ID = scs.SKILL_ID
-                 OR skill.PARENT_SKILL_ID = scs.SKILL_ID
+          AND (
+              course_skill.SKILL_ID = scs.SKILL_ID
+              OR skill.PARENT_SKILL_ID = scs.SKILL_ID
           )
         GROUP BY scs.COMPETENCY_ID, scs.CALC_TYPE
+        HAVING SUM(scs.SCORE_DELTA * course_skill.WEIGHT) &gt; 0
         ORDER BY scs.COMPETENCY_ID, scs.CALC_TYPE
+    </select>
+
+    <select id="countRecommendedCourseForUser" resultType="int">
+        SELECT COUNT(*)
+        FROM CAREER_RECOMMENDATION cr
+        JOIN CAREER_DIAGNOSIS cd
+          ON cd.DIAGNOSIS_ID = cr.DIAGNOSIS_ID
+        WHERE cd.USER_ID = #{userId}
+          AND cr.COURSE_ID = #{courseId}
+    </select>
+
+    <select id="countFirstLearningSkillsForCourse" resultType="int">
+        SELECT COUNT(*)
+        FROM COURSE_SKILL current_skill
+        WHERE current_skill.COURSE_ID = #{courseId}
+          AND NVL(current_skill.WEIGHT, 0) &gt; 0
+          AND NOT EXISTS (
+              SELECT 1
+              FROM COURSE_LEARNING_STATUS cls
+              JOIN COURSE_SKILL previous_skill
+                ON previous_skill.COURSE_ID = cls.COURSE_ID
+              WHERE cls.USER_ID = #{userId}
+                AND cls.COURSE_ID != #{courseId}
+                AND cls.STATUS = 'COMPLETED'
+                AND previous_skill.SKILL_ID = current_skill.SKILL_ID
+          )
+    </select>
+
+    <select id="findLearningStreakUserIds" resultType="long">
+        SELECT streak.USER_ID
+        FROM (
+            SELECT
+                ll.USER_ID,
+                COUNT(DISTINCT TRUNC(ll.EVENT_AT)) AS ACTIVE_DAYS
+            FROM LEARNING_LOG ll
+            WHERE ll.EVENT_AT &gt;= #{targetDate} - (#{streakDays} - 1)
+              AND ll.EVENT_AT &lt; #{targetDate} + 1
+            GROUP BY ll.USER_ID
+        ) streak
+        WHERE streak.ACTIVE_DAYS = #{streakDays}
     </select>
 
     <select id="countScoreHistory" resultType="int">
@@ -60,6 +128,14 @@
         WHERE USER_ID = #{userId}
           AND COMPETENCY_ID = #{competencyId}
           AND CALC_TYPE = #{calcType}
+          AND (
+              (#{referenceType, jdbcType=VARCHAR} IS NULL AND REFERENCE_TYPE IS NULL)
+              OR REFERENCE_TYPE = #{referenceType, jdbcType=VARCHAR}
+          )
+          AND (
+              (#{referenceId, jdbcType=NUMERIC} IS NULL AND REFERENCE_ID IS NULL)
+              OR REFERENCE_ID = #{referenceId, jdbcType=NUMERIC}
+          )
     </select>
 
     <insert id="insertScoreHistory">
@@ -69,6 +145,8 @@
             COMPETENCY_ID,
             SCORE,
             CALC_TYPE,
+            REFERENCE_TYPE,
+            REFERENCE_ID,
             CALCULATED_AT
         )
         SELECT
@@ -82,6 +160,8 @@
                   AND ucs.COMPETENCY_ID = #{competencyId}
             ), 70) + #{scoreDelta}),
             #{calcType},
+            #{referenceType, jdbcType=VARCHAR},
+            #{referenceId, jdbcType=NUMERIC},
             SYSDATE
         FROM DUAL
         WHERE NOT EXISTS (
@@ -90,6 +170,14 @@
             WHERE csh.USER_ID = #{userId}
               AND csh.COMPETENCY_ID = #{competencyId}
               AND csh.CALC_TYPE = #{calcType}
+              AND (
+                  (#{referenceType, jdbcType=VARCHAR} IS NULL AND csh.REFERENCE_TYPE IS NULL)
+                  OR csh.REFERENCE_TYPE = #{referenceType, jdbcType=VARCHAR}
+              )
+              AND (
+                  (#{referenceId, jdbcType=NUMERIC} IS NULL AND csh.REFERENCE_ID IS NULL)
+                  OR csh.REFERENCE_ID = #{referenceId, jdbcType=NUMERIC}
+              )
         )
     </insert>
 

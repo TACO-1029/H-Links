@@ -12,6 +12,7 @@
   bindStatsAlert();
   updateDateRangeLabels(form);
   updatePeriodPresetState(form);
+  styleAverageHintSegments(document);
 
   form.querySelectorAll('input[name="startDate"], input[name="endDate"]').forEach((input) => {
     input.addEventListener('change', () => {
@@ -95,6 +96,7 @@
     });
 
     content.innerHTML = fragments.join('');
+    styleAverageHintSegments(content);
 
     if (window.HrStatsCharts) {
       window.HrStatsCharts.render(charts);
@@ -183,7 +185,7 @@
     const rows = ranks.map((rank) => `
       <li>
         <span class="hr-stats-rank__meta">${escapeHtml(rank.rank)}</span>
-        ${rank.badgeText ? `<span class="hr-stats-rank__badge badge rounded-pill ${escapeAttribute(rank.badgeTone || '')}">${escapeHtml(rank.badgeText)}</span>` : ''}
+        ${shouldRenderRankBadge(rank) ? `<span class="hr-stats-rank__badge badge rounded-pill ${escapeAttribute(rank.badgeTone || '')}">${escapeHtml(rank.badgeText)}</span>` : ''}
         <span class="hr-stats-rank__label">${escapeHtml(rank.label)}</span>
         <strong>${escapeHtml(rank.value)}</strong>
       </li>
@@ -265,6 +267,41 @@
     }
 
     return `<span class="hr-stats-table__type-text">${escapeHtml(rank.courseTypeName)}</span>`;
+  }
+
+  function styleAverageHintSegments(root) {
+    root.querySelectorAll('.hr-stats-kpi__hint').forEach((element) => {
+      const text = element.textContent || '';
+      const marker = '전체 평균';
+      const markerIndex = text.indexOf(marker);
+
+      if (markerIndex < 0 || element.querySelector('.hr-stats-kpi__hint-average')) {
+        return;
+      }
+
+      const delimiter = ' · ';
+      const averageEndIndex = text.indexOf(delimiter, markerIndex + marker.length);
+      const prefix = text.slice(0, markerIndex);
+      const average = averageEndIndex >= 0 ? text.slice(markerIndex, averageEndIndex) : text.slice(markerIndex);
+      const suffix = averageEndIndex >= 0 ? text.slice(averageEndIndex) : '';
+
+      element.replaceChildren(
+        document.createTextNode(prefix),
+        createAverageHintElement(average),
+        document.createTextNode(suffix)
+      );
+    });
+  }
+
+  function createAverageHintElement(text) {
+    const element = document.createElement('span');
+    element.className = 'hr-stats-kpi__hint-average';
+    element.textContent = text;
+    return element;
+  }
+
+  function shouldRenderRankBadge(rank) {
+    return Boolean(rank.badgeText) && rank.badgeText !== '조직';
   }
 
   function setLoading(button, loading) {

@@ -454,7 +454,7 @@
             value,
             displayValue: formatValue(value, chart.unit),
           })),
-          smooth: true,
+          smooth: false,
           symbol: 'circle',
           symbolSize: 7,
           lineStyle: {
@@ -558,7 +558,7 @@
         name: item.name,
         type: 'line',
         data: labels.map((label) => rankData.dataByDepartmentAndLabel.get(item.name)?.get(label) || null),
-        smooth: true,
+        smooth: false,
         connectNulls: false,
         symbol: 'circle',
         symbolSize: 5,
@@ -689,7 +689,7 @@
 
     return {
       ...buildBaseOption(chart),
-      color: ['#009E7A', '#2563EB'],
+      color: ['#009E7A', '#F1A400'],
       tooltip: {
         trigger: 'axis',
         confine: true,
@@ -751,14 +751,14 @@
         {
           type: 'value',
           nameTextStyle: {
-            color: '#2563EB',
+            color: '#F1A400',
             fontSize: 12,
             fontWeight: 700,
             align: 'right',
           },
           splitLine: { show: false },
           axisLabel: {
-            color: '#2563EB',
+            color: '#F1A400',
             fontSize: 12,
             formatter: (value) => `${value}`,
           },
@@ -799,18 +799,18 @@
           symbol: 'circle',
           symbolSize: 9,
           lineStyle: {
-            color: '#2563EB',
+            color: '#F1A400',
             width: 2,
           },
           itemStyle: {
-            color: '#2563EB',
+            color: '#F1A400',
             borderColor: '#FFFFFF',
             borderWidth: 2,
           },
           label: {
             show: true,
             position: 'right',
-            color: '#2563EB',
+            color: '#F1A400',
             fontSize: 12,
             fontWeight: 700,
             formatter: (params) => params.data.displayValue || `${params.value}건`,

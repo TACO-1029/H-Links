@@ -134,8 +134,8 @@ public class CourseStatisticsService {
         return rows.stream()
                 .map(row -> new RankStatDto(
                         row.rank(),
-                        null,
-                        null,
+                        row.courseTypeName(),
+                        courseTypeBadgeTone(row.courseTypeName()),
                         row.courseTitle(),
                         number(row.applicationCount(), "명"),
                         null,
@@ -153,7 +153,7 @@ public class CourseStatisticsService {
                 .map(row -> new RankStatDto(
                         row.rank(),
                         row.courseTypeName(),
-                        row.badgeTone(),
+                        courseTypeBadgeTone(row.courseTypeName()),
                         row.courseTitle(),
                         number(row.incompleteCount(), "명"),
                         null,
@@ -164,6 +164,10 @@ public class CourseStatisticsService {
                         null
                 ))
                 .toList();
+    }
+
+    private String courseTypeBadgeTone(String courseTypeName) {
+        return "오프라인".equals(courseTypeName) ? "orange" : "green";
     }
 
     private StatisticsFilter previousPeriodFilter(StatisticsFilter filter) {

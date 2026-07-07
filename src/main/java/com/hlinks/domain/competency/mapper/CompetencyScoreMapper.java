@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Mapper
@@ -19,17 +20,36 @@ public interface CompetencyScoreMapper {
 
     List<CompetencyScorePolicyRow> findSkillCourseCompletionPolicies(@Param("courseId") Long courseId);
 
+    int countRecommendedCourseForUser(
+            @Param("userId") Long userId,
+            @Param("courseId") Long courseId
+    );
+
+    int countFirstLearningSkillsForCourse(
+            @Param("userId") Long userId,
+            @Param("courseId") Long courseId
+    );
+
+    List<Long> findLearningStreakUserIds(
+            @Param("targetDate") LocalDate targetDate,
+            @Param("streakDays") int streakDays
+    );
+
     int countScoreHistory(
             @Param("userId") Long userId,
             @Param("competencyId") Long competencyId,
-            @Param("calcType") String calcType
+            @Param("calcType") String calcType,
+            @Param("referenceType") String referenceType,
+            @Param("referenceId") Long referenceId
     );
 
     int insertScoreHistory(
             @Param("userId") Long userId,
             @Param("competencyId") Long competencyId,
             @Param("calcType") String calcType,
-            @Param("scoreDelta") BigDecimal scoreDelta
+            @Param("scoreDelta") BigDecimal scoreDelta,
+            @Param("referenceType") String referenceType,
+            @Param("referenceId") Long referenceId
     );
 
     int upsertUserCompetencyScore(
