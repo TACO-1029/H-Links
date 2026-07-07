@@ -9,7 +9,7 @@ import lombok.Setter;
 @Builder
 public class KcyAdaptiveResponse {
     private String status; // IN_PROGRESS_MCQ, TETRIS_PHASE, TIEBREAKER, COMPLETED
-    private KcyQuestionDto nextQuestion;
+    private KcyQuestionClientDto nextQuestion;
     private int currentCount;
     private int totalPredictCount;
     private java.util.List<TetrisBlockDto> blocks;

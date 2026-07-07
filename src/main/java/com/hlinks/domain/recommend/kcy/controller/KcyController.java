@@ -47,12 +47,16 @@ public class KcyController {
 
     @PostMapping("/kcy")
     public String submit(
-            com.hlinks.domain.recommend.kcy.dto.KcySubmitRequest request,
+            @Valid com.hlinks.domain.recommend.kcy.dto.KcySubmitRequest request,
             BindingResult bindingResult,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes,
             Model model
     ) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "제출된 답변 데이터에 오류가 있습니다.");
+            return "redirect:/kcy";
+        }
 
         KcyScoreDto score = kcyService.submit(
                 userDetails.getUserId(),

@@ -96,7 +96,7 @@ public class KcyServiceImpl implements KcyService {
 
         int answeredCount = request.getSelectedOptionIds() != null ? request.getSelectedOptionIds().size() : 0;
 
-        // 조기 종료 조건: MCQ를 5문항 이상 풀었고 모든 축 격차가 20%p 이상으로 확실히 결정된 경우
+        // 조기 종료 조건: MCQ를 2문항 이상 풀었고 최소 2개 이상의 축 성향이 40%/60% 비율 범위 밖으로 굳어진 경우
         // 단, 사용자가 우회를 희망하여 bypassEarlyStop = true 로 오면 건너뛴다.
         if (answeredCount >= MIN_MCQ_FOR_EARLY_STOP && isAllAxesDetermined(currentScore)) {
             Boolean bes = request.getBypassEarlyStop();
@@ -141,7 +141,7 @@ public class KcyServiceImpl implements KcyService {
 
         return KcyAdaptiveResponse.builder()
                 .status("IN_PROGRESS_MCQ")
-                .nextQuestion(nextQ)
+                .nextQuestion(KcyQuestionClientDto.from(nextQ))
                 .currentCount(answeredCount + 1)
                 .totalPredictCount(MAX_MCQ_LIMIT)
                 .build();
@@ -228,6 +228,28 @@ public class KcyServiceImpl implements KcyService {
     }
 
     private KcyScoreDto calculateCurrentScore(List<Long> optionIds, List<String> angerTypes, List<String> tetrisBlocks, Integer timeTaken, Integer fillRate) {
+        if (timeTaken != null && (timeTaken < 0 || timeTaken > 3600)) {
+            throw new IllegalArgumentException("Invalid timeTaken value");
+        }
+        if (fillRate != null && (fillRate < 0 || fillRate > 100)) {
+            throw new IllegalArgumentException("Invalid fillRate value");
+        }
+        if (angerTypes != null) {
+            java.util.Set<String> validAxes = java.util.Set.of("ACTION", "OUTLINE", "WIDE", "DEEP", "INDEPENDENT", "CORPORATE", "PROMPTER", "MANUAL");
+            for (String type : angerTypes) {
+                if (type == null || !validAxes.contains(type)) {
+                    throw new IllegalArgumentException("Invalid anger type: " + type);
+                }
+            }
+        }
+        if (tetrisBlocks != null) {
+            for (String blockId : tetrisBlocks) {
+                if (blockId == null || TetrisBlockRegistry.findById(blockId) == null) {
+                    throw new IllegalArgumentException("Invalid tetris block ID: " + blockId);
+                }
+            }
+        }
+
         KcyScoreDto score;
         if (optionIds != null && !optionIds.isEmpty()) {
             score = kcyMapper.sumScoresByOptionIds(optionIds);
@@ -296,34 +318,7 @@ public class KcyServiceImpl implements KcyService {
         }
     }
 
-    private List<TetrisBlockDto> generateBlocks(KcyScoreDto score) {
-        List<TetrisBlockDto> blocks = new ArrayList<>();
-        int pDiff = Math.abs(score.getPrompterScore() - score.getManualScore());
-        int aDiff = Math.abs(score.getActionScore() - score.getOutlineScore());
 
-        // Tiebreaker logic
-        if (pDiff < SCORE_DIFF_THRESHOLD) {
-            // Need Prompter vs Manual tiebreaker blocks
-            blocks.add(TetrisBlockRegistry.AI_PROMPT_ENG.toDto());
-            blocks.add(TetrisBlockRegistry.SWE_QA.toDto());
-            blocks.add(TetrisBlockRegistry.AI_HARNESS.toDto());
-            blocks.add(TetrisBlockRegistry.BE_JDBC.toDto());
-        } else if (aDiff < SCORE_DIFF_THRESHOLD) {
-            // Need Action vs Outline tiebreaker blocks
-            blocks.add(TetrisBlockRegistry.INFRA_DOCKER.toDto());
-            blocks.add(TetrisBlockRegistry.SWE_AGILE.toDto());
-            blocks.add(TetrisBlockRegistry.AI_MULTI_AGENT.toDto());
-            blocks.add(TetrisBlockRegistry.FE_REACT.toDto());
-        } else {
-            // Default preset
-            blocks.add(TetrisBlockRegistry.INFRA_K8S.toDto());
-            blocks.add(TetrisBlockRegistry.BE_SPRING.toDto());
-            blocks.add(TetrisBlockRegistry.FE_VUE.toDto());
-            blocks.add(TetrisBlockRegistry.SWE_TDD.toDto());
-            blocks.add(TetrisBlockRegistry.AI_COPILOT.toDto());
-        }
-        return blocks;
-    }
 
     private boolean isAllAxesDetermined(KcyScoreDto score) {
         int determinedCount = 0;
