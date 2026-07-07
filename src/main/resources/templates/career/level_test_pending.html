@@ -8,6 +8,7 @@
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/footer.css}">
     <link rel="stylesheet" th:href="@{/css/career.css}">
+    <link rel="stylesheet" th:href="@{/css/career-path/career_pending.css}">
 </head>
 <body class="career-pending-page">
 <div th:replace="~{fragments/header :: header}"></div>
@@ -52,18 +53,18 @@
 
         <!-- 하단 생성 조건 -->
         <div class="generation-condition-box">
-            <div class="condition-header">생성 조건</div>
+            <div class="condition-header">진단 기준</div>
             <div class="condition-grid">
                 <div class="condition-item">
-                    <span class="condition-label">분야</span>
-                    <span class="condition-value" th:text="${difficulty == '상' ? '고급 스택' : (difficulty == '하' ? '기초 스택' : '현업 스택')}">인프라</span>
+                    <span class="condition-label">목표 수준</span>
+                    <span class="condition-value" th:text="${difficulty == '상' ? '실무 심화형' : (difficulty == '하' ? '기초 입문형' : '실무 성장형')}">실무 성장형</span>
                 </div>
                 <div class="condition-item">
                     <span class="condition-label">난이도</span>
                     <span class="condition-value" th:text="${difficulty == '상' ? '고급' : (difficulty == '하' ? '초급' : '중급')}">중급</span>
                 </div>
                 <div class="condition-item">
-                    <span class="condition-label">모드</span>
+                    <span class="condition-label">진단 방식</span>
                     <span class="condition-value" th:text="${mode}">표준 진단</span>
                 </div>
             </div>

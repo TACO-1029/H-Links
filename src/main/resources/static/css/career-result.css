@@ -526,3 +526,29 @@
 .btn-report-save:hover {
     background: #009366;
 }
+
+.result-rise {
+    opacity: 0;
+    transform: translateY(36px);
+    transition: opacity 0.76s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.76s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--result-rise-delay, 0ms);
+    will-change: opacity, transform;
+}
+
+.result-rise.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.course-card.result-rise.is-visible:hover {
+    transform: translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .result-rise {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}

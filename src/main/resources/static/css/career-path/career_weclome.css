@@ -1,0 +1,183 @@
+/* --- Welcome Page --- */
+.career-welcome-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 60px 24px 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.career-welcome-bubble-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.s-avatar-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.s-avatar-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.career-welcome-bubble {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-brand);
+    border-radius: var(--radius-lg);
+    padding: 12px 24px;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+}
+
+/* 말풍선 테두리 꼬리 (border trick으로 외곽선 표현) */
+.career-welcome-bubble::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border: 11px solid transparent;
+    border-right-color: var(--color-border-brand);
+    border-left: 0;
+    border-bottom: 0;
+    margin-top: -5.5px;
+    margin-left: -11px;
+}
+
+/* 말풍선 내부 꼬리 (배경색으로 채워 테두리처럼 보이게) */
+.career-welcome-bubble::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+    border-right-color: var(--color-bg-surface);
+    border-left: 0;
+    border-bottom: 0;
+    margin-top: -5px;
+    margin-left: -10px;
+}
+
+.career-welcome-bubble strong {
+    color: var(--color-brand);
+}
+
+.career-welcome-hero {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.career-welcome-hero h1 {
+    font-size: 26px;
+    line-height: var(--leading-relaxed);
+    font-weight: var(--font-bold);
+    color: var(--color-text-primary);
+}
+
+/* Horizontal Feature Cards */
+.career-feature-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 60px;
+}
+
+.career-feature-card {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: var(--radius-xl);
+    background: linear-gradient(135deg, #f0f5ff, #f8fafc);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.career-feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.career-feature-media {
+    background: #e0ebff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    position: relative;
+}
+
+.media-placeholder {
+    font-size: var(--text-5xl);
+}
+
+.career-feature-desc {
+    padding: 30px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.career-feature-desc h2 {
+    font-size: var(--text-sm);
+    color: var(--color-text-tertiary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.career-feature-desc h3 {
+    font-size: 20px;
+    font-weight: var(--font-bold);
+    line-height: 1.4;
+    color: var(--color-text-primary);
+    margin-bottom: 12px;
+}
+
+.career-feature-desc p {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.career-welcome-action {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.btn-start-diagnosis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 48px;
+    background: var(--color-brand);
+    color: white;
+    font-size: var(--text-base);
+    font-weight: var(--font-bold);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-start-diagnosis:hover {
+    background: var(--color-brand-hover);
+}
+
