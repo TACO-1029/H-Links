@@ -289,6 +289,87 @@
             font-weight: 500;
         }
 
+        .course-material-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #2563EB;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .course-material-link:hover {
+            color: #1D4ED8;
+            text-decoration: underline;
+        }
+
+        .course-material-link.is-disabled {
+            color: #64748B;
+            cursor: pointer;
+        }
+
+        .course-alert-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1100;
+            display: none;
+            place-items: center;
+            padding: 24px;
+            background: rgba(15, 23, 42, 0.42);
+        }
+
+        .course-alert-overlay.is-open {
+            display: grid;
+        }
+
+        .course-alert {
+            width: min(100%, 420px);
+            padding: 28px;
+            border: 1px solid var(--danger-200, #fecaca);
+            border-radius: var(--radius-xl, 20px);
+            background: var(--color-bg-surface, #FFFFFF);
+            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.3);
+        }
+
+        .course-alert__eyebrow {
+            margin: 0 0 8px;
+            color: var(--color-danger-text, #B91C1C);
+            font-size: var(--text-xs, 12px);
+            font-weight: var(--font-bold, 700);
+        }
+
+        .course-alert h2 {
+            margin: 0;
+            color: var(--color-text-primary, #1E293B);
+            font-size: var(--text-xl, 20px);
+            font-weight: var(--font-bold, 700);
+            line-height: var(--leading-tight, 1.25);
+        }
+
+        .course-alert__message {
+            margin: 14px 0 0;
+            color: var(--color-text-secondary, #475569);
+            font-size: var(--text-sm, 14px);
+            font-weight: var(--font-semibold, 600);
+            line-height: var(--leading-relaxed, 1.625);
+        }
+
+        .course-alert button {
+            width: 100%;
+            min-height: 44px;
+            margin-top: 22px;
+            border: 0;
+            border-radius: var(--radius-md, 10px);
+            background: var(--color-brand, #3B4043);
+            color: var(--color-text-inverse, #FFFFFF);
+            font-size: var(--text-sm, 14px);
+            font-weight: var(--font-bold, 700);
+        }
+
+        .course-alert button:hover {
+            background: var(--color-brand-hover, #2F3437);
+        }
+
         /* -----------------------------------------
            [하단] 커리큘럼 박스
            ----------------------------------------- */
@@ -990,6 +1071,18 @@
                                 <div class="detail-dt">강의/접수기간</div>
                                 <div class="detail-dd">상시 수강 및 접수 가능</div>
                             </div>
+                            <div class="detail-row" th:if="${course.online}">
+                                <div class="detail-dt">강의 자료</div>
+                                <div class="detail-dd">
+                                    <a class="course-material-link"
+                                       data-course-material-download
+                                       th:href="${course.courseMaterialUrl != null and course.courseMaterialUrl != '' ? course.courseMaterialUrl : '#'}"
+                                       th:data-material-url="${course.courseMaterialUrl != null ? course.courseMaterialUrl : ''}"
+                                       th:classappend="${course.courseMaterialUrl == null or course.courseMaterialUrl == ''} ? ' is-disabled'">
+                                        강의 자료 다운로드
+                                    </a>
+                                </div>
+                            </div>
                             <div class="detail-row">
                                 <div class="detail-dt">대상구분</div>
                                 <div class="detail-dd">전 임직원 대상</div>
@@ -1207,6 +1300,19 @@
     </th:block>
 </main>
 
+<div id="courseAlertModal"
+     class="course-alert-overlay"
+     role="alertdialog"
+     aria-modal="true"
+     aria-labelledby="course-alert-title">
+    <section class="course-alert">
+        <p class="course-alert__eyebrow">확인 필요</p>
+        <h2 id="course-alert-title">강의 자료를 확인할 수 없습니다</h2>
+        <p id="courseAlertMessage" class="course-alert__message">등록된 강의 자료가 없습니다.</p>
+        <button id="courseAlertClose" type="button">확인</button>
+    </section>
+</div>
+
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <script th:inline="javascript">
@@ -1215,10 +1321,13 @@
         const courseId = /*[[${course.courseId}]]*/ null;
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const materialDownloadLink = document.querySelector('[data-course-material-download]');
         const sections = {
             courseInfoSection: document.getElementById('courseInfoSection'),
             curriculumSection: document.getElementById('curriculumSection')
         };
+
+        bindCourseAlert();
 
         // 1. 탭 클릭 시 정밀 스마트 자동 스크롤 처리
         tabs.forEach(tab => {
@@ -1276,9 +1385,20 @@
             });
         });
 
+        if (materialDownloadLink) {
+            materialDownloadLink.addEventListener('click', function (event) {
+                if (this.dataset.materialUrl) {
+                    return;
+                }
+
+                event.preventDefault();
+                showCourseAlert('등록된 강의 자료가 없습니다.');
+            });
+        }
+
         async function submitCourseApplication(method, button, fallbackMessage) {
             if (!courseId) {
-                alert('강의 정보를 확인할 수 없습니다.');
+                showCourseAlert('강의 정보를 확인할 수 없습니다.');
                 return;
             }
 
@@ -1305,11 +1425,56 @@
                 }
 
                 const errorBody = await readJsonSafely(response);
-                alert(errorBody?.message || fallbackMessage);
+                showCourseAlert(errorBody?.message || fallbackMessage);
             } catch (error) {
-                alert(fallbackMessage);
+                showCourseAlert(fallbackMessage);
             } finally {
                 button.disabled = false;
+            }
+        }
+
+        function bindCourseAlert() {
+            const modal = document.getElementById('courseAlertModal');
+            const closeButton = document.getElementById('courseAlertClose');
+
+            if (!modal || !closeButton) {
+                return;
+            }
+
+            closeButton.addEventListener('click', hideCourseAlert);
+
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    hideCourseAlert();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    hideCourseAlert();
+                }
+            });
+        }
+
+        function showCourseAlert(message) {
+            const modal = document.getElementById('courseAlertModal');
+            const messageElement = document.getElementById('courseAlertMessage');
+            const closeButton = document.getElementById('courseAlertClose');
+
+            if (!modal || !messageElement || !closeButton) {
+                return;
+            }
+
+            messageElement.textContent = message;
+            modal.classList.add('is-open');
+            closeButton.focus();
+        }
+
+        function hideCourseAlert() {
+            const modal = document.getElementById('courseAlertModal');
+
+            if (modal) {
+                modal.classList.remove('is-open');
             }
         }
 
