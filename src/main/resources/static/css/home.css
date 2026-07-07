@@ -391,6 +391,10 @@
     letter-spacing: 0;
 }
 
+.home-career-intro__accent {
+    color: var(--orange-600);
+}
+
 .home-career-intro__inner p {
     margin: 0;
     color: var(--neutral-600);
@@ -415,6 +419,9 @@
 }
 
 .home-scroll-rise .home-section-heading,
+.home-scroll-rise .home-career-intro__wave-layer,
+.home-scroll-rise .home-career-intro__character,
+.home-scroll-rise .home-career-intro__inner,
 .home-scroll-rise .home-path-step,
 .home-scroll-rise .home-path-roadmap,
 .home-scroll-rise .home-diagnosis-card,
@@ -429,6 +436,9 @@
 }
 
 .home-scroll-rise.is-visible .home-section-heading,
+.home-scroll-rise.is-visible .home-career-intro__wave-layer,
+.home-scroll-rise.is-visible .home-career-intro__character,
+.home-scroll-rise.is-visible .home-career-intro__inner,
 .home-scroll-rise.is-visible .home-path-step,
 .home-scroll-rise.is-visible .home-path-roadmap,
 .home-scroll-rise.is-visible .home-diagnosis-card,
@@ -441,12 +451,14 @@
 }
 
 .home-scroll-rise.is-visible .home-path-step:nth-child(2),
+.home-scroll-rise.is-visible .home-career-intro__character,
 .home-scroll-rise.is-visible .home-learning-card,
 .home-scroll-rise.is-visible .home-news__grid {
     transition-delay: 0.14s;
 }
 
 .home-scroll-rise.is-visible .home-path-step:nth-child(3),
+.home-scroll-rise.is-visible .home-career-intro__inner,
 .home-scroll-rise.is-visible .home-roadmap-demo__copy {
     transition-delay: 0.24s;
 }
