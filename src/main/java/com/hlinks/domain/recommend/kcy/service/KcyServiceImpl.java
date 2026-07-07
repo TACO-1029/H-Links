@@ -23,6 +23,7 @@ public class KcyServiceImpl implements KcyService {
     private static final int MIN_MCQ_FOR_EARLY_STOP = 5;
     private static final int MAX_MCQ_LIMIT = 9;
     private static final int SCORE_DIFF_THRESHOLD = 3;
+    private static final int BASE_SCORE = 0;
 
     private final KcyMapper kcyMapper;
 
@@ -224,15 +225,15 @@ public class KcyServiceImpl implements KcyService {
 
         if (score == null) score = new KcyScoreDto();
 
-        // [통계 보정] 40%/60% 비율제 하에서 0점 분모에 의한 극단적 쏠림 방지용 초기 Base 5점 적재
-        score.addScore("ACTION", 5);
-        score.addScore("OUTLINE", 5);
-        score.addScore("WIDE", 5);
-        score.addScore("DEEP", 5);
-        score.addScore("INDEPENDENT", 5);
-        score.addScore("CORPORATE", 5);
-        score.addScore("PROMPTER", 5);
-        score.addScore("MANUAL", 5);
+        // [통계 보정] 40%/60% 비율제 하에서 0점 분모에 의한 극단적 쏠림 방지용 초기 Base점 적재
+        score.addScore("ACTION", BASE_SCORE);
+        score.addScore("OUTLINE", BASE_SCORE);
+        score.addScore("WIDE", BASE_SCORE);
+        score.addScore("DEEP", BASE_SCORE);
+        score.addScore("INDEPENDENT", BASE_SCORE);
+        score.addScore("CORPORATE", BASE_SCORE);
+        score.addScore("PROMPTER", BASE_SCORE);
+        score.addScore("MANUAL", BASE_SCORE);
 
         // 1. 하이라이터 훅 점수 추가 (MCQ 대비 가중치 미미하게 1점 부여)
         if (angerTypes != null) {
