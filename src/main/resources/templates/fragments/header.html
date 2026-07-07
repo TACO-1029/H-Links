@@ -91,6 +91,12 @@
                        role="menuitem">
                         내 역량 평가
                     </a>
+                    <a class="site-header__dropdown-link"
+                       th:classappend="${activeSubMenu == 'myCoffeeChats'} ? ' is-active'"
+                       th:href="@{/mypage/coffee-chats}"
+                       role="menuitem">
+                        커피챗
+                    </a>
                     <div class="site-header__dropdown-divider" aria-hidden="true"></div>
                     <form class="site-header__logout-form" th:action="@{/logout}" method="post">
                         <input type="hidden"

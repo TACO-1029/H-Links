@@ -727,7 +727,10 @@
 
 .kcy-partner-card {
     min-width: 0;
+    height: 100%;
     padding: 18px;
+    display: flex;
+    flex-direction: column;
     border: 1px solid rgba(124, 58, 237, 0.13);
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.78);
@@ -789,7 +792,7 @@
 }
 
 .kcy-partner-card__reason {
-    margin: 13px 0 0;
+    margin: 13px 0 16px;
     color: var(--color-text-secondary);
     font-size: 13px;
     font-weight: 700;
@@ -798,6 +801,38 @@
     overflow: hidden;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 5;
+}
+
+.kcy-coffee-request-button {
+    width: 100%;
+    min-height: 38px;
+    margin-top: auto;
+    border: 0;
+    border-radius: 12px;
+    background: #111827;
+    color: var(--color-text-inverse);
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.14);
+    transition: transform 160ms ease, background-color 160ms ease, opacity 160ms ease;
+}
+
+.kcy-coffee-request-button:hover,
+.kcy-coffee-request-button:focus-visible {
+    background: #0f172a;
+    transform: translateY(-1px);
+}
+
+.kcy-coffee-request-button:disabled {
+    cursor: default;
+    opacity: 0.72;
+    transform: none;
+}
+
+.kcy-coffee-request-button.is-complete {
+    background: var(--color-brand);
+    opacity: 1;
 }
 
 .kcy-partner-empty {

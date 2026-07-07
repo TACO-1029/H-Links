@@ -9,6 +9,8 @@
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/footer.css}">
     <link rel="stylesheet" th:href="@{/css/kcy.css}">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
 </head>
 <body class="kcy-page kcy-result-page">
 <div th:replace="~{fragments/header :: header}"></div>
@@ -182,6 +184,11 @@
                     <p class="kcy-partner-card__reason" th:text="${partner.reason}">
                         실행과 설계 관점을 서로 보완할 수 있는 조합입니다.
                     </p>
+                    <button class="kcy-coffee-request-button"
+                            type="button"
+                            th:attr="data-receiver-id=${partner.userId}">
+                        커피챗 신청
+                    </button>
                 </article>
             </div>
 
@@ -193,5 +200,49 @@
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+<script>
+    (() => {
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const buttons = document.querySelectorAll('.kcy-coffee-request-button');
+
+        buttons.forEach((button) => {
+            button.addEventListener('click', async () => {
+                const receiverUserId = Number(button.dataset.receiverId);
+                const originalText = button.textContent;
+                button.disabled = true;
+                button.textContent = '신청 중';
+
+                try {
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    };
+
+                    if (csrfToken && csrfHeader) {
+                        headers[csrfHeader] = csrfToken;
+                    }
+
+                    const response = await fetch('/api/coffee-chats/requests', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({receiverUserId})
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('커피챗 신청 실패');
+                    }
+
+                    button.textContent = '신청 완료';
+                    button.classList.add('is-complete');
+                } catch (error) {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                    alert('커피챗 신청에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                }
+            });
+        });
+    })();
+</script>
 </body>
 </html>
