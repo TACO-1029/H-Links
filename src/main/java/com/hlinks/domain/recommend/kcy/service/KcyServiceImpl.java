@@ -96,7 +96,7 @@ public class KcyServiceImpl implements KcyService {
 
         int answeredCount = request.getSelectedOptionIds() != null ? request.getSelectedOptionIds().size() : 0;
 
-        // 조기 종료 조건: MCQ를 2문항 이상 풀었고 최소 2개 이상의 축 성향이 40%/60% 비율 범위 밖으로 굳어진 경우
+        // 조기 종료 조건: MCQ를 5문항 이상 풀었고 최소 2개 이상의 축 성향이 40%/60% 비율 범위 밖으로 굳어진 경우
         // 단, 사용자가 우회를 희망하여 bypassEarlyStop = true 로 오면 건너뛴다.
         if (answeredCount >= MIN_MCQ_FOR_EARLY_STOP && isAllAxesDetermined(currentScore)) {
             Boolean bes = request.getBypassEarlyStop();
@@ -109,7 +109,7 @@ public class KcyServiceImpl implements KcyService {
             }
         }
 
-        // 최대 문항 수 제한 도달 조건: MCQ를 6문항 다 푼 경우
+        // 최대 문항 수 제한 도달 조건: MCQ를 9문항 다 푼 경우
         // 단, 사용자가 우회를 희망하여 bypassEarlyStop = true 로 오면 최대 11문항 풀을 다 풀 때까지 계속 진행
         if (answeredCount >= MAX_MCQ_LIMIT) {
             Boolean bes = request.getBypassEarlyStop();
