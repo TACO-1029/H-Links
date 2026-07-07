@@ -48,6 +48,11 @@ public enum KcyErrorCode implements BaseResponseCode {
             HttpStatus.INTERNAL_SERVER_ERROR,
             "KCY_RESULT_TYPE_NOT_FOUND",
                     "KCY 결과 유형을 찾을 수 없습니다."
+    ),
+    KCY_INVALID_INPUT_VALUE(
+            HttpStatus.BAD_REQUEST,
+            "KCY_INVALID_INPUT_VALUE",
+            "잘못된 입력값 형식입니다."
     );
 
     private final HttpStatus httpStatus;

@@ -22,7 +22,15 @@
         KCY_OPTION_ID AS kcyOptionId,
         KCY_QUESTION_ID AS kcyQuestionId,
         OPTION_NO AS optionNo,
-        OPTION_TEXT AS optionText
+        OPTION_TEXT AS optionText,
+        ACTION_SCORE AS actionScore,
+        OUTLINE_SCORE AS outlineScore,
+        WIDE_SCORE AS wideScore,
+        DEEP_SCORE AS deepScore,
+        INDEPENDENT_SCORE AS independentScore,
+        CORPORATE_SCORE AS corporateScore,
+        PROMPTER_SCORE AS prompterScore,
+        MANUAL_SCORE AS manualScore
         FROM KCY_OPTION
         WHERE KCY_QUESTION_ID IN
         <foreach collection="questionIds" item="questionId" open="(" separator="," close=")">
@@ -89,9 +97,19 @@
         ON u.JOB_ID = j.JOB_ID
         LEFT JOIN POSITION p
         ON u.POSITION_ID = p.POSITION_ID
+        JOIN USER_COFFEE_CHAT_SETTING setting
+        ON setting.USER_ID = u.USER_ID
+        AND setting.EMAIL_NOTIFY_YN = 'Y'
         WHERE u.USER_ID != #{userId}
         AND u.STATUS = 'ACTIVE'
         AND u.KCY_RESULT IS NOT NULL
+        AND NOT EXISTS (
+            SELECT 1
+            FROM KCY_COFFEE_CHAT_REQUEST request
+            WHERE request.REQUESTER_USER_ID = #{userId}
+            AND request.RECEIVER_USER_ID = u.USER_ID
+            AND request.STATUS = 'REQUESTED'
+        )
         ORDER BY u.UPDATED_AT DESC NULLS LAST, u.USER_ID DESC
     </select>
 

@@ -1,5 +1,6 @@
 package com.hlinks.domain.mypage.controller;
 
+import com.hlinks.domain.coffeechat.service.CoffeeChatService;
 import com.hlinks.domain.interest.dto.InterestDto;
 import com.hlinks.domain.interest.service.InterestService;
 import com.hlinks.domain.course.dto.CourseApplicationListResponseDto;
@@ -31,6 +32,7 @@ public class MyPageController {
     private final KcyService kcyService;
     private final InterestService interestService;
     private final CourseService courseService; // [이슈 #44] CourseService 주입 추가
+    private final CoffeeChatService coffeeChatService;
 
     @GetMapping("/mypage")
     public String myInfo(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
@@ -65,6 +67,19 @@ public class MyPageController {
         model.addAttribute("careerDescription", "UI 아키텍처와 클라우드 기반 배포 역량을 함께 강화하면 제품형 엔지니어로 성장 가능성이 높습니다.");
 
         return "mypage/info";
+    }
+
+    @GetMapping("/mypage/coffee-chats")
+    public String myCoffeeChats(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        model.addAttribute("activeMenu", "mypage");
+        model.addAttribute("activeSubMenu", "myCoffeeChats");
+        addMyPageHeroModel(userDetails, model);
+
+        model.addAttribute("coffeeChatSetting", coffeeChatService.getSetting(userDetails.getUserId()));
+        model.addAttribute("sentCoffeeChatRequests", coffeeChatService.getSentRequests(userDetails.getUserId()));
+        model.addAttribute("receivedCoffeeChatRequests", coffeeChatService.getReceivedRequests(userDetails.getUserId()));
+
+        return "mypage/coffee-chats";
     }
 
     // ========================================================
