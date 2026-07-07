@@ -1,6 +1,6 @@
 .home-page {
     min-height: 100vh;
-    background: var(--color-bg-page);
+    background: transparent;
 }
 
 .home-shell {
@@ -151,13 +151,13 @@
 }
 
 .home-assessment {
-    min-height: calc(100vh - 160px);
+    min-height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 34px;
-    padding-bottom: 72px;
+    padding-bottom: 0;
     text-align: center;
 }
 
@@ -243,18 +243,18 @@
 }
 
 .home-assessment__panel {
-    overflow: hidden;
-    border: 1px solid var(--color-border-default);
-    border-radius: var(--radius-xl);
-    background: var(--color-bg-surface);
-    box-shadow: var(--shadow-lg);
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
     animation: homeFloat 4.4s ease-in-out 1.2s infinite;
 }
 
 .home-assessment__panel img {
     width: 100%;
     aspect-ratio: 16 / 9;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
 }
 
@@ -339,51 +339,66 @@
 
 .home-career-intro {
     position: relative;
+    z-index: 20;
+    isolation: isolate;
     width: 100%;
-    min-height: 140px;
-    height: auto;
-    padding: 10px 80px 10px 440px;
+    height: 480px;
+    min-height: 162px;
+    padding: 34px 80px 30px 360px;
     display: flex;
     align-items: center;
-    overflow: visible;
-    background: #9BE5BC;
+    overflow: hidden;
+}
+
+.home-career-intro__wave-layer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+.home-career-intro__wave {
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
 .home-career-intro__character {
     position: absolute;
-    left: 120px;
+    left: 96px;
     bottom: 0;
     width: 340px;
     height: auto;
-    transform: translateY(0px);
-    z-index: 2;
+    z-index: 4;
     pointer-events: none;
 }
 
 .home-career-intro__inner {
     position: relative;
-    z-index: 1;
+    z-index: 5;
+    margin-top: 300px;
+    margin-left: 90px;
 }
 
 .home-career-intro__inner strong {
     display: block;
-    margin-bottom: 16px;
-    color: #2F3340;
+    margin-bottom: 10px;
+    color: var(--neutral-600);
     font-family: "Pretendard", sans-serif;
-    font-size: 30px;
+    font-size: 36px;
     font-weight: 800;
     line-height: 1.25;
-    letter-spacing: -0.04em;
+    letter-spacing: 0;
 }
 
 .home-career-intro__inner p {
     margin: 0;
-    color: #4D5668;
+    color: var(--neutral-600);
     font-family: "Pretendard", sans-serif;
-    font-size: 18px;
+    font-size: 28px;
     font-weight: 500;
     line-height: 1.4;
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
 }
 
 .home-scroll-rise {
@@ -1044,9 +1059,10 @@
 .home-news-card {
     display: grid;
     grid-template-columns: 132px minmax(0, 1fr);
-    align-items: stretch;
+    align-items: start;
     gap: 14px;
-    min-height: 108px;
+    min-height: 132px;
+    height: 132px;
     padding: 14px;
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
@@ -1058,8 +1074,8 @@
 
 .home-news-card__image {
     width: 100%;
-    height: 100%;
-    min-height: 92px;
+    height: 104px;
+    min-height: 0;
     object-fit: cover;
     display: block;
     border-radius: var(--radius-sm);
@@ -1090,7 +1106,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    min-height: 92px;
+    height: 104px;
+    min-height: 0;
 }
 
 .home-news-card__body strong {
@@ -1120,7 +1137,7 @@
     display: flex;
     justify-content: space-between;
     gap: 10px;
-    margin-top: 4px;
+    margin-top: auto;
     color: var(--color-text-muted);
     font-size: 11px;
     font-weight: 700;
@@ -1209,6 +1226,13 @@
 
     .home-news-card {
         grid-template-columns: 104px minmax(0, 1fr);
+        min-height: 124px;
+        height: 124px;
+    }
+
+    .home-news-card__image,
+    .home-news-card__body {
+        height: 96px;
     }
 
     .home-path-guide {
@@ -1315,25 +1339,30 @@
     }
 
     .home-career-intro {
-        min-height: 260px;
-        margin-top: 80px;
-        padding: 140px 24px 32px;
-        align-items: flex-end;
+        height: 190px;
+        min-height: 190px;
+        margin-top: 0;
+        padding: 28px 20px 28px 178px;
+        align-items: center;
     }
 
     .home-career-intro__character {
-        left: 24px;
-        width: 180px;
-        transform: translateY(-90px);
+        left: 8px;
+        width: 162px;
+        transform: none;
+    }
+
+    .home-career-intro__wave-layer {
+        height: 118px;
     }
 
     .home-career-intro__inner strong {
         margin-bottom: 8px;
-        font-size: 30px;
+        font-size: 22px;
     }
 
     .home-career-intro__inner p {
-        font-size: 20px;
+        font-size: 14px;
     }
 
 }

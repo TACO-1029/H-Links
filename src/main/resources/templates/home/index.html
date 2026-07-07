@@ -40,6 +40,12 @@
     </div>
 </main>
 <section class="home-career-intro" aria-label="커리어 패스 소개">
+    <div class="home-career-intro__wave-layer" aria-hidden="true">
+        <img
+                class="home-career-intro__wave"
+                th:src="@{/images/home/wave.svg}"
+                alt="">
+    </div>
     <img
             class="home-career-intro__character"
             th:src="@{/images/home/career-path-dog.webp}"
@@ -231,8 +237,8 @@
             <p>성장을 위한 다음 학습 단계를 확인해보세요.</p>
             <h2 id="home-roadmap-demo-title">
                 <span class="home-roadmap-demo__subline">진단 결과를 바탕으로</span><br>
-                <span>나에게 맞는 학습 로드맵</span>을
-                <span class="home-roadmap-demo__subline">추천해드려요</span>
+                <span>나에게 맞는 학습 로드맵</span>
+                <span class="home-roadmap-demo__subline">을 추천해드려요</span>
             </h2>
             <a th:href="@{/courses/career-path}">지금 진단 시작하기</a>
         </div>
