@@ -3,7 +3,12 @@
     color: var(--color-text-primary);
 }
 
-.kcy-shell,
+.kcy-shell {
+    width: min(1180px, calc(100% - 48px));
+    margin: 0 auto;
+    padding: 10px 0 0; /* minimized padding to push footer out of viewport */
+}
+
 .kcy-result-shell {
     width: min(1180px, calc(100% - 48px));
     margin: 0 auto;
@@ -157,7 +162,8 @@
 }
 
 .kcy-test {
-    width: min(700px, 100%);
+    width: 100%;
+    max-width: 2560px;
     margin: 0 auto;
 }
 
@@ -1209,4 +1215,936 @@
     .kcy-profile-card__shine {
         display: none;
     }
+}
+
+/* ==========================================================================
+   KCY v2.0 - IDE Highlighter & 4x4 Sprint Tetris (Corporate Light)
+   ========================================================================== */
+
+/* Stage 1: IDE Editor Hook */
+.kcy-ide-editor {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px 0;
+    font-family: 'Fira Code', Consolas, monospace;
+    font-size: 14px;
+    color: #334155;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+.kcy-ide-line {
+    padding: 4px 24px;
+    transition: background 0.2s;
+    user-select: none;
+}
+.kcy-ide-line .line-num {
+    color: #cbd5e1;
+    display: inline-block;
+    width: 24px;
+    margin-right: 12px;
+    text-align: right;
+    user-select: none;
+}
+.kcy-ide-line .keyword { color: #0056b3; font-weight: 700; }
+.kcy-ide-line .type { color: #2b91af; font-weight: 600; }
+.kcy-ide-line .function { color: #745330; font-weight: 600; }
+.kcy-ide-line .string { color: #a31515; }
+.kcy-ide-line .comment { color: #008000; font-style: italic; }
+
+/* Reference Highlighter Styles */
+.token {
+    position: relative;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    user-select: none;
+    display: inline-block;
+}
+
+.token:hover {
+    background-color: rgba(234, 179, 8, 0.2);
+    box-shadow: 0 0 8px rgba(234, 179, 8, 0.1);
+}
+
+.token.is-highlighted {
+    background-color: rgba(234, 179, 8, 0.55);
+    box-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
+    color: #ffffff !important;
+    animation: wiggle 0.3s ease;
+}
+
+@keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-0.5deg); }
+    75% { transform: rotate(0.5deg); }
+}
+
+/* Stage 3: 4x4 Tetris Container */
+.board-layout {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    padding: 20px 0;
+    margin-bottom: 24px;
+    position: relative;
+}
+
+/* 4x4 Grid Board */
+.grid-container {
+    width: calc(56px * 4 + 8px);
+    height: calc(56px * 4 + 8px);
+    background: #f1f5f9;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    display: grid;
+    grid-template-columns: repeat(4, 56px);
+    grid-template-rows: repeat(4, 56px);
+    padding: 2px;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+}
+
+.grid-cell {
+    border: 1px dashed rgba(148, 163, 184, 0.4);
+    position: relative;
+}
+
+/* Inventory Shelf */
+.inventory-shelf {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 280px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px;
+    min-height: 250px;
+    align-content: flex-start;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Draggable Blocks */
+.draggable-block {
+      position: relative;
+      color: white;
+      font-family: var(--font-title);
+      font-weight: 800;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      z-index: 15;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 1px rgba(255,255,255,0.3));
+  }
+  
+  .draggable-block:active {
+      cursor: grabbing;
+      transform: scale(0.96);
+  }
+  
+  /* Dynamic Block Shapes */
+  .shape-cell {
+      position: absolute;
+      width: 56px;
+      height: 56px;
+      background: inherit;
+      border: 2px solid #1c1c1c; /* 개별 셀의 명확한 가장자리 검정 테두리 */
+      box-sizing: border-box;
+  }
+  
+  /* 내부 점선 표시용 가상 레이어 */
+  .shape-cell::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      right: 2px;
+      bottom: 2px;
+      border: 1px dashed rgba(255, 255, 255, 0.45);
+      pointer-events: none;
+      box-sizing: border-box;
+  }
+  
+  /* Soft low-saturation visible colors by Theme applied to shape cells */
+  .block-ai .shape-cell { background: #5f7490; }
+  .block-infra .shape-cell { background: #5c6bc0; }
+  .block-backend .shape-cell { background: #d85c30; }
+  .block-frontend .shape-cell { background: #ce5a8f; }
+  .block-swe .shape-cell { background: #43a047; }
+  .block-security .shape-cell { background: #3949ab; }
+  .block-method .shape-cell { background: #00acc1; }
+ 
+.block-label {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 2;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.65);
+    font-size: 14.5px;
+    font-weight: 700;
+}
+
+/* Scanner Animation */
+.scanner-line {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right, transparent, #10b981, transparent);
+    box-shadow: 0 0 12px #10b981;
+    opacity: 0;
+    z-index: 20;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   MS Teams Web Workspace Layout Styles (H-Links Signature Theme)
+   ========================================================================== */
+
+.teams-layout {
+    display: flex;
+    width: 100%;
+    max-width: 2560px;
+    height: calc(100vh - 110px); /* fill space and hide footer below viewport */
+    min-height: 650px; /* prevent layout collapse */
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin: 0 auto;
+    flex-shrink: 0;
+}
+
+.teams-sidebar {
+    display: none !important;
+    width: 220px;
+    background: #202225; /* MS Teams style dark charcoal */
+    color: #a3a3a3;
+    flex-direction: column;
+    flex-shrink: 0;
+    text-align: left;
+}
+
+.teams-sidebar-header {
+    height: 52px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.teams-sidebar-title {
+    font-weight: 800;
+    font-size: 15px;
+    color: #ffffff;
+}
+
+.teams-sidebar-sections {
+    flex-grow: 1;
+    padding: 16px 0;
+    overflow-y: auto;
+}
+
+.teams-sidebar-section {
+    margin-bottom: 16px;
+}
+
+.teams-section-title {
+    padding: 0 16px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    color: #737373;
+}
+
+.teams-item {
+    height: 32px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    color: #d4d4d4;
+}
+
+.teams-item:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.teams-item.active {
+    background: #009E7A; /* H-Links signature Green */
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.teams-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981; /* active green */
+}
+
+.teams-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f5f5f5;
+}
+
+.teams-chat-header {
+    height: 52px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+    text-align: left;
+}
+
+.teams-chat-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: #242424;
+}
+
+.teams-chat-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.teams-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+}
+
+.teams-message {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    max-width: 85%;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* Outgoing message on the right */
+.teams-message.outgoing {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+/* Animation for short messages */
+.teams-message.fade-in-init {
+    opacity: 0;
+}
+.teams-message.fade-in-active {
+    opacity: 1;
+}
+
+.teams-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%; /* circular avatar standard in MS Teams */
+    overflow: hidden;
+    background: #e2e8f0;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.teams-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.teams-msg-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.teams-msg-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 12px;
+}
+
+.teams-message.outgoing .teams-msg-header {
+    flex-direction: row-reverse;
+}
+
+.teams-sender {
+    font-weight: 700;
+    color: #424242;
+}
+
+.teams-time {
+    color: #707070;
+}
+
+/* Teams chat bubble */
+.teams-msg-bubble {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    word-break: break-all;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Incoming bot bubble */
+.teams-message.incoming .teams-msg-bubble {
+    background: #ffffff;
+    color: #242424;
+    border: 1px solid #e0e0e0;
+    border-top-left-radius: 2px;
+}
+
+/* Outgoing user bubble */
+.teams-message.outgoing .teams-msg-bubble {
+    background: #e6f6f2; /* Light H-Links Green */
+    color: #005c47;
+    border: 1px solid #bbf7d0;
+    border-top-right-radius: 2px;
+}
+
+.teams-msg-attachment {
+    border-left: 3.5px solid #d1d1d1;
+    padding-left: 14px;
+    margin-top: 8px;
+    background: #ffffff;
+    border-radius: 0 8px 8px 0;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #e0e0e0;
+    border-left-width: 4px;
+    text-align: left;
+}
+
+.teams-msg-attachment-hook {
+    border-left-color: #f59e0b; /* code review warning yellow */
+}
+
+.teams-msg-attachment-tetris {
+    border-left-color: #009E7A; /* H-Links signature green */
+}
+
+.teams-input-area {
+    padding: 16px 20px;
+    border-top: 1px solid #cbd5e1;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.teams-options-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.teams-option-btn {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #242424;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.teams-option-btn:hover {
+    background: #f5f5f5;
+    border-color: #b3b3b3;
+    transform: translateY(-1px);
+}
+
+.teams-options-container .teams-undo-btn {
+    background: #f9f9f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #616161;
+    cursor: pointer;
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+}
+
+.teams-options-container .teams-undo-btn:hover {
+    background: #eaeaea;
+}
+
+.teams-input-box {
+    border: 1px solid #d1d1d1;
+    border-radius: 4px;
+    padding: 6px 12px;
+    background: #f5f5f5;
+}
+
+.teams-input-box input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: #616161;
+    outline: none;
+}
+
+/* Typing Indicator inside Teams bubble */
+.teams-typing {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+}
+
+.teams-typing-dot {
+    width: 5px;
+    height: 5px;
+    background: #707070;
+    border-radius: 50%;
+    animation: teams-bounce 1s infinite ease-in-out;
+}
+
+.teams-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.teams-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes teams-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+.teams-quick-reply-btn {
+    background: #ffffff;
+    border: 1.5px solid #009E7A; /* H-Links Green border */
+    border-radius: 20px; /* Pill shape */
+    padding: 10px 18px;
+    font-size: 13.5px;
+    color: #009E7A;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    opacity: 0;
+    transform: translateY(15px);
+    animation: slide-up-quick 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    display: inline-flex;
+    justify-content: center; /* 가로 중앙정렬 */
+    align-items: center;    /* 세로 중앙정렬 */
+    text-align: center;
+    max-width: 100%;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.teams-quick-reply-btn:hover {
+    background: #e6f6f2;
+    color: #005c47;
+    border-color: #008768;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,158,122,0.12);
+}
+
+.teams-quick-reply-no {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #e6f6f2;
+    color: #009E7A;
+    font-size: 11px;
+    margin-right: 12px;
+    font-weight: 800;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+}
+
+.teams-quick-reply-btn:hover .teams-quick-reply-no {
+    background: #009E7A;
+    color: #ffffff;
+}
+
+.teams-quick-reply-text {
+    flex-grow: 1;
+}
+
+@keyframes slide-up-quick {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Tetris Full Overlay Style (MS Teams Adaptive Card look) */
+.teams-msg-attachment-tetris.tetris-full-overlay {
+    position: absolute;
+    top: 52px; /* Header 아래 */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    z-index: 100;
+    background: rgba(243, 244, 246, 0.98); /* Teams 스타일 라이트 그레이 */
+    border: none;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.teams-msg-attachment-tetris.tetris-full-overlay .attachment-inner {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    width: 100%;
+}
+
+.teams-msg-attachment-tetris.tetris-full-overlay .undo-btn {
+    top: 16px;
+    right: 16px;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+/* Same Bubble 내부에 들어간 어태치먼트 카드 스타일 조정 */
+.teams-msg-bubble .teams-msg-attachment {
+    border: none;
+    border-left: 4px solid #f59e0b; /* 코드 리뷰 경고 색상만 유지 */
+    background: transparent;
+    box-shadow: none;
+    padding: 12px 0 0 12px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+/* MS Teams style Undo Button Styling - Pill shape, modern flat style */
+.undo-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #ffffff;
+    border: 1px solid #d2d0ce;
+    border-radius: 20px; /* pill style */
+    color: #605e5c;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    z-index: 10;
+}
+
+.undo-btn:hover {
+    background: #f5f5f5;
+    color: #009E7A; /* point green */
+    border-color: #009E7A;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,158,122,0.15);
+}
+
+.undo-btn::before {
+    content: "↩";
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* MS Teams Vertical App Bar */
+.teams-app-bar {
+    display: none !important;
+    width: 68px;
+    background: #202225; /* Dark background */
+    flex-direction: column;
+    align-items: center;
+    padding-top: 12px;
+    gap: 4px;
+    border-right: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+}
+
+.teams-app-item {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #a6a6a6;
+    font-size: 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.teams-app-icon {
+    font-size: 18px;
+    margin-bottom: 2px;
+}
+
+.teams-app-item span {
+    font-size: 9px;
+}
+
+.teams-app-item:hover {
+    background: rgba(255,255,255,0.05);
+    color: #ffffff;
+}
+
+.teams-app-item.active {
+    background: rgba(255,255,255,0.08);
+    color: #6264a7; /* Teams Purple */
+    border-left: 3px solid #6264a7;
+    border-radius: 0 6px 6px 0;
+    position: relative;
+    padding-left: 3px;
+}
+
+.teams-app-item.active .teams-app-icon {
+    color: #6264a7;
+}
+
+/* Teams Header Wrap & Tabs */
+.teams-chat-header-wrap {
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.teams-chat-header {
+    height: 40px; /* slightly shortened for tabs space */
+    border-bottom: none;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+}
+
+.teams-tabs {
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    gap: 20px;
+    height: 32px;
+}
+
+.teams-tab {
+    font-size: 12px;
+    color: #616161;
+    cursor: pointer;
+    font-weight: 500;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding: 0 2px;
+}
+
+.teams-tab:hover {
+    color: #242424;
+}
+
+.teams-tab.active {
+    color: #6264a7; /* Teams active Purple */
+    font-weight: 700;
+}
+
+.teams-tab.active::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #6264a7; /* Teams signature purple bottom border */
+    border-radius: 3px 3px 0 0;
+}
+
+.teams-tab-add {
+    color: #616161;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.teams-tab-add:hover {
+    color: #242424;
+}
+
+/* MS Teams Survey Card MCQ styling */
+.teams-mcq-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 6px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    position: relative;
+    margin-bottom: 4px;
+}
+
+.teams-mcq-option:hover {
+    background: #f3f2f1;
+    border-color: #c8c6c4;
+}
+
+.teams-mcq-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* 커스텀 라디오 서클 */
+.teams-mcq-radio {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid #605e5c;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+
+.teams-mcq-option:hover .teams-mcq-radio {
+    border-color: #323130;
+}
+
+.teams-mcq-option input[type="radio"]:checked ~ .teams-mcq-radio {
+    border-color: #009E7A; /* H-Links Green */
+    background: #ffffff;
+}
+
+.teams-mcq-option input[type="radio"]:checked ~ .teams-mcq-radio::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #009E7A;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.teams-mcq-option-text {
+    font-size: 13.5px;
+    color: #323130;
+    font-weight: 500;
+}
+
+.teams-mcq-option input[type="radio"]:checked ~ .teams-mcq-option-text {
+    color: #009E7A;
+    font-weight: 600;
+}
+
+.teams-mcq-option:has(input[type="radio"]:checked) {
+    border-color: #009E7A;
+    background: #e6f6f2; /* Light H-Links Green */
+}
+
+/* Disabled state */
+.teams-mcq-option:has(input[type="radio"]:disabled) {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.teams-mcq-option:has(input[type="radio"]:disabled):hover {
+    background: #ffffff;
+    border-color: #e0e0e0;
+}
+
+/* Teams App Bar SVG support */
+.teams-app-svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.1s ease;
+}
+
+.teams-app-item:hover .teams-app-svg {
+    transform: scale(1.05);
+}
+
+/* Custom Confirmation Modal overlay & card styles */
+.kcy-modal-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.kcy-modal-card button {
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.kcy-modal-card button:active {
+    transform: scale(0.97);
+}
+
+/* Shuffling Micro-animation */
+@keyframes bounce-shuffle {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-5px) rotate(-1.5deg); }
+    50% { transform: translateY(2px) rotate(1.5deg); }
+    75% { transform: translateY(-2px); }
+}
+.is-shuffling {
+    animation: bounce-shuffle 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
 }

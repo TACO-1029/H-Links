@@ -22,7 +22,15 @@
         KCY_OPTION_ID AS kcyOptionId,
         KCY_QUESTION_ID AS kcyQuestionId,
         OPTION_NO AS optionNo,
-        OPTION_TEXT AS optionText
+        OPTION_TEXT AS optionText,
+        ACTION_SCORE AS actionScore,
+        OUTLINE_SCORE AS outlineScore,
+        WIDE_SCORE AS wideScore,
+        DEEP_SCORE AS deepScore,
+        INDEPENDENT_SCORE AS independentScore,
+        CORPORATE_SCORE AS corporateScore,
+        PROMPTER_SCORE AS prompterScore,
+        MANUAL_SCORE AS manualScore
         FROM KCY_OPTION
         WHERE KCY_QUESTION_ID IN
         <foreach collection="questionIds" item="questionId" open="(" separator="," close=")">
