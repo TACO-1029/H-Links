@@ -31,7 +31,8 @@ public class LevelTestPromptBuilder {
                   - HIGH (상): %d문항
                 - 각 문항의 difficulty 필드값은 위 난이도 구분에 맞추어 대문자 "LOW", "MEDIUM", "HIGH" 중 하나로 매핑하세요.
                 - 모든 퀴즈의 questionType은 "MULTIPLE_CHOICE"로 구성하세요.
-                - 각 문항의 options는 정확히 4개여야 합니다.
+                - 각 문항의 questionText는 정확히 하나의 지식에 대해 물어봐야 합니다. 즉, 하나의 물음표("?")만이 포함되어야 합니다.
+                - 각 문항의 options는 정확히 4개이며, questionText에 대응되는 3개의 plausible한 오답과 1개의 correct한 정답으로 이루어져있습니다.
                 - 각 문항의 정답 선택지는 correctYn이 "Y"인 항목 정확히 1개만 존재해야 하며, 나머지는 "N"이어야 합니다.
                 - optionNo는 반드시 1, 2, 3, 4 숫자를 순서대로 사용하세요.
                 - 정답 문항은 1, 2, 3, 4 중 랜덤한 하나여야 합니다. 일관성이나 규칙 없이 랜덤하게 배정되어야 합니다.
