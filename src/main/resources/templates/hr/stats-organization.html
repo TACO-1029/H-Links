@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>조직 비교 통계 | H-Links</title>
+  <title>부서 비교 통계 | H-Links</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" th:href="@{/css/tokens.css}">
@@ -25,7 +25,7 @@
     <section class="hr-stats-main" aria-labelledby="statsTitle">
       <div class="hr-stats-top">
         <div>
-          <h1 class="hr-stats-title" id="statsTitle" th:text="${view.title}">조직 비교 통계</h1>
+          <h1 class="hr-stats-title" id="statsTitle" th:text="${view.title}">부서 비교 통계</h1>
           <p class="hr-stats-description" th:text="${view.description}">부서와 직급 단위로 학습 참여도와 역량 성장 흐름을 비교합니다.</p>
         </div>
         <div th:replace="~{fragments/hr-stats :: organizationFilter}"></div>
@@ -54,6 +54,19 @@
     </section>
   </div>
 </main>
+
+<div id="hrStatsAlertModal"
+     class="hr-stats-alert-overlay interest-alert-overlay"
+     role="alertdialog"
+     aria-modal="true"
+     aria-labelledby="hr-stats-alert-title">
+  <section class="hr-stats-alert interest-alert">
+    <p class="hr-stats-alert__eyebrow interest-alert__eyebrow">확인 필요</p>
+    <h2 id="hr-stats-alert-title">통계를 확인할 수 없습니다</h2>
+    <p id="hrStatsAlertMessage" class="hr-stats-alert__message interest-alert__message">통계 확인할 조직을 선택해주세요.</p>
+    <button id="hrStatsAlertClose" type="button">확인</button>
+  </section>
+</div>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 <script id="statsChartData" type="application/json" th:utext="${chartDataJson}">[]</script>

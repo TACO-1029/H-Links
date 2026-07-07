@@ -54,6 +54,18 @@ public record StatisticsFilter(
         );
     }
 
+    public StatisticsFilter withCourseType(String nextCourseType) {
+        return new StatisticsFilter(
+                startDate,
+                endDate,
+                departmentId,
+                departmentIds,
+                positionId,
+                category,
+                nextCourseType
+        );
+    }
+
     private static boolean hasText(String value) {
         return value != null && !value.isBlank();
     }

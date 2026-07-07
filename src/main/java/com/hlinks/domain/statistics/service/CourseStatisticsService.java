@@ -3,15 +3,14 @@ package com.hlinks.domain.statistics.service;
 import com.hlinks.domain.statistics.dto.ChartPointDto;
 import com.hlinks.domain.statistics.dto.ChartSeriesDto;
 import com.hlinks.domain.statistics.dto.ChartStatDto;
-import com.hlinks.domain.statistics.dto.CoursePeriodQuery;
-import com.hlinks.domain.statistics.dto.CoursePeriodSeriesRow;
+import com.hlinks.domain.statistics.dto.CourseStatusMonthlyRow;
 import com.hlinks.domain.statistics.dto.CourseStatisticsView;
+import com.hlinks.domain.statistics.dto.IncompleteCourseRow;
 import com.hlinks.domain.statistics.dto.KpiStatDto;
 import com.hlinks.domain.statistics.dto.PopularCourseRow;
 import com.hlinks.domain.statistics.dto.RankStatDto;
 import com.hlinks.domain.statistics.dto.SkillPopularityChangeQuery;
 import com.hlinks.domain.statistics.dto.StatisticsPointRow;
-import com.hlinks.domain.statistics.dto.StatisticsRankRow;
 import com.hlinks.domain.statistics.dto.StatisticsBlockDto;
 import com.hlinks.domain.statistics.dto.StatisticsFilter;
 import com.hlinks.domain.statistics.dto.StatisticsScope;
@@ -24,10 +23,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -55,63 +56,58 @@ public class CourseStatisticsService {
                         StatisticsBlockDto.kpi(1, new KpiStatDto("bi bi-play-fill", "전체 평균 진도율", percent(averageProgressRate), percentComparisonHint(averageProgressRate, previousAverageProgressRate), "orange"))
                 ),
                 List.of(
-                        new StatisticsSectionDto("강의 성과", List.of(
-                                StatisticsBlockDto.chart(1, StatisticsChartFactory.chart("course-type-status", "강의 유형별 현황", "현재 OPEN 강의 기준", "donut", "개", "개설 강의 수", courseStatisticsMapper.selectOperatingCoursesByType(filter))),
-                                StatisticsBlockDto.chart(1, StatisticsChartFactory.chart("course-type-completion", "강의 유형별 수료율", "온라인/오프라인", "bar", "%", "수료율", courseStatisticsMapper.selectCourseTypeCompletionRate(filter))),
-                                StatisticsBlockDto.chart(2, applicationCompletionConversionTrend(courseStatisticsMapper.selectApplicationCompletionConversionTrend(CoursePeriodQuery.from(filter)))),
-                                StatisticsBlockDto.rank(3, "인기 강의 TOP 5", "수강 신청 기준", popularCourseRanks(courseStatisticsMapper.selectPopularCourses(filter))),
-                                StatisticsBlockDto.rank(1, "미수료/이탈 강의 TOP 5", "미수료/이탈 건수 기준", incompleteCourseRanks(courseStatisticsMapper.selectIncompleteCourses(filter))),
-                                StatisticsBlockDto.chart(2, StatisticsChartFactory.chart("course-popular-skills", "스킬별 인기 TOP 5", "수강 신청 수 기준", "bar", "명", "수강 신청 수", courseStatisticsMapper.selectPopularSkills(filter))),
-                                StatisticsBlockDto.chart(2, risingSkills(courseStatisticsMapper.selectRisingSkills(SkillPopularityChangeQuery.from(filter, previousFilter)))),
-                                StatisticsBlockDto.chart(4, applicationCompletionTrend(courseStatisticsMapper.selectApplicationCompletionTrend(CoursePeriodQuery.from(filter))))
+                        new StatisticsSectionDto("강의 운영 및 성과", List.of(
+                                StatisticsBlockDto.chart(1, StatisticsChartFactory.chart("course-type-status", "강의 유형별 운영 현황", "현재 OPEN 강의 기준", "donut", "개", "개설 강의 수", courseStatisticsMapper.selectOperatingCoursesByType(filter))),
+                                StatisticsBlockDto.chart(1, StatisticsChartFactory.chart("course-type-completion", "온라인·오프라인 수료 성과", "온라인/오프라인", "bar", "%", "수료율", courseStatisticsMapper.selectCourseTypeCompletionRate(filter))),
+                                StatisticsBlockDto.chart(2, monthlyLearningStatusComposition(courseStatisticsMapper.selectMonthlyLearningStatusComposition(filter)))
+                        )),
+                        new StatisticsSectionDto("인기/비인기 강의", List.of(
+                                StatisticsBlockDto.rank(2, "인기 강의 TOP 5", "수강 신청 수 기준", popularCourseRanks(courseStatisticsMapper.selectPopularCourses(filter))),
+                                StatisticsBlockDto.rank(2, "미수료/이탈 강의 TOP 5", "미수료/이탈 건수 기준", incompleteCourseRanks(courseStatisticsMapper.selectIncompleteCourses(filter)))
+                        )),
+                        new StatisticsSectionDto("인기 스킬 및 수요", List.of(
+                                StatisticsBlockDto.chart(2, StatisticsChartFactory.chart("course-popular-skills", "인기 스킬 TOP 5", "수강 신청 수 기준", "bar", "명", "수강 신청 수", courseStatisticsMapper.selectPopularSkills(filter))),
+                                StatisticsBlockDto.chart(2, risingSkills(courseStatisticsMapper.selectRisingSkills(SkillPopularityChangeQuery.from(filter, previousFilter))))
                         ))
                 )
         );
     }
 
-    private ChartStatDto applicationCompletionConversionTrend(List<StatisticsPointRow> rows) {
-        List<ChartPointDto> points = rows.stream()
-                .map(row -> new ChartPointDto(
-                        row.label(),
-                        safe(row.value()),
-                        percent(row.value())
-                ))
-                .toList();
+    private ChartStatDto monthlyLearningStatusComposition(List<CourseStatusMonthlyRow> rows) {
+        List<String> statuses = List.of("미시작", "수강중", "수료", "미수료/이탈");
+        Set<String> labels = new LinkedHashSet<>();
+        Map<String, Map<String, BigDecimal>> valuesByStatusAndMonth = new LinkedHashMap<>();
+
+        statuses.forEach(status -> valuesByStatusAndMonth.put(status, new LinkedHashMap<>()));
+        rows.stream()
+                .sorted(Comparator.comparing(CourseStatusMonthlyRow::monthLabel)
+                        .thenComparing(CourseStatusMonthlyRow::statusOrder))
+                .forEach(row -> {
+                    labels.add(row.monthLabel());
+                    valuesByStatusAndMonth
+                            .computeIfAbsent(row.statusLabel(), ignored -> new LinkedHashMap<>())
+                            .put(row.monthLabel(), safe(row.statusCount()));
+                });
 
         return new ChartStatDto(
-                "course-application-completion-conversion",
-                "강의 신청 대비 수료 전환율 추이",
-                "선택 기간 단위별 수료 건수 / 신청 건수",
-                "line",
-                "%",
-                List.of(new ChartSeriesDto("전환율", points))
-        );
-    }
-
-    private ChartStatDto applicationCompletionTrend(List<CoursePeriodSeriesRow> rows) {
-        Map<String, List<ChartPointDto>> pointsBySeries = new LinkedHashMap<>();
-
-        for (CoursePeriodSeriesRow row : rows) {
-            pointsBySeries
-                    .computeIfAbsent(row.seriesName(), ignored -> new ArrayList<>())
-                    .add(new ChartPointDto(
-                            row.periodLabel(),
-                            safe(row.value()),
-                            number(row.value(), "건")
-                    ));
-        }
-
-        List<ChartSeriesDto> series = pointsBySeries.entrySet().stream()
-                .map(entry -> new ChartSeriesDto(entry.getKey(), entry.getValue()))
-                .toList();
-
-        return new ChartStatDto(
-                "course-application-completion-trend",
-                "기간 내 수강 신청 및 수료 추이",
-                "선택 기간 단위별 신청/수료 건수",
-                "line",
+                "course-monthly-learning-status",
+                "월별 수강상태 구성",
+                "선택 기간 내 수강 상태별 강의 건수",
+                "stackedBar",
                 "건",
-                series
+                statuses.stream()
+                        .map(status -> new ChartSeriesDto(
+                                status,
+                                labels.stream()
+                                        .map(label -> {
+                                            BigDecimal value = valuesByStatusAndMonth
+                                                    .getOrDefault(status, Map.of())
+                                                    .getOrDefault(label, BigDecimal.ZERO);
+                                            return new ChartPointDto(label, value, number(value, "건"));
+                                        })
+                                        .toList()
+                        ))
+                        .toList()
         );
     }
 
@@ -142,24 +138,30 @@ public class CourseStatisticsService {
                         null,
                         row.courseTitle(),
                         number(row.applicationCount(), "명"),
-                        row.categoryName(),
+                        null,
                         row.courseTypeName(),
                         number(row.applicationCount(), "명"),
                         percent(row.completionRate()),
-                        percent(row.averageProgressRate()),
-                        percent(row.quizCorrectRate())
+                        null,
+                        null
                 ))
                 .toList();
     }
 
-    private List<RankStatDto> incompleteCourseRanks(List<StatisticsRankRow> rows) {
+    private List<RankStatDto> incompleteCourseRanks(List<IncompleteCourseRow> rows) {
         return rows.stream()
                 .map(row -> new RankStatDto(
                         row.rank(),
-                        row.badgeText(),
+                        row.courseTypeName(),
                         row.badgeTone(),
-                        row.label(),
-                        number(row.value(), "명")
+                        row.courseTitle(),
+                        number(row.incompleteCount(), "명"),
+                        null,
+                        row.courseTypeName(),
+                        number(row.incompleteCount(), "명"),
+                        percent(row.completionRate()),
+                        null,
+                        null
                 ))
                 .toList();
     }
