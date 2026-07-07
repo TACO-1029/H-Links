@@ -21,10 +21,12 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import org.springframework.web.util.UriUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +36,8 @@ public class AdminCourseService {
     private static final String CAREER_PATH_CATEGORY = "CAREER_PATH";
     private static final String THUMBNAIL_FILE_PREFIX = "thumbnail.";
     private static final Set<String> ALLOWED_THUMBNAIL_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
+    private static final Set<String> ALLOWED_COURSE_MATERIAL_EXTENSIONS =
+            Set.of("pdf", "ppt", "pptx", "doc", "docx", "xls", "xlsx", "zip");
 
     private final CourseMapper courseMapper;
     private final FfmpegService ffmpegService;
@@ -84,10 +88,14 @@ public class AdminCourseService {
                 return response;
             }
 
-            int onlineCourseInserted = courseMapper.insertOnlineCourse(
-                    course.getCourseId(),
-                    request.getCourseMaterialUrl()
-            );
+            String courseMaterialUrl = null;
+            if (hasCourseMaterialFile(request.getCourseMaterialFile())) {
+                Path savedMaterialPath = saveCourseMaterialFile(course.getCourseId(), request.getCourseMaterialFile());
+                savedFilePaths.add(savedMaterialPath);
+                courseMaterialUrl = buildCourseMaterialUrl(course.getCourseId(), savedMaterialPath.getFileName().toString());
+            }
+
+            int onlineCourseInserted = courseMapper.insertOnlineCourse(course.getCourseId(), courseMaterialUrl);
 
             if (onlineCourseInserted != 1) {
                 throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "온라인 강의 정보 저장에 실패했습니다.");
@@ -145,6 +153,7 @@ public class AdminCourseService {
         validateChapterTitles(request);
 
         if (CourseType.ONLINE.equals(request.getCourseType())) {
+            validateCourseMaterialFile(request.getCourseMaterialFile());
             validateOnlineChapterVideos(request);
             return;
         }
@@ -239,6 +248,21 @@ public class AdminCourseService {
         }
     }
 
+    private void validateCourseMaterialFile(MultipartFile courseMaterialFile) {
+        if (!hasCourseMaterialFile(courseMaterialFile)) {
+            return;
+        }
+
+        String extension = getLowercaseExtension(courseMaterialFile.getOriginalFilename());
+
+        if (!ALLOWED_COURSE_MATERIAL_EXTENSIONS.contains(extension)) {
+            throw new BaseException(
+                    ErrorResponseCode.INVALID_REQUEST_PARAMETER,
+                    "강의 자료는 pdf, ppt, pptx, doc, docx, xls, xlsx, zip 파일만 등록할 수 있습니다."
+            );
+        }
+    }
+
     private Course toCourse(AdminCourseCreateRequest request, Long createdBy) {
         Course course = new Course();
         course.setCreatedBy(createdBy);
@@ -324,6 +348,22 @@ public class AdminCourseService {
         }
     }
 
+    private Path saveCourseMaterialFile(Long courseId, MultipartFile courseMaterialFile) {
+        Path targetPath = resolveCourseMaterialPath(courseId, getCourseMaterialFileName(courseMaterialFile));
+
+        try {
+            Files.createDirectories(targetPath.getParent());
+
+            try (InputStream inputStream = courseMaterialFile.getInputStream()) {
+                Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            return targetPath;
+        } catch (IOException e) {
+            throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "강의 자료 저장에 실패했습니다.", e);
+        }
+    }
+
     private void updateVideoMetadata(
             Long courseId,
             Long chapterId,
@@ -374,6 +414,26 @@ public class AdminCourseService {
         return thumbnailPath;
     }
 
+    public Path resolveCourseMaterialPath(Long courseId, String fileName) {
+        if (!StringUtils.hasText(fileName)) {
+            throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "강의 자료 경로가 올바르지 않습니다.");
+        }
+
+        Path materialDirectory = Path.of(uploadRoot)
+                .toAbsolutePath()
+                .normalize()
+                .resolve(Path.of("courses", String.valueOf(courseId), "materials"))
+                .normalize();
+
+        Path materialPath = materialDirectory.resolve(fileName).normalize();
+
+        if (!materialPath.startsWith(materialDirectory)) {
+            throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "강의 자료 경로가 올바르지 않습니다.");
+        }
+
+        return materialPath;
+    }
+
     private String toRelativeVideoPath(Long courseId, Long chapterId) {
         return Path.of(
                 "courses",
@@ -392,19 +452,47 @@ public class AdminCourseService {
         return "/images/courses/" + courseId + "/" + THUMBNAIL_FILE_PREFIX + extension;
     }
 
+    private String buildCourseMaterialUrl(Long courseId, String fileName) {
+        return "/materials/courses/" + courseId + "/" + UriUtils.encodePathSegment(fileName, StandardCharsets.UTF_8);
+    }
+
     private String getThumbnailFileName(MultipartFile thumbnailFile) {
         return THUMBNAIL_FILE_PREFIX + getThumbnailExtension(thumbnailFile);
     }
 
     private String getThumbnailExtension(MultipartFile thumbnailFile) {
-        String originalFileName = thumbnailFile.getOriginalFilename();
-        String extension = StringUtils.getFilenameExtension(originalFileName);
+        return getLowercaseExtension(thumbnailFile.getOriginalFilename());
+    }
 
+    private String getLowercaseExtension(String originalFileName) {
+        String extension = StringUtils.getFilenameExtension(originalFileName);
         if (extension == null) {
             return "";
         }
 
         return extension.toLowerCase(Locale.ROOT);
+    }
+
+    private String getCourseMaterialFileName(MultipartFile courseMaterialFile) {
+        String originalFileName = courseMaterialFile.getOriginalFilename();
+        String cleanedFileName = StringUtils.cleanPath(originalFileName == null ? "" : originalFileName)
+                .replace('\\', '/');
+
+        int lastSlashIndex = cleanedFileName.lastIndexOf('/');
+        if (lastSlashIndex >= 0) {
+            cleanedFileName = cleanedFileName.substring(lastSlashIndex + 1);
+        }
+
+        String safeFileName = cleanedFileName.replaceAll("[\\\\/:*?\"<>|]+", "_").trim();
+        if (!StringUtils.hasText(safeFileName) || ".".equals(safeFileName) || "..".equals(safeFileName)) {
+            return "material." + getLowercaseExtension(originalFileName);
+        }
+
+        return safeFileName;
+    }
+
+    private boolean hasCourseMaterialFile(MultipartFile courseMaterialFile) {
+        return courseMaterialFile != null && !courseMaterialFile.isEmpty();
     }
 
     private void deleteSavedFiles(List<Path> savedVideoPaths) {

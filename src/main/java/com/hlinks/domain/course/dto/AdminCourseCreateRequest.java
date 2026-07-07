@@ -19,6 +19,7 @@ public class AdminCourseCreateRequest {
     private String instructorName;
     private MultipartFile thumbnailFile;
     private String courseMaterialUrl;
+    private MultipartFile courseMaterialFile;
     private Integer capacity;
     private String location;
     private LocalDate applyStartDate;

@@ -795,6 +795,31 @@
               </div>
 
               <div class="hr-course-form__section" data-course-type-panel="ONLINE">
+                <div class="hr-course-form__field">
+                  <span class="hr-course-form__label">강의 자료</span>
+                  <div class="file-upload-box" data-file-upload>
+                    <input
+                        class="file-upload-input"
+                        type="file"
+                        name="courseMaterialFile"
+                        id="courseMaterialFile"
+                        accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.zip,application/pdf,application/zip,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+
+                    <label class="file-upload-trigger" for="courseMaterialFile">
+                      <span class="file-upload-icon">＋</span>
+                      <span class="file-upload-title">강의 자료 선택</span>
+                      <span class="file-upload-desc">PDF, PPT, DOC, XLS, ZIP 파일을 업로드하세요</span>
+                    </label>
+
+                    <div class="file-upload-selected" hidden></div>
+
+                    <div class="upload-progress" hidden>
+                      <div class="upload-progress-bar"></div>
+                    </div>
+
+                    <div class="file-upload-preview" hidden></div>
+                  </div>
+                </div>
               </div>
 
               <div class="hr-course-form__section" data-course-type-panel="OFFLINE" hidden>
@@ -815,7 +840,7 @@
               </div>
 
               <div class="hr-course-form__field hr-course-form__chapter-field">
-                <span class="hr-course-form__label">강의 챕터</span>
+                <span class="hr-course-form__label is-required">강의 챕터</span>
                 <div class="hr-course-form__chapter-list" id="chapterFields">
                   <div class="hr-course-form__chapter">
                     <label class="hr-course-form__field">
@@ -864,7 +889,7 @@
 
               <div class="hr-course-form__section" data-course-type-panel="ONLINE">
                 <p class="hr-course-form__help">
-                  온라인 강의는 등록일 기준 2개월 동안 수강 가능합니다.
+                  온라인 강의는 상시 운영되며, 신청일로부터 2개월 동안 수강할 수 있습니다.
                 </p>
               </div>
 
@@ -933,7 +958,7 @@
                         <dd class="hr-wizard__summary-value" data-summary="videoFileCount">-</dd>
                       </div>
                       <div class="hr-wizard__summary-row">
-                        <dt class="hr-wizard__summary-label">자료 URL</dt>
+                        <dt class="hr-wizard__summary-label">강의 자료</dt>
                         <dd class="hr-wizard__summary-value" data-summary="courseMaterialUrl">-</dd>
                       </div>
                       <div class="hr-wizard__summary-row">
@@ -1058,7 +1083,7 @@
     clearFilePreview(preview);
 
     if (!preview || !input.files || !input.files[0]) {
-      return;
+      return false;
     }
 
     const file = input.files[0];
@@ -1078,7 +1103,7 @@
       media.preload = 'metadata';
     } else {
       URL.revokeObjectURL(previewUrl);
-      return;
+      return false;
     }
 
     media.src = previewUrl;
@@ -1093,6 +1118,7 @@
     preview.appendChild(media);
     preview.appendChild(clearButton);
     preview.hidden = false;
+    return true;
   }
 
   function updateFileUploadBox(input) {
@@ -1108,14 +1134,15 @@
     const fileName = input.files && input.files[0] ? input.files[0].name : '';
 
     selected.textContent = fileName;
-    selected.hidden = true;
     progress.hidden = true;
     progressBar.style.width = fileName ? '100%' : '0';
 
     if (fileName) {
-      uploadBox.classList.add('has-preview');
-      renderFilePreview(input, preview);
+      const hasPreview = renderFilePreview(input, preview);
+      selected.hidden = hasPreview;
+      uploadBox.classList.toggle('has-preview', hasPreview);
     } else {
+      selected.hidden = true;
       uploadBox.classList.remove('has-preview');
       clearFilePreview(preview);
     }
@@ -1274,6 +1301,11 @@
         .length;
   }
 
+  function getCourseMaterialFileName() {
+    const input = form.querySelector('input[name="courseMaterialFile"]:not(:disabled)');
+    return input && input.files && input.files[0] ? input.files[0].name : '-';
+  }
+
   function updateSummary() {
     const isOnline = courseTypeSelect.value === 'ONLINE';
     const chapterCount = chapterFields.querySelectorAll('.hr-course-form__chapter').length;
@@ -1286,7 +1318,7 @@
       instructorName: getFieldValue('instructorName') || '-',
       chapterCount: `${chapterCount}개`,
       videoFileCount: `${getVideoFileCount()}개`,
-      courseMaterialUrl: getFieldValue('courseMaterialUrl') || '-',
+      courseMaterialUrl: getCourseMaterialFileName(),
       period: '등록일 기준 2개월',
       location: getFieldValue('location') || '-',
       capacity: getFieldValue('capacity') ? `${getFieldValue('capacity')}명` : '-',
