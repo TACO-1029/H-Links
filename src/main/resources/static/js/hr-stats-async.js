@@ -380,7 +380,7 @@
 
         if (checkedItems().length > maxSelection) {
           item.input.checked = false;
-          window.alert(`비교 조직은 최대 ${maxSelection}개까지 선택할 수 있습니다.`);
+          showStatsAlert(`비교 조직은 최대 ${maxSelection}개까지 선택할 수 있습니다.`);
         }
 
         updateIndeterminateStates();
