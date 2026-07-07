@@ -73,4 +73,26 @@
         WHERE USER_ID = #{userId}
     </select>
 
+    <select id="findKcyMatchCandidates"
+            resultType="com.hlinks.domain.recommend.kcy.dto.KcyMatchCandidateDto">
+        SELECT
+        u.USER_ID AS userId,
+        u.NAME AS name,
+        d.DEPARTMENT_NAME AS departmentName,
+        j.JOB_NAME AS jobName,
+        p.POSITION_NAME AS positionName,
+        u.KCY_RESULT AS kcyResult
+        FROM USERS u
+        LEFT JOIN DEPARTMENT d
+        ON u.DEPARTMENT_ID = d.DEPARTMENT_ID
+        LEFT JOIN JOB j
+        ON u.JOB_ID = j.JOB_ID
+        LEFT JOIN POSITION p
+        ON u.POSITION_ID = p.POSITION_ID
+        WHERE u.USER_ID != #{userId}
+        AND u.STATUS = 'ACTIVE'
+        AND u.KCY_RESULT IS NOT NULL
+        ORDER BY u.UPDATED_AT DESC NULLS LAST, u.USER_ID DESC
+    </select>
+
 </mapper>
