@@ -7,9 +7,10 @@ import com.hlinks.domain.quiz.ffmpeg.FfmpegService;
 import com.hlinks.domain.quiz.service.QuizGenerateService;
 import com.hlinks.domain.quiz.stt.SttService;
 import com.hlinks.domain.quiz.type.QuizBuildStatus;
+import com.hlinks.global.storage.DownloadedFile;
+import com.hlinks.global.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
@@ -28,9 +29,7 @@ public class CourseChapterAiBuildService {
     private final SttService sttService;
     private final CourseChapterSummaryService courseChapterSummaryService;
     private final QuizGenerateService quizGenerateService;
-
-    @Value("${file.upload.root:./storage/uploads}")
-    private String uploadRoot;
+    private final FileStorageService fileStorageService;
 
     public void buildForChapter(Long chapterId) {
         int claimedCount = courseChapterMapper.updateQuizBuildStatusIfPending(
@@ -43,6 +42,7 @@ public class CourseChapterAiBuildService {
             return;
         }
 
+        DownloadedFile downloadedVideo = null;
         Path audioPath = null;
 
         try {
@@ -52,7 +52,8 @@ public class CourseChapterAiBuildService {
                 throw new IllegalStateException("챕터 영상 경로가 없습니다. chapterId=" + chapterId);
             }
 
-            Path videoPath = resolveVideoPath(chapter.getVideoPath());
+            downloadedVideo = fileStorageService.download(chapter.getVideoPath());
+            Path videoPath = downloadedVideo.path();
             validateResolvedVideoPath(chapterId, videoPath);
             audioPath = ffmpegService.convertVideoToMp3(videoPath);
 
@@ -76,6 +77,7 @@ public class CourseChapterAiBuildService {
             updateFailedStatus(chapterId);
         } finally {
             deleteAudioFile(audioPath);
+            closeDownloadedVideo(downloadedVideo);
         }
     }
 
@@ -87,20 +89,6 @@ public class CourseChapterAiBuildService {
         }
 
         return chapter;
-    }
-
-    private Path resolveVideoPath(String videoPath) {
-        Path rawVideoPath = Path.of(videoPath.trim());
-
-        if (rawVideoPath.isAbsolute()) {
-            return rawVideoPath.toAbsolutePath().normalize();
-        }
-
-        return Path.of(uploadRoot)
-                .toAbsolutePath()
-                .normalize()
-                .resolve(rawVideoPath)
-                .normalize();
     }
 
     private void validateResolvedVideoPath(Long chapterId, Path videoPath) {
@@ -129,5 +117,13 @@ public class CourseChapterAiBuildService {
         } catch (Exception e) {
             log.warn("챕터 AI 빌드 임시 오디오 파일 삭제 실패. path={}", audioPath, e);
         }
+    }
+
+    private void closeDownloadedVideo(DownloadedFile downloadedVideo) {
+        if (downloadedVideo == null) {
+            return;
+        }
+
+        downloadedVideo.close();
     }
 }

@@ -130,6 +130,8 @@
                         <img th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/common/hyundai_futurenet.webp'}"
                              alt="강의 썸네일"
                              class="card-thumbnail"
+                             loading="lazy"
+                             decoding="async"
                              onerror="this.onerror=null; this.src='/images/common/hyundai_futurenet.webp';">
                         <div class="card-badges">
                             <span class="badge"
@@ -205,6 +207,8 @@
                             <img src="${escapeHtml(thumbnailUrl)}"
                                  alt="강의 썸네일"
                                  class="card-thumbnail"
+                                 loading="lazy"
+                                 decoding="async"
                                  onerror="this.onerror=null; this.src='${placeholderImage}';">
                             <div class="card-badges">
                                 <span class="badge ${getCourseTypeBadgeClass(course.courseType)}">${getCourseTypeLabel(course.courseType)}</span>
