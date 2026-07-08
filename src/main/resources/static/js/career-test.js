@@ -76,6 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle form submission
     form.addEventListener('submit', (e) => {
         const hiddenInputs = document.querySelectorAll('input[name="selectedOptionIds"]');
+        const submitButton = form.querySelector('.btn-submit-test');
+        const pendingModal = document.getElementById('levelTestPendingModal');
         let allAnswered = true;
         hiddenInputs.forEach((input) => {
             if (!input.value) {
@@ -89,6 +91,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Clear localStorage on success submit
             localStorage.removeItem(storageKey);
+
+            if (pendingModal) {
+                pendingModal.classList.add('is-open');
+                pendingModal.setAttribute('aria-hidden', 'false');
+            }
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = '진단 결과 생성 중...';
+            }
         }
     });
 });
