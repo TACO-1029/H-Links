@@ -26,6 +26,7 @@ public class CoffeeChatHistoryDto {
 
         return switch (status) {
             case "REQUESTED" -> "대기 중";
+            case "MAILED" -> "메일 발송됨";
             case "ACCEPTED" -> "승인됨";
             case "REJECTED" -> "거절됨";
             case "CANCELED" -> "취소됨";

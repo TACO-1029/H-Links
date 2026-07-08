@@ -188,7 +188,7 @@
                     <button class="kcy-coffee-request-button"
                             type="button"
                             th:attr="data-receiver-id=${partner.userId}">
-                        커피챗 신청
+                        커피챗 메일 보내기
                     </button>
                 </article>
             </div>
@@ -212,7 +212,7 @@
                 const receiverUserId = Number(button.dataset.receiverId);
                 const originalText = button.textContent;
                 button.disabled = true;
-                button.textContent = '신청 중';
+                button.textContent = '발송 중';
 
                 try {
                     const headers = {
@@ -224,7 +224,7 @@
                         headers[csrfHeader] = csrfToken;
                     }
 
-                    const response = await fetch('/api/coffee-chats/requests', {
+                    const response = await fetch('/api/coffee-chats/mails', {
                         method: 'POST',
                         headers,
                         body: JSON.stringify({receiverUserId})
@@ -234,12 +234,22 @@
                         throw new Error('커피챗 신청 실패');
                     }
 
-                    button.textContent = '신청 완료';
-                    button.classList.add('is-complete');
+                    const result = await response.json();
+                    const mailStatus = result?.data?.mailStatus;
+
+                    if (mailStatus === 'SENT') {
+                        button.textContent = '메일 발송 완료';
+                        button.classList.add('is-complete');
+                        return;
+                    }
+
+                    button.disabled = false;
+                    button.textContent = '메일 발송 확인 필요';
+                    alert('커피챗 메일 발송 설정 또는 수신자 이메일을 확인해주세요.');
                 } catch (error) {
                     button.disabled = false;
                     button.textContent = originalText;
-                    alert('커피챗 신청에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                    alert('커피챗 메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
                 }
             });
         });

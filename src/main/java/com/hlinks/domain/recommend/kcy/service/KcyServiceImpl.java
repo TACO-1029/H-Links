@@ -32,9 +32,6 @@ public class KcyServiceImpl implements KcyService {
     private static final String REFERENCE_TYPE_KCY_TEST = "KCY_TEST";
     private static final int REQUIRED_QUESTION_COUNT = 11;
     private static final int RECOMMENDED_PARTNER_LIMIT = 3;
-    private static final List<String> ANONYMOUS_NICKNAMES = List.of(
-            "두더지", "고양이", "강아지", "수달", "토끼", "햄스터", "판다", "여우"
-    );
     private static final int MIN_MCQ_FOR_EARLY_STOP = 5;
     private static final int MAX_MCQ_LIMIT = 9;
     private static final int SCORE_DIFF_THRESHOLD = 3;
@@ -424,7 +421,7 @@ public class KcyServiceImpl implements KcyService {
         return KcyPartnerRecommendationDto.builder()
                 .userId(candidate.getUserId())
                 .name(candidate.getName())
-                .displayName(toAnonymousName(candidate.getName(), candidate.getUserId()))
+                .displayName(candidate.getName())
                 .departmentName(candidate.getDepartmentName())
                 .jobName(candidate.getJobName())
                 .positionName(candidate.getPositionName())
@@ -435,28 +432,6 @@ public class KcyServiceImpl implements KcyService {
                 .score(grade.getScore())
                 .reason(KcyCompatibilityPolicy.reasonOf(myType, partnerType, grade))
                 .build();
-    }
-
-    private String toAnonymousName(String name, Long userId) {
-        String familyName = resolveFamilyName(name);
-        int nicknameIndex = Math.floorMod(Objects.hashCode(userId), ANONYMOUS_NICKNAMES.size());
-
-        return familyName + ANONYMOUS_NICKNAMES.get(nicknameIndex);
-    }
-
-    private String resolveFamilyName(String name) {
-        if (name == null || name.isBlank()) {
-            return "동료";
-        }
-
-        String trimmedName = name.trim();
-        String[] nameParts = trimmedName.split("\\s+");
-
-        if (nameParts.length > 1) {
-            return nameParts[nameParts.length - 1];
-        }
-
-        return trimmedName.substring(0, 1);
     }
 
     private void applyTiebreakerAdjustments(KcyScoreDto score, KcySubmitRequest request) {
