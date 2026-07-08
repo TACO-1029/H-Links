@@ -135,12 +135,28 @@ public class S3FileStorageService implements FileStorageService {
             return;
         }
 
+        String objectKey = toObjectKey(key);
+
         try {
             s3Client.deleteObject(DeleteObjectRequest.builder()
                     .bucket(properties.getBucket())
-                    .key(toObjectKey(key))
+                    .key(objectKey)
                     .build());
-        } catch (Exception ignored) {
+        } catch (AwsServiceException e) {
+            log.warn(
+                    "S3 파일 삭제 실패. bucket={}, key={}, statusCode={}, awsErrorCode={}, requestId={}, message={}",
+                    properties.getBucket(),
+                    objectKey,
+                    e.statusCode(),
+                    e.awsErrorDetails() == null ? null : e.awsErrorDetails().errorCode(),
+                    e.requestId(),
+                    e.awsErrorDetails() == null ? e.getMessage() : e.awsErrorDetails().errorMessage(),
+                    e
+            );
+        } catch (SdkClientException e) {
+            log.warn("S3 클라이언트 삭제 실패. bucket={}, key={}, message={}", properties.getBucket(), objectKey, e.getMessage(), e);
+        } catch (Exception e) {
+            log.warn("S3 파일 삭제 실패. bucket={}, key={}", properties.getBucket(), objectKey, e);
         }
     }
 
