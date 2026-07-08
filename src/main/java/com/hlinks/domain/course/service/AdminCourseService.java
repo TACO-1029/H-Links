@@ -13,6 +13,7 @@ import com.hlinks.global.storage.DownloadedFile;
 import com.hlinks.global.storage.FileStorageService;
 import com.hlinks.global.storage.StoredFile;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -27,6 +28,7 @@ import java.util.Set;
 import org.springframework.web.util.UriUtils;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AdminCourseService {
 
@@ -463,6 +465,10 @@ public class AdminCourseService {
             return;
         }
 
-        fileStorageService.delete(savedFileKey);
+        try {
+            fileStorageService.delete(savedFileKey);
+        } catch (Exception e) {
+            log.warn("강의 생성 실패 후 저장 파일 정리 실패. key={}", savedFileKey, e);
+        }
     }
 }
