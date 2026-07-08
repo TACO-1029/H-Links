@@ -41,6 +41,21 @@ a {
     text-decoration: none;
 }
 
+.hlinks-pagination .page-link {
+    color: var(--color-brand, #009e7a);
+}
+
+.hlinks-pagination .page-link:focus {
+    border-color: var(--color-brand, #009e7a);
+    box-shadow: 0 0 0 0.25rem rgba(0, 158, 122, 0.14);
+}
+
+.hlinks-pagination .active .page-link {
+    border-color: var(--color-brand, #009e7a);
+    background: var(--color-brand, #009e7a);
+    color: var(--color-text-inverse);
+}
+
 button {
     border: 0;
     cursor: pointer;
