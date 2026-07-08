@@ -115,14 +115,16 @@
     <section class="career-recommendation-section career-dashboard-rise"
              th:if="${recommendationDiagnosisId != null}"
              th:data-diagnosis-id="${recommendationDiagnosisId}"
-             th:data-has-next="${recommendationHasNext}"
              aria-label="커리어패스 추천 강의">
         <div class="career-recommendation-header">
             <div>
                 <span class="career-recommendation-eyebrow">RECOMMENDED COURSES</span>
                 <h2>커리어패스 추천 강의</h2>
             </div>
-            <p>진단 결과를 바탕으로 이어서 학습하기 좋은 강의입니다.</p>
+            <p>
+                <span th:text="${recommendationLowestSkill != null ? recommendationLowestSkill : '진단 결과'}">진단 결과</span>
+                기반으로 이어서 학습하기 좋은 강의입니다.
+            </p>
         </div>
 
         <div id="careerRecommendationGrid" class="career-recommendation-grid">
@@ -140,18 +142,24 @@
                         <span class="career-course-badge"
                               th:classappend="${course.courseType == 'ONLINE' ? ' is-online' : ' is-offline'}"
                               th:text="${course.courseType == 'ONLINE' ? '온라인' : (course.courseType == 'OFFLINE' ? '오프라인' : '유형 미정')}">온라인</span>
-                        <span class="career-course-badge is-status" th:text="${course.virtualStatus}">상시 수강 가능</span>
+                        <span class="career-course-badge is-score"
+                              th:text="'추천 ' + ${#numbers.formatDecimal(course.recommendationScore, 1, 1)} + '점'">
+                            추천 42.0점
+                        </span>
                     </div>
                 </div>
                 <div class="career-recommendation-body">
                     <h3 th:text="${course.courseTitle}">추천 강의명</h3>
                     <p th:text="|강사 : ${course.instructorName != null ? course.instructorName : '인재개발원'}|">강사 : 인재개발원</p>
+                    <div class="career-recommendation-tags">
+                        <span th:if="${#lists.isEmpty(course.matchedSkills)}">#맞춤 추천</span>
+                        <span th:unless="${#lists.isEmpty(course.matchedSkills)}"
+                              th:text="${'#' + course.matchedSkills[0].skillName + ' ' + course.matchedSkills[0].recommendedCoverageLevel}">
+                            #Java BASIC
+                        </span>
+                    </div>
                 </div>
             </a>
-        </div>
-
-        <div id="careerRecommendationSentinel" class="career-recommendation-sentinel">
-            <span>추천 강의를 불러오는 중입니다.</span>
         </div>
     </section>
 </main>
@@ -196,124 +204,6 @@
 
         revealDashboardElements(document.querySelectorAll('.career-dashboard-rise'));
 
-        const section = document.querySelector('.career-recommendation-section');
-        const grid = document.getElementById('careerRecommendationGrid');
-        const sentinel = document.getElementById('careerRecommendationSentinel');
-        if (!section || !grid || !sentinel) {
-            return;
-        }
-
-        const pageSize = 12;
-        const placeholderImage = '/images/common/hyundai_futurenet.webp';
-        const diagnosisId = section.dataset.diagnosisId;
-        let currentPage = section.dataset.hasNext === 'true' ? 1 : 0;
-        let hasNext = section.dataset.hasNext === 'true';
-        let isLoading = false;
-        let observer = null;
-
-        const escapeHtml = (value) => {
-            const div = document.createElement('div');
-            div.textContent = value ?? '';
-            return div.innerHTML;
-        };
-
-        const courseTypeLabel = (courseType) => {
-            if (courseType === 'ONLINE') {
-                return '온라인';
-            }
-            if (courseType === 'OFFLINE') {
-                return '오프라인';
-            }
-            return '유형 미정';
-        };
-
-        const courseTypeClass = (courseType) => courseType === 'ONLINE' ? 'is-online' : 'is-offline';
-
-        const renderCard = (course) => {
-            const thumbnailUrl = course.thumbnailUrl || placeholderImage;
-            return `
-                <a href="/courses/${encodeURIComponent(course.courseId)}" class="career-recommendation-card career-dashboard-rise">
-                    <div class="career-recommendation-thumb">
-                        <img src="${escapeHtml(thumbnailUrl)}"
-                             alt="강의 썸네일"
-                             onerror="this.onerror=null; this.src='${placeholderImage}';">
-                        <div class="career-recommendation-badges">
-                            <span class="career-course-badge ${courseTypeClass(course.courseType)}">${courseTypeLabel(course.courseType)}</span>
-                            <span class="career-course-badge is-status">${escapeHtml(course.virtualStatus || '상태 확인 중')}</span>
-                        </div>
-                    </div>
-                    <div class="career-recommendation-body">
-                        <h3>${escapeHtml(course.courseTitle || '제목 없는 강의')}</h3>
-                        <p>강사 : ${escapeHtml(course.instructorName || '인재개발원')}</p>
-                    </div>
-                </a>
-            `;
-        };
-
-        const setSentinelMessage = (message) => {
-            sentinel.innerHTML = `<span>${escapeHtml(message)}</span>`;
-            sentinel.classList.toggle('is-end', !hasNext);
-        };
-
-        const disconnectObserver = () => {
-            if (observer) {
-                observer.disconnect();
-            }
-        };
-
-        const loadRecommendations = async () => {
-            if (isLoading || !hasNext) {
-                return;
-            }
-            isLoading = true;
-            setSentinelMessage('추천 강의를 불러오는 중입니다.');
-
-            try {
-                const response = await fetch(`/api/career-path/diagnoses/${encodeURIComponent(diagnosisId)}/recommendations?page=${currentPage}&size=${pageSize}`);
-                if (!response.ok) {
-                    throw new Error(`Failed to load recommendations: ${response.status}`);
-                }
-                const data = await response.json();
-                const courses = Array.isArray(data.content) ? data.content : [];
-                const emptyState = grid.querySelector('.career-recommendation-empty');
-                if (emptyState && courses.length > 0) {
-                    emptyState.remove();
-                }
-                grid.insertAdjacentHTML('beforeend', courses.map(renderCard).join(''));
-                revealDashboardElements(grid.querySelectorAll('.career-dashboard-rise:not(.is-visible)'));
-                hasNext = Boolean(data.hasNext);
-                currentPage = Number(data.page ?? currentPage);
-                if (hasNext) {
-                    currentPage += 1;
-                    setSentinelMessage('추천 강의를 불러오는 중입니다.');
-                } else {
-                    setSentinelMessage('더 이상 불러올 추천 강의가 없습니다.');
-                    disconnectObserver();
-                }
-            } catch (error) {
-                console.error(error);
-                setSentinelMessage('추천 강의를 불러오지 못했습니다.');
-                disconnectObserver();
-            } finally {
-                isLoading = false;
-            }
-        };
-
-        if (!hasNext) {
-            setSentinelMessage('더 이상 불러올 추천 강의가 없습니다.');
-            return;
-        }
-
-        observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    loadRecommendations();
-                }
-            });
-        }, {
-            rootMargin: '240px 0px'
-        });
-        observer.observe(sentinel);
     });
 </script>
 </body>

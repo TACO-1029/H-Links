@@ -3,21 +3,30 @@ package com.hlinks.domain.course.controller;
 import com.hlinks.domain.course.service.AdminCourseService;
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.global.response.code.ErrorResponseCode;
+import com.hlinks.global.storage.DownloadedFile;
+import com.hlinks.global.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.MalformedURLException;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Optional;
 
 @RestController
@@ -25,43 +34,43 @@ import java.util.Optional;
 public class CourseVideoController {
 
     private final AdminCourseService adminCourseService;
+    private final FileStorageService fileStorageService;
+
+    @Value("${hlinks.storage.s3.presigned-url-expiration-minutes:10}")
+    private long presignedUrlExpirationMinutes;
 
     @GetMapping("/videos/courses/{courseId}/chapters/{chapterId}")
-    public ResponseEntity<Resource> streamVideo(
+    public ResponseEntity<?> streamVideo(
             @PathVariable Long courseId,
             @PathVariable Long chapterId
     ) {
-        Path videoPath = adminCourseService.resolveVideoPath(courseId, chapterId);
-
-        if (!Files.exists(videoPath) || !Files.isReadable(videoPath)) {
-            throw new BaseException(ErrorResponseCode.NOT_FOUND_ENDPOINT, "강의 영상을 찾을 수 없습니다.");
+        String videoKey = adminCourseService.resolveVideoKey(courseId, chapterId);
+        if (fileStorageService.supportsPresignedUrl()) {
+            return redirectToPresignedUrl(videoKey);
         }
 
-        try {
-            Resource resource = new UrlResource(videoPath.toUri());
-
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType("video/mp4"))
-                    .body(resource);
-        } catch (MalformedURLException e) {
-            throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "강의 영상 경로가 올바르지 않습니다.", e);
-        }
+        DownloadedFile downloadedFile = fileStorageService.download(videoKey);
+        Resource resource = toResponseResource(downloadedFile);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("video/mp4"))
+                .body(resource);
     }
 
     @GetMapping("/images/courses/{courseId}/{fileName:.+}")
-    public ResponseEntity<Resource> showThumbnail(
+    public ResponseEntity<?> showThumbnail(
             @PathVariable Long courseId,
             @PathVariable String fileName
     ) {
-        Path thumbnailPath = adminCourseService.resolveThumbnailPath(courseId, fileName);
-
-        if (!Files.exists(thumbnailPath) || !Files.isReadable(thumbnailPath)) {
-            throw new BaseException(ErrorResponseCode.NOT_FOUND_ENDPOINT, "강의 썸네일을 찾을 수 없습니다.");
+        String thumbnailKey = adminCourseService.resolveThumbnailKey(courseId, fileName);
+        if (fileStorageService.supportsPresignedUrl()) {
+            return redirectToPresignedUrl(thumbnailKey);
         }
 
+        DownloadedFile downloadedFile = fileStorageService.download(thumbnailKey);
+
         try {
-            Resource resource = new UrlResource(thumbnailPath.toUri());
-            MediaType mediaType = Optional.ofNullable(Files.probeContentType(thumbnailPath))
+            Resource resource = new UrlResource(downloadedFile.path().toUri());
+            MediaType mediaType = Optional.ofNullable(Files.probeContentType(downloadedFile.path()))
                     .map(MediaType::parseMediaType)
                     .orElse(MediaType.APPLICATION_OCTET_STREAM);
 
@@ -73,32 +82,91 @@ public class CourseVideoController {
         }
     }
 
+    @GetMapping("/images/course/{fileName:.+}")
+    public ResponseEntity<Void> redirectLegacyThumbnail(
+            @PathVariable String fileName
+    ) {
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create("/images/common/hyundai_futurenet.webp"))
+                .build();
+    }
+
     @GetMapping("/materials/courses/{courseId}/{fileName:.+}")
-    public ResponseEntity<Resource> downloadCourseMaterial(
+    public ResponseEntity<?> downloadCourseMaterial(
             @PathVariable Long courseId,
             @PathVariable String fileName
     ) {
-        Path materialPath = adminCourseService.resolveCourseMaterialPath(courseId, fileName);
-
-        if (!Files.exists(materialPath) || !Files.isReadable(materialPath)) {
-            throw new BaseException(ErrorResponseCode.NOT_FOUND_ENDPOINT, "강의 자료를 찾을 수 없습니다.");
+        String materialKey = adminCourseService.resolveCourseMaterialKey(courseId, fileName);
+        if (fileStorageService.supportsPresignedUrl()) {
+            return redirectToPresignedUrl(materialKey);
         }
 
+        DownloadedFile downloadedFile = fileStorageService.download(materialKey);
+
         try {
-            Resource resource = new UrlResource(materialPath.toUri());
+            Path materialPath = downloadedFile.path();
             MediaType mediaType = Optional.ofNullable(Files.probeContentType(materialPath))
                     .map(MediaType::parseMediaType)
                     .orElse(MediaType.APPLICATION_OCTET_STREAM);
             ContentDisposition contentDisposition = ContentDisposition.attachment()
-                    .filename(materialPath.getFileName().toString(), StandardCharsets.UTF_8)
+                    .filename(fileName, StandardCharsets.UTF_8)
                     .build();
+            Resource resource = toResponseResource(downloadedFile);
 
             return ResponseEntity.ok()
                     .contentType(mediaType)
                     .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
                     .body(resource);
+        } catch (BaseException e) {
+            downloadedFile.close();
+            throw e;
         } catch (Exception e) {
+            downloadedFile.close();
             throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "강의 자료 경로가 올바르지 않습니다.", e);
         }
+    }
+
+    private Resource toResponseResource(DownloadedFile downloadedFile) {
+        Path path = downloadedFile.path();
+
+        try {
+            InputStream inputStream = new FilterInputStream(Files.newInputStream(path)) {
+                @Override
+                public void close() throws IOException {
+                    try {
+                        super.close();
+                    } finally {
+                        downloadedFile.close();
+                    }
+                }
+            };
+
+            return new InputStreamResource(inputStream) {
+                @Override
+                public long contentLength() throws IOException {
+                    return Files.size(path);
+                }
+
+                @Override
+                public String getFilename() {
+                    Path fileName = path.getFileName();
+                    return fileName == null ? null : fileName.toString();
+                }
+            };
+        } catch (IOException e) {
+            downloadedFile.close();
+            throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "파일 응답 리소스 생성에 실패했습니다.", e);
+        }
+    }
+
+    private ResponseEntity<Void> redirectToPresignedUrl(String key) {
+        URI uri = fileStorageService.createPresignedGetUri(
+                key,
+                Duration.ofMinutes(Math.max(1, presignedUrlExpirationMinutes))
+        );
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(uri)
+                .build();
     }
 }

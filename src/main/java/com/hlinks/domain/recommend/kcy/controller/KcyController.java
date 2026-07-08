@@ -1,5 +1,7 @@
 package com.hlinks.domain.recommend.kcy.controller;
 
+import com.hlinks.domain.recommend.kcy.dto.KcyAdaptiveRequest;
+import com.hlinks.domain.recommend.kcy.dto.KcyAdaptiveResponse;
 import com.hlinks.domain.recommend.kcy.dto.KcyScoreDto;
 import com.hlinks.domain.recommend.kcy.dto.KcySubmitRequest;
 import com.hlinks.domain.recommend.kcy.service.KcyService;
@@ -13,6 +15,8 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -39,15 +43,15 @@ public class KcyController {
 
     // 사용자가 고른 답변을 제출합니다. 앞에서 넘겨준 KcySubmitRequest 객체가 여기로 다시 들어옵니다.
     @PostMapping("/kcy/adaptive-flow")
-    @org.springframework.web.bind.annotation.ResponseBody
-    public com.hlinks.domain.recommend.kcy.dto.KcyAdaptiveResponse getNextAdaptiveQuestion(
-            @org.springframework.web.bind.annotation.RequestBody com.hlinks.domain.recommend.kcy.dto.KcyAdaptiveRequest request) {
+    @ResponseBody
+    public KcyAdaptiveResponse getNextAdaptiveQuestion(
+            @RequestBody KcyAdaptiveRequest request) {
         return kcyService.getNextAdaptiveQuestion(request);
     }
 
     @PostMapping("/kcy")
     public String submit(
-            @Valid com.hlinks.domain.recommend.kcy.dto.KcySubmitRequest request,
+            @Valid KcySubmitRequest request,
             BindingResult bindingResult,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes,

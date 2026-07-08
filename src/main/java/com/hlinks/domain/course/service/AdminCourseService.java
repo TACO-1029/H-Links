@@ -9,18 +9,17 @@ import com.hlinks.domain.course.type.CourseType;
 import com.hlinks.domain.quiz.ffmpeg.FfmpegService;
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.global.response.code.ErrorResponseCode;
+import com.hlinks.global.storage.DownloadedFile;
+import com.hlinks.global.storage.FileStorageService;
+import com.hlinks.global.storage.StoredFile;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +28,7 @@ import java.util.Set;
 import org.springframework.web.util.UriUtils;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AdminCourseService {
 
@@ -41,9 +41,7 @@ public class AdminCourseService {
 
     private final CourseMapper courseMapper;
     private final FfmpegService ffmpegService;
-
-    @Value("${file.upload.root:./storage/uploads}")
-    private String uploadRoot;
+    private final FileStorageService fileStorageService;
 
     @Transactional
     public AdminCourseCreateResponse createCourse(AdminCourseCreateRequest request, Long createdBy) {
@@ -57,11 +55,11 @@ public class AdminCourseService {
             throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "강의 저장에 실패했습니다.");
         }
 
-        List<Path> savedFilePaths = new ArrayList<>();
+        List<String> savedFileKeys = new ArrayList<>();
 
         try {
-            Path savedThumbnailPath = saveThumbnailFile(course.getCourseId(), request.getThumbnailFile());
-            savedFilePaths.add(savedThumbnailPath);
+            StoredFile savedThumbnail = saveThumbnailFile(course.getCourseId(), request.getThumbnailFile());
+            savedFileKeys.add(savedThumbnail.key());
 
             String thumbnailUrl = buildThumbnailUrl(course.getCourseId(), getThumbnailExtension(request.getThumbnailFile()));
             updateThumbnailMetadata(course.getCourseId(), thumbnailUrl);
@@ -90,9 +88,9 @@ public class AdminCourseService {
 
             String courseMaterialUrl = null;
             if (hasCourseMaterialFile(request.getCourseMaterialFile())) {
-                Path savedMaterialPath = saveCourseMaterialFile(course.getCourseId(), request.getCourseMaterialFile());
-                savedFilePaths.add(savedMaterialPath);
-                courseMaterialUrl = buildCourseMaterialUrl(course.getCourseId(), savedMaterialPath.getFileName().toString());
+                StoredFile savedMaterial = saveCourseMaterialFile(course.getCourseId(), request.getCourseMaterialFile());
+                savedFileKeys.add(savedMaterial.key());
+                courseMaterialUrl = buildCourseMaterialUrl(course.getCourseId(), getCourseMaterialFileName(request.getCourseMaterialFile()));
             }
 
             int onlineCourseInserted = courseMapper.insertOnlineCourse(course.getCourseId(), courseMaterialUrl);
@@ -105,10 +103,10 @@ public class AdminCourseService {
             for (int index = 0; index < request.getChapterTitles().size(); index++) {
                 CourseChapter chapter = insertCourseChapter(course.getCourseId(), request.getChapterTitles().get(index), index + 1);
                 MultipartFile videoFile = request.getVideoFiles().get(index);
-                Path savedVideoPath = saveVideoFile(course.getCourseId(), chapter.getChapterId(), videoFile);
-                savedFilePaths.add(savedVideoPath);
+                StoredFile savedVideo = saveVideoFile(course.getCourseId(), chapter.getChapterId(), videoFile);
+                savedFileKeys.add(savedVideo.key());
 
-                Integer durationSeconds = ffmpegService.getVideoDurationSeconds(savedVideoPath);
+                Integer durationSeconds = getVideoDurationSeconds(savedVideo.key());
                 updateVideoMetadata(course.getCourseId(), chapter.getChapterId(), videoFile, durationSeconds);
                 chapterIds.add(chapter.getChapterId());
             }
@@ -118,10 +116,10 @@ public class AdminCourseService {
             response.setChapterIds(chapterIds);
             return response;
         } catch (BaseException e) {
-            deleteSavedFiles(savedFilePaths);
+            deleteSavedFiles(savedFileKeys);
             throw e;
         } catch (Exception e) {
-            deleteSavedFiles(savedFilePaths);
+            deleteSavedFiles(savedFileKeys);
             throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "강의 파일 저장에 실패했습니다.", e);
         }
     }
@@ -308,20 +306,8 @@ public class AdminCourseService {
         return chapter;
     }
 
-    private Path saveThumbnailFile(Long courseId, MultipartFile thumbnailFile) {
-        Path targetPath = resolveThumbnailPath(courseId, getThumbnailFileName(thumbnailFile));
-
-        try {
-            Files.createDirectories(targetPath.getParent());
-
-            try (InputStream inputStream = thumbnailFile.getInputStream()) {
-                Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            return targetPath;
-        } catch (IOException e) {
-            throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "강의 썸네일 저장에 실패했습니다.", e);
-        }
+    private StoredFile saveThumbnailFile(Long courseId, MultipartFile thumbnailFile) {
+        return fileStorageService.upload(toThumbnailKey(courseId, getThumbnailFileName(thumbnailFile)), thumbnailFile);
     }
 
     private void updateThumbnailMetadata(Long courseId, String thumbnailUrl) {
@@ -332,35 +318,17 @@ public class AdminCourseService {
         }
     }
 
-    private Path saveVideoFile(Long courseId, Long chapterId, MultipartFile videoFile) {
-        Path targetPath = resolveVideoPath(courseId, chapterId);
-
-        try {
-            Files.createDirectories(targetPath.getParent());
-
-            try (InputStream inputStream = videoFile.getInputStream()) {
-                Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            return targetPath;
-        } catch (IOException e) {
-            throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "영상 파일 저장에 실패했습니다.", e);
-        }
+    private StoredFile saveVideoFile(Long courseId, Long chapterId, MultipartFile videoFile) {
+        return fileStorageService.upload(toRelativeVideoPath(courseId, chapterId), videoFile);
     }
 
-    private Path saveCourseMaterialFile(Long courseId, MultipartFile courseMaterialFile) {
-        Path targetPath = resolveCourseMaterialPath(courseId, getCourseMaterialFileName(courseMaterialFile));
+    private StoredFile saveCourseMaterialFile(Long courseId, MultipartFile courseMaterialFile) {
+        return fileStorageService.upload(toCourseMaterialKey(courseId, getCourseMaterialFileName(courseMaterialFile)), courseMaterialFile);
+    }
 
-        try {
-            Files.createDirectories(targetPath.getParent());
-
-            try (InputStream inputStream = courseMaterialFile.getInputStream()) {
-                Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            return targetPath;
-        } catch (IOException e) {
-            throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "강의 자료 저장에 실패했습니다.", e);
+    private Integer getVideoDurationSeconds(String videoKey) {
+        try (DownloadedFile downloadedFile = fileStorageService.download(videoKey)) {
+            return ffmpegService.getVideoDurationSeconds(downloadedFile.path());
         }
     }
 
@@ -386,52 +354,29 @@ public class AdminCourseService {
         }
     }
 
-    public Path resolveVideoPath(Long courseId, Long chapterId) {
-        return Path.of(uploadRoot)
-                .toAbsolutePath()
-                .normalize()
-                .resolve(toRelativeVideoPath(courseId, chapterId))
-                .normalize();
+    public String resolveVideoKey(Long courseId, Long chapterId) {
+        return toRelativeVideoPath(courseId, chapterId);
     }
 
-    public Path resolveThumbnailPath(Long courseId, String fileName) {
+    public String resolveThumbnailKey(Long courseId, String fileName) {
         if (!StringUtils.hasText(fileName) || !fileName.startsWith(THUMBNAIL_FILE_PREFIX)) {
             throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "강의 썸네일 경로가 올바르지 않습니다.");
         }
 
-        Path courseDirectory = Path.of(uploadRoot)
-                .toAbsolutePath()
-                .normalize()
-                .resolve(Path.of("courses", String.valueOf(courseId)))
-                .normalize();
-
-        Path thumbnailPath = courseDirectory.resolve(fileName).normalize();
-
-        if (!thumbnailPath.startsWith(courseDirectory)) {
-            throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "강의 썸네일 경로가 올바르지 않습니다.");
-        }
-
-        return thumbnailPath;
+        return toThumbnailKey(courseId, fileName);
     }
 
-    public Path resolveCourseMaterialPath(Long courseId, String fileName) {
+    public String resolveCourseMaterialKey(Long courseId, String fileName) {
         if (!StringUtils.hasText(fileName)) {
             throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "강의 자료 경로가 올바르지 않습니다.");
         }
 
-        Path materialDirectory = Path.of(uploadRoot)
-                .toAbsolutePath()
-                .normalize()
-                .resolve(Path.of("courses", String.valueOf(courseId), "materials"))
-                .normalize();
-
-        Path materialPath = materialDirectory.resolve(fileName).normalize();
-
-        if (!materialPath.startsWith(materialDirectory)) {
+        String safeFileName = getSafeRequestedFileName(fileName);
+        if (!fileName.equals(safeFileName)) {
             throw new BaseException(ErrorResponseCode.INVALID_REQUEST_PARAMETER, "강의 자료 경로가 올바르지 않습니다.");
         }
 
-        return materialPath;
+        return toCourseMaterialKey(courseId, fileName);
     }
 
     private String toRelativeVideoPath(Long courseId, Long chapterId) {
@@ -454,6 +399,14 @@ public class AdminCourseService {
 
     private String buildCourseMaterialUrl(Long courseId, String fileName) {
         return "/materials/courses/" + courseId + "/" + UriUtils.encodePathSegment(fileName, StandardCharsets.UTF_8);
+    }
+
+    private String toThumbnailKey(Long courseId, String fileName) {
+        return Path.of("courses", String.valueOf(courseId), fileName).toString();
+    }
+
+    private String toCourseMaterialKey(Long courseId, String fileName) {
+        return Path.of("courses", String.valueOf(courseId), "materials", fileName).toString();
     }
 
     private String getThumbnailFileName(MultipartFile thumbnailFile) {
@@ -495,20 +448,27 @@ public class AdminCourseService {
         return courseMaterialFile != null && !courseMaterialFile.isEmpty();
     }
 
-    private void deleteSavedFiles(List<Path> savedVideoPaths) {
-        for (Path savedVideoPath : savedVideoPaths) {
-            deleteSavedFile(savedVideoPath);
+    private String getSafeRequestedFileName(String fileName) {
+        String cleanedFileName = StringUtils.cleanPath(fileName == null ? "" : fileName).replace('\\', '/');
+        int lastSlashIndex = cleanedFileName.lastIndexOf('/');
+        return lastSlashIndex >= 0 ? cleanedFileName.substring(lastSlashIndex + 1) : cleanedFileName;
+    }
+
+    private void deleteSavedFiles(List<String> savedFileKeys) {
+        for (String savedFileKey : savedFileKeys) {
+            deleteSavedFile(savedFileKey);
         }
     }
 
-    private void deleteSavedFile(Path savedVideoPath) {
-        if (savedVideoPath == null) {
+    private void deleteSavedFile(String savedFileKey) {
+        if (!StringUtils.hasText(savedFileKey)) {
             return;
         }
 
         try {
-            Files.deleteIfExists(savedVideoPath);
-        } catch (IOException ignored) {
+            fileStorageService.delete(savedFileKey);
+        } catch (Exception e) {
+            log.warn("강의 생성 실패 후 저장 파일 정리 실패. key={}", savedFileKey, e);
         }
     }
 }

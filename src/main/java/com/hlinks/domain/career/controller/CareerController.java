@@ -2,12 +2,10 @@ package com.hlinks.domain.career.controller;
 
 import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.service.CareerService;
-import com.hlinks.domain.course.dto.CourseListResponseDto;
-import com.hlinks.domain.interest.service.InterestService;
-import com.hlinks.global.response.SliceResponse;
 import com.hlinks.domain.recommend.course.dto.CourseRecommendationRequest;
 import com.hlinks.domain.recommend.course.dto.CourseRecommendationResponse;
 import com.hlinks.domain.recommend.course.dto.LevelTestSkillResultRequest;
+import com.hlinks.domain.recommend.course.dto.RecommendedCourseDto;
 import com.hlinks.domain.recommend.course.service.CourseRecommendationService;
 import com.hlinks.global.security.CustomUserDetails;
 import com.hlinks.global.exception.BaseException;
@@ -24,8 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,7 +37,6 @@ public class CareerController {
     private static final String ACTIVE_SUB_MENU = "careerPath";
 
     private final CareerService careerService;
-    private final InterestService interestService;
     private final CourseRecommendationService courseRecommendationService;
     private final ObjectMapper objectMapper;
 
@@ -176,11 +171,15 @@ public class CareerController {
 
     @GetMapping("/result")
     public String viewResult(
+            @RequestParam(value = "diagnosisId", required = false) Long requestDiagnosisId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model
     ) {
         setActiveMenu(model);
-        Long diagnosisId = (Long) model.asMap().get("diagnosisId");
+        Long diagnosisId = requestDiagnosisId;
+        if (diagnosisId == null) {
+            diagnosisId = (Long) model.asMap().get("diagnosisId");
+        }
         if (diagnosisId == null) {
             diagnosisId = careerService.findLatestDiagnosisId(userDetails.getUserId());
         }
@@ -189,11 +188,27 @@ public class CareerController {
             return "redirect:/courses/career-path/dashboard";
         }
 
-        String rawJson = diagnosis.getLlmSummary();
+        CareerResultViewData resultData = parseCareerResult(diagnosis);
+
+        model.addAttribute("diagnosisId", diagnosisId);
+        model.addAttribute("category", resultData.category());
+        model.addAttribute("results", resultData.results());
+        model.addAttribute("rawJson", resultData.rawJson());
+        model.addAttribute("averageScore", resultData.averageScore());
+        model.addAttribute("lowestSkill", resultData.lowestSkillName());
+        model.addAttribute("userName", userDetails.getName());
+        model.addAttribute("aiSummary", resultData.aiSummary());
+        model.addAttribute("recommendedCourses", recommendCourses(resultData.category(), resultData.results()).getCourses());
+        return "career/result";
+    }
+
+    @SuppressWarnings("unchecked")
+    private CareerResultViewData parseCareerResult(CareerDiagnosis diagnosis) {
+        String rawJson = diagnosis == null ? null : diagnosis.getLlmSummary();
         String category = "IT 기술";
         String aiSummary = null;
         List<Map<String, Object>> resultsList = new ArrayList<>();
-        int avgScore = 0;
+        int averageScore = 0;
         String lowestSkillName = "";
 
         List<com.hlinks.domain.career.dto.CareerSkillDto> allSkills = careerService.getAllActiveSkills();
@@ -204,62 +219,61 @@ public class CareerController {
                 String tempCategory = (String) jsonMap.get("category");
                 String tempAiSummary = (String) jsonMap.get("aiSummary");
                 List<Map<String, Object>> rawResults = (List<Map<String, Object>>) jsonMap.get("results");
-                List<Map<String, Object>> tempResultsList = new ArrayList<>();
-                int tempAvgScore = 0;
-                String tempLowestSkillName = "";
+                List<Map<String, Object>> enrichedResults = new ArrayList<>();
+
+                double scoreSum = 0;
+                int scoreCount = 0;
+                int lowestScore = Integer.MAX_VALUE;
 
                 if (rawResults != null) {
-                    double sum = 0;
-                    int count = 0;
-                    int lowestScore = 999;
-                    for (Map<String, Object> res : rawResults) {
-                        Map<String, Object> enriched = new HashMap<>(res);
-                        Long skillId = ((Number) res.get("skillId")).longValue();
+                    for (Map<String, Object> result : rawResults) {
+                        if (result == null || result.get("skillId") == null || result.get("score") == null) {
+                            continue;
+                        }
 
+                        Map<String, Object> enriched = new HashMap<>(result);
+                        Long skillId = ((Number) result.get("skillId")).longValue();
                         String skillName = allSkills.stream()
-                            .filter(s -> s.getSkillId().equals(skillId))
-                            .map(s -> s.getSkillName())
-                            .findFirst().orElse("세부 기술");
+                                .filter(skill -> skill.getSkillId().equals(skillId))
+                                .map(com.hlinks.domain.career.dto.CareerSkillDto::getSkillName)
+                                .findFirst()
+                                .orElse("세부 기술");
 
                         enriched.put("skillName", skillName);
-                        tempResultsList.add(enriched);
+                        enrichedResults.add(enriched);
 
-                        int scoreVal = ((Number) res.get("score")).intValue();
-                        sum += scoreVal;
-                        count++;
-                        if (scoreVal < lowestScore) {
-                            lowestScore = scoreVal;
-                            tempLowestSkillName = skillName;
+                        int score = ((Number) result.get("score")).intValue();
+                        scoreSum += score;
+                        scoreCount++;
+
+                        if (score < lowestScore) {
+                            lowestScore = score;
+                            lowestSkillName = skillName;
                         }
-                    }
-                    if (count > 0) {
-                        tempAvgScore = (int) Math.round(sum / count);
                     }
                 }
 
                 category = tempCategory != null ? tempCategory : "IT 기술";
                 aiSummary = tempAiSummary;
-                resultsList = tempResultsList;
-                avgScore = tempAvgScore;
-                lowestSkillName = tempLowestSkillName;
+                resultsList = enrichedResults;
+
+                if (scoreCount > 0) {
+                    averageScore = (int) Math.round(scoreSum / scoreCount);
+                }
             }
         } catch (Exception e) {
-            log.error("Failed to parse scoring JSON on result page", e);
-            resultsList.clear();
-            avgScore = 0;
-            lowestSkillName = "";
+            log.error("Failed to parse career scoring JSON. diagnosisId={}",
+                    diagnosis == null ? null : diagnosis.getDiagnosisId(), e);
         }
 
-        model.addAttribute("diagnosisId", diagnosisId);
-        model.addAttribute("category", category);
-        model.addAttribute("results", resultsList);
-        model.addAttribute("rawJson", rawJson);
-        model.addAttribute("averageScore", avgScore);
-        model.addAttribute("lowestSkill", lowestSkillName.isEmpty() ? "핵심 기술" : lowestSkillName);
-        model.addAttribute("userName", userDetails.getName());
-        model.addAttribute("aiSummary", aiSummary);
-        model.addAttribute("recommendedCourses", recommendCourses(category, resultsList).getCourses());
-        return "career/result";
+        return new CareerResultViewData(
+                category,
+                aiSummary,
+                resultsList,
+                rawJson,
+                averageScore,
+                lowestSkillName.isEmpty() ? "핵심 기술" : lowestSkillName
+        );
     }
 
     private CourseRecommendationResponse recommendCourses(String category, List<Map<String, Object>> resultsList) {
@@ -342,20 +356,34 @@ public class CareerController {
         model.addAttribute("diagnosis", latestDiagnosis);
         if (latestDiagnosis != null) {
             try {
-                SliceResponse<CourseListResponseDto> recommendationSlice =
-                        careerService.getRecommendationCourseSlice(userId, latestDiagnosis.getDiagnosisId(), 0, 12);
-                model.addAttribute("recommendedCourses", recommendationSlice.getContent());
-                model.addAttribute("recommendationHasNext", recommendationSlice.isHasNext());
+                CareerResultViewData resultData = parseCareerResult(latestDiagnosis);
+                List<RecommendedCourseDto> recommendedCourses = recommendCourses(
+                        resultData.category(),
+                        resultData.results()
+                ).getCourses();
+
+                model.addAttribute("recommendedCourses", recommendedCourses);
+                model.addAttribute("recommendationCategory", resultData.category());
+                model.addAttribute("recommendationLowestSkill", resultData.lowestSkillName());
                 model.addAttribute("recommendationDiagnosisId", latestDiagnosis.getDiagnosisId());
             } catch (Exception e) {
                 log.warn("Failed to load initial career recommendation courses - userId={}, diagnosisId={}",
                         userId, latestDiagnosis.getDiagnosisId(), e);
                 model.addAttribute("recommendedCourses", List.of());
-                model.addAttribute("recommendationHasNext", false);
                 model.addAttribute("recommendationDiagnosisId", latestDiagnosis.getDiagnosisId());
             }
         }
         return "career/dashboard";
+    }
+
+    private record CareerResultViewData(
+            String category,
+            String aiSummary,
+            List<Map<String, Object>> results,
+            String rawJson,
+            int averageScore,
+            String lowestSkillName
+    ) {
     }
 
     private void setActiveMenu(Model model) {
