@@ -54,6 +54,7 @@ public class MyPageController {
         model.addAttribute("activeMenu", "mypage");
         model.addAttribute("activeSubMenu", "myInfo");
 
+        model.addAttribute("loginId", userDetails.getUsername());
         model.addAttribute("name", userDetails.getName());
         model.addAttribute("positionName", userDetails.getPositionName());
         model.addAttribute("departmentName", userDetails.getDepartmentName());
