@@ -346,3 +346,13 @@
         transform: translateY(-20px);
     }
 }
+
+/* Department skill highlight style */
+.highlight-dept {
+    border-color: #10B981 !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.25) !important;
+}
+.highlight-dept:hover {
+    border-color: #059669 !important;
+    box-shadow: 0 0 12px rgba(5, 150, 105, 0.35) !important;
+}

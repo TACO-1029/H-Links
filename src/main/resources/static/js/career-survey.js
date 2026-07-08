@@ -119,6 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
     categories.forEach(cat => {
         const card = document.createElement('div');
         card.className = 'category-card';
+        if (typeof deptCategoryIds !== 'undefined' && deptCategoryIds.map(Number).includes(Number(cat.skillId))) {
+            card.classList.add('highlight-dept');
+        }
         card.setAttribute('data-category-id', cat.skillId);
         card.setAttribute('data-category-name', cat.skillName);
 
@@ -192,6 +195,9 @@ document.addEventListener('DOMContentLoaded', () => {
         filteredSkills.forEach(skill => {
             const label = document.createElement('label');
             label.className = 'skill-chip';
+            if (typeof deptSkills !== 'undefined' && deptSkills.map(Number).includes(Number(skill.skillId))) {
+                label.classList.add('highlight-dept');
+            }
             
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';

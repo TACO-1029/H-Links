@@ -308,4 +308,22 @@
         ) WHERE ROWNUM = 1
     </select>
 
+    <select id="findDepartmentSkillIdsByUserId" resultType="long">
+        SELECT ds.SKILL_ID
+        FROM DEPARTMENT_SKILL ds
+        JOIN USERS u ON ds.DEPARTMENT_ID = u.DEPARTMENT_ID
+        WHERE u.USER_ID = #{userId}
+          AND ds.USE_YN = 'Y'
+    </select>
+
+    <select id="findDepartmentCategoryIdsByUserId" resultType="long">
+        SELECT DISTINCT s.PARENT_SKILL_ID
+        FROM DEPARTMENT_SKILL ds
+        JOIN USERS u ON ds.DEPARTMENT_ID = u.DEPARTMENT_ID
+        JOIN SKILL s ON ds.SKILL_ID = s.SKILL_ID
+        WHERE u.USER_ID = #{userId}
+          AND ds.USE_YN = 'Y'
+          AND s.PARENT_SKILL_ID IS NOT NULL
+    </select>
+
 </mapper>
