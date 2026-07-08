@@ -57,7 +57,6 @@
   font-weight: var(--font-bold);
 }
 
-.hr-stats-filter__control,
 .hr-stats-filter__submit,
 .hr-stats-filter__reset {
   min-height: 44px;
@@ -71,12 +70,8 @@
 
 .hr-stats-filter__control {
   width: 100%;
+  min-height: 44px;
   padding: 0 14px;
-}
-
-.hr-stats-filter__control.form-select {
-  padding-right: 36px;
-  background-color: var(--color-bg-surface);
 }
 
 .hr-stats-filter__date {

@@ -214,11 +214,6 @@
     .hr-course-form__select,
     .hr-course-form__textarea {
       width: 100%;
-      border: 1px solid var(--color-border-default);
-      border-radius: var(--radius-md);
-      padding: 12px 14px;
-      background-color: var(--color-bg-surface);
-      color: var(--color-text-primary);
       font: inherit;
     }
 
@@ -799,18 +794,18 @@
 
                 <label class="hr-course-form__field">
                   <span class="hr-course-form__label is-required">강의명</span>
-                  <input class="hr-course-form__input" type="text" name="courseTitle" required>
+                  <input class="hr-course-form__input hlinks-input" type="text" name="courseTitle" required>
                 </label>
 
                 <label class="hr-course-form__field">
                   <span class="hr-course-form__label is-required">설명</span>
-                  <textarea class="hr-course-form__textarea" name="description" required></textarea>
+                  <textarea class="hr-course-form__textarea hlinks-input" name="description" required></textarea>
                 </label>
 
                 <div class="hr-course-form__split">
                   <label class="hr-course-form__field">
                     <span class="hr-course-form__label is-required">카테고리</span>
-                    <select class="hr-course-form__select form-select" name="categoryType" id="categoryType" required>
+                    <select class="hr-course-form__select form-select hlinks-dropdown" name="categoryType" id="categoryType" required>
                       <option value="">선택</option>
                       <option value="CAREER_HIGH">커리어하이</option>
                       <option value="CAREER_PATH">커리어패스</option>
@@ -819,7 +814,7 @@
 
                   <label class="hr-course-form__field">
                     <span class="hr-course-form__label is-required">강의 유형</span>
-                    <select class="hr-course-form__select form-select" name="courseType" id="courseType" required>
+                    <select class="hr-course-form__select form-select hlinks-dropdown" name="courseType" id="courseType" required>
                       <option value="ONLINE" selected>온라인</option>
                       <option value="OFFLINE">오프라인</option>
                     </select>
@@ -828,7 +823,7 @@
 
                 <label class="hr-course-form__field">
                   <span class="hr-course-form__label is-required">강사명</span>
-                  <input class="hr-course-form__input" type="text" name="instructorName" required>
+                  <input class="hr-course-form__input hlinks-input" type="text" name="instructorName" required>
                 </label>
               </div>
             </fieldset>
@@ -872,14 +867,14 @@
                   <label class="hr-course-form__field">
                     <span class="hr-course-form__label is-required">장소</span>
                     <span class="hr-course-form__inline">
-                      <input class="hr-course-form__input" type="text" name="location" data-offline-required disabled>
+                      <input class="hr-course-form__input hlinks-input" type="text" name="location" data-offline-required disabled>
                       <button class="hr-course-form__sub-button" type="button">주소 검색</button>
                     </span>
                   </label>
 
                   <label class="hr-course-form__field">
                     <span class="hr-course-form__label is-required">정원</span>
-                    <input class="hr-course-form__input" type="number" name="capacity" min="1" data-offline-required disabled>
+                    <input class="hr-course-form__input hlinks-input" type="number" name="capacity" min="1" data-offline-required disabled>
                   </label>
                 </div>
               </div>
@@ -890,7 +885,7 @@
                   <div class="hr-course-form__chapter">
                     <label class="hr-course-form__field">
                       <span class="hr-course-form__label is-required">챕터명</span>
-                      <input class="hr-course-form__input" type="text" name="chapterTitles" required>
+                      <input class="hr-course-form__input hlinks-input" type="text" name="chapterTitles" required>
                     </label>
                     <div class="hr-course-form__field" data-online-video-field>
                       <span class="hr-course-form__label is-required">mp4 영상 파일</span>
@@ -942,22 +937,22 @@
                 <div class="hr-course-form__split">
                   <label class="hr-course-form__field">
                     <span class="hr-course-form__label is-required">신청 시작일</span>
-                    <input class="hr-course-form__input form-control" type="date" name="applyStartDate" data-offline-required disabled>
+                    <input class="hr-course-form__input form-control hlinks-input" type="date" name="applyStartDate" data-offline-required disabled>
                   </label>
                   <label class="hr-course-form__field">
                     <span class="hr-course-form__label is-required">신청 종료일</span>
-                    <input class="hr-course-form__input form-control" type="date" name="applyEndDate" data-offline-required disabled>
+                    <input class="hr-course-form__input form-control hlinks-input" type="date" name="applyEndDate" data-offline-required disabled>
                   </label>
                 </div>
 
                 <div class="hr-course-form__split">
                   <label class="hr-course-form__field">
                     <span class="hr-course-form__label is-required">강의 시작일</span>
-                    <input class="hr-course-form__input form-control" type="date" name="courseStartDate" data-offline-required disabled>
+                    <input class="hr-course-form__input form-control hlinks-input" type="date" name="courseStartDate" data-offline-required disabled>
                   </label>
                   <label class="hr-course-form__field">
                     <span class="hr-course-form__label is-required">강의 종료일</span>
-                    <input class="hr-course-form__input form-control" type="date" name="courseEndDate" data-offline-required disabled>
+                    <input class="hr-course-form__input form-control hlinks-input" type="date" name="courseEndDate" data-offline-required disabled>
                   </label>
                 </div>
               </div>

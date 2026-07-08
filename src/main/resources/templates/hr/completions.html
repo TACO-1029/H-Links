@@ -43,7 +43,7 @@
         <form class="admin-dashboard__filter" th:action="@{/hr/completions}" method="get">
           <label class="admin-filter-field">
             <span>강의 유형</span>
-            <select class="form-select" name="courseType">
+            <select class="form-select hlinks-dropdown" name="courseType">
               <option value="all" th:selected="${filter.courseType == 'all'}">전체</option>
               <option value="ONLINE" th:selected="${filter.courseType == 'ONLINE'}">온라인</option>
               <option value="OFFLINE" th:selected="${filter.courseType == 'OFFLINE'}">오프라인</option>
@@ -51,7 +51,7 @@
           </label>
           <label class="admin-filter-field">
             <span>수료 상태</span>
-            <select class="form-select" name="completionStatus">
+            <select class="form-select hlinks-dropdown" name="completionStatus">
               <option value="all" th:selected="${filter.completionStatus == 'all'}">전체</option>
               <option value="COMPLETED" th:selected="${filter.completionStatus == 'COMPLETED'}">수료</option>
               <option value="INCOMPLETE" th:selected="${filter.completionStatus == 'INCOMPLETE'}">미수료</option>
@@ -59,11 +59,11 @@
           </label>
           <label class="admin-filter-field">
             <span>강의명</span>
-            <input class="form-control" type="search" name="keyword" placeholder="강의명 검색" th:value="${filter.keyword}">
+            <input class="form-control hlinks-input" type="search" name="keyword" placeholder="강의명 검색" th:value="${filter.keyword}">
           </label>
           <label class="admin-filter-field">
             <span>부서</span>
-            <select class="form-select" name="departmentId">
+            <select class="form-select hlinks-dropdown" name="departmentId">
               <option value="" th:selected="${filter.departmentId == null}">전체</option>
               <option th:each="department : ${departments}"
                       th:value="${department.id}"
@@ -73,11 +73,11 @@
           </label>
           <label class="admin-filter-field">
             <span>시작일</span>
-            <input class="form-control" type="date" name="startDate" th:value="${filter.startDate}">
+            <input class="form-control hlinks-input" type="date" name="startDate" th:value="${filter.startDate}">
           </label>
           <label class="admin-filter-field">
             <span>종료일</span>
-            <input class="form-control" type="date" name="endDate" th:value="${filter.endDate}">
+            <input class="form-control hlinks-input" type="date" name="endDate" th:value="${filter.endDate}">
           </label>
           <div class="admin-dashboard__filter-actions">
             <a class="btn btn-outline-secondary" th:href="@{/hr/completions}">

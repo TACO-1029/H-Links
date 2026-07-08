@@ -36,7 +36,7 @@
         <input type="hidden" name="size" th:value="${pageSize}">
         <label class="hr-quiz-filter__field">
           <span class="hr-quiz-filter__label">강의명</span>
-          <select class="hr-quiz-filter__select form-select" name="course">
+          <select class="form-select hlinks-dropdown" name="course">
             <option value="">전체 강의</option>
             <option th:each="courseOption : ${courseOptions}"
                     th:value="${courseOption}"
@@ -46,7 +46,7 @@
         </label>
         <label class="hr-quiz-filter__field">
           <span class="hr-quiz-filter__label">생성 상태</span>
-          <select class="hr-quiz-filter__select form-select" name="status">
+          <select class="form-select hlinks-dropdown" name="status">
             <option value="">전체 생성 상태</option>
             <option th:each="statusOption : ${statusOptions}"
                     th:value="${statusOption}"
@@ -56,7 +56,7 @@
         </label>
         <label class="hr-quiz-filter__field">
           <span class="hr-quiz-filter__label">검색</span>
-          <input class="hr-quiz-filter__input"
+          <input class="hr-quiz-filter__input hlinks-input"
                  type="search"
                  name="keyword"
                  th:value="${keyword}"

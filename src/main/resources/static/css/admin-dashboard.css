@@ -120,14 +120,15 @@
   font-weight: var(--font-bold);
 }
 
-.admin-filter-field .form-control,
-.admin-filter-field .form-select {
+.admin-filter-field .hlinks-input,
+.admin-filter-field .hlinks-dropdown {
   min-height: 42px;
   font-size: var(--text-sm);
 }
 
 .admin-dashboard__filter-actions {
   display: flex;
+  grid-column: 1 / -1;
   justify-content: flex-end;
   gap: 8px;
 }
@@ -150,8 +151,8 @@
   --bs-btn-active-border-color: var(--color-brand-hover, #008a6b);
 }
 
-.admin-dashboard .form-control:focus,
-.admin-dashboard .form-select:focus {
+.admin-dashboard .hlinks-input:focus,
+.admin-dashboard .hlinks-dropdown:focus {
   border-color: var(--color-brand, #009e7a);
   box-shadow: 0 0 0 0.25rem rgba(0, 158, 122, 0.14);
 }
