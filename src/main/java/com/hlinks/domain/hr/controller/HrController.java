@@ -89,9 +89,6 @@ public class HrController {
         int fromIndex = Math.min((currentPage - 1) * pageSize, totalCount);
         int toIndex = Math.min(fromIndex + pageSize, totalCount);
         List<QuizListResponse> pagedQuizzes = filteredQuizzes.subList(fromIndex, toIndex);
-        List<Integer> pageNumbers = IntStream.rangeClosed(1, totalPages)
-                .boxed()
-                .toList();
 
         model.addAttribute("activeMenu", "hr");
         model.addAttribute("quizzes", pagedQuizzes);
@@ -99,7 +96,7 @@ public class HrController {
         model.addAttribute("currentPage", currentPage);
         model.addAttribute("pageSize", pageSize);
         model.addAttribute("totalPages", totalPages);
-        model.addAttribute("pageNumbers", pageNumbers);
+        model.addAttribute("pageItems", buildPageItems(currentPage, totalPages));
         model.addAttribute("courseOptions", courseOptions);
         model.addAttribute("statusOptions", statusOptions);
         model.addAttribute("courseFilter", normalize(course));
