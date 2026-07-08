@@ -9,6 +9,48 @@ function getCategoryDescription(name) {
     return '해당 기술 분야를 심도 있게 학습할 수 있는 커리큘럼을 제공합니다.';
 }
 
+// 토스트 알림 함수
+function showToast(message) {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+        <svg class="toast-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 9V14M12 17.01L12.01 16.9989M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="toast-message">${message}</span>
+        <button class="toast-close" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    `;
+
+    container.appendChild(toast);
+
+    const closeBtn = toast.querySelector('.toast-close');
+    const dismissToast = () => {
+        if (toast.classList.contains('hide')) return;
+        toast.classList.add('hide');
+        toast.addEventListener('animationend', () => {
+            toast.remove();
+            if (container.children.length === 0) {
+                container.remove();
+            }
+        });
+    };
+
+    closeBtn.addEventListener('click', dismissToast);
+
+    setTimeout(dismissToast, 3000);
+}
+
 // 가상 폴백 데이터 (DB 데이터가 비어 있을 경우를 대비)
 const fallbackCategories = [
     { skillId: 1000, skillName: '인프라', skillType: 'CATEGORY' },
@@ -171,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (checkbox.checked && checkedSkills.length > 3) {
                         checkbox.checked = false;
                         label.classList.remove('active');
-                        alert("집중 학습할 기술은 최대 3개까지만 선택 가능합니다.");
+                        showToast("집중 학습할 기술은 최대 3개까지만 선택 가능합니다.");
                         return;
                     }
                     if (checkbox.checked) {
