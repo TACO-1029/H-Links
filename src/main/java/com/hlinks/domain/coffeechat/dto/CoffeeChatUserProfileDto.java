@@ -10,6 +10,9 @@ public class CoffeeChatUserProfileDto {
     private Long userId;
     private String name;
     private String email;
+    private String departmentName;
+    private String jobName;
+    private String positionName;
     private String kcyResult;
     private String emailNotifyYn;
 }
