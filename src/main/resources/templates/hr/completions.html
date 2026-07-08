@@ -111,9 +111,19 @@
           <span>수강 신청 후 학습이 시작되면 이곳에 수료 현황이 표시됩니다.</span>
         </div>
 
-        <div class="hlinks-table-card" th:unless="${#lists.isEmpty(completions)}">
-          <div class="hlinks-table-wrap">
-            <table class="table table-hover align-middle hlinks-table admin-dashboard-table">
+        <div class="admin-table-card" th:unless="${#lists.isEmpty(completions)}">
+          <div class="admin-table-wrap">
+            <table class="table table-hover align-middle admin-table admin-dashboard-table">
+              <colgroup>
+                <col class="admin-dashboard-table__col-course">
+                <col class="admin-dashboard-table__col-type">
+                <col class="admin-dashboard-table__col-learner">
+                <col class="admin-dashboard-table__col-department">
+                <col class="admin-dashboard-table__col-progress">
+                <col class="admin-dashboard-table__col-quiz">
+                <col class="admin-dashboard-table__col-status">
+                <col class="admin-dashboard-table__col-date">
+              </colgroup>
               <thead>
               <tr>
                 <th>강의명</th>
@@ -128,7 +138,7 @@
               </thead>
               <tbody>
               <tr th:each="completion : ${completions}">
-                <td class="hlinks-table__title admin-dashboard-table__title" th:text="${completion.courseTitle}">강의명</td>
+                <td class="admin-table__title admin-dashboard-table__title" th:text="${completion.courseTitle}">강의명</td>
                 <td th:text="${completion.courseTypeLabel}">온라인</td>
                 <td th:text="${completion.learnerName}">수강자</td>
                 <td th:text="${completion.departmentName}">부서</td>
@@ -143,10 +153,12 @@
                     <span class="admin-progress__value" th:text="${completion.progressRate + '%'}">0%</span>
                   </div>
                 </td>
-                <td th:text="${completion.quizStatusLabel}">응시 완료</td>
                 <td>
-                  <span class="badge rounded-pill admin-status-badge"
-                        th:classappend="${' admin-status-badge--' + completion.completionTone}"
+                  <span class="admin-table-badge" th:text="${completion.quizStatusLabel}">응시 완료</span>
+                </td>
+                <td>
+                  <span class="admin-table-badge admin-table-status"
+                        th:classappend="${' ' + completion.completionTone}"
                         th:text="${completion.completionStatusLabel}">수료</span>
                 </td>
                 <td th:text="${completion.completedAtStr}">2026.07.08</td>

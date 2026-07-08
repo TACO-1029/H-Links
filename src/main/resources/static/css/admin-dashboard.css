@@ -157,40 +157,58 @@
 }
 
 .admin-dashboard-table {
-  min-width: 980px;
+  min-width: 1320px;
+}
+
+.admin-dashboard-table__col-course {
+  width: 23%;
+}
+
+.admin-dashboard-table__col-type {
+  width: 10%;
+}
+
+.admin-dashboard-table__col-learner {
+  width: 11%;
+}
+
+.admin-dashboard-table__col-department {
+  width: 11%;
+}
+
+.admin-dashboard-table__col-progress {
+  width: 14%;
+}
+
+.admin-dashboard-table__col-quiz {
+  width: 10%;
+}
+
+.admin-dashboard-table__col-status {
+  width: 11%;
+}
+
+.admin-dashboard-table__col-date {
+  width: 10%;
 }
 
 .admin-dashboard-table__title {
   max-width: 260px;
 }
 
-.admin-status-badge {
-  min-height: 28px;
-  padding: 0 10px;
-  display: inline-flex;
-  align-items: center;
-  font-size: var(--text-xs);
-  font-weight: var(--font-bold);
+.admin-dashboard-table th:nth-child(5),
+.admin-dashboard-table th:nth-child(6),
+.admin-dashboard-table th:nth-child(7),
+.admin-dashboard-table td:nth-child(5),
+.admin-dashboard-table td:nth-child(6),
+.admin-dashboard-table td:nth-child(7) {
+  text-align: center;
 }
 
-.admin-status-badge--green {
-  background: rgba(0, 158, 122, 0.12);
-  color: #007a5e;
-}
-
-.admin-status-badge--blue {
-  background: rgba(37, 99, 235, 0.12);
-  color: #1d4ed8;
-}
-
-.admin-status-badge--amber {
-  background: rgba(217, 119, 6, 0.12);
-  color: #b45309;
-}
-
-.admin-status-badge--gray {
-  background: rgba(100, 116, 139, 0.14);
-  color: #475569;
+.admin-dashboard-table th:nth-child(8),
+.admin-dashboard-table td:nth-child(8) {
+  text-align: right;
+  white-space: nowrap;
 }
 
 .admin-progress {
@@ -199,6 +217,7 @@
   gap: 8px;
   width: 148px;
   min-height: 28px;
+  margin-inline: auto;
 }
 
 .admin-progress__track {
