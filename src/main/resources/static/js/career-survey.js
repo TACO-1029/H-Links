@@ -148,6 +148,16 @@ document.addEventListener('DOMContentLoaded', () => {
             difficultySkillsContainer.innerHTML = '';
             jsErrorAlert.style.display = 'none';
 
+            // Q2 부서 연관 기술 안내문 노출 여부 제어
+            const q2DeptInfoTip = document.getElementById('q2-dept-info-tip');
+            if (q2DeptInfoTip) {
+                if (card.classList.contains('highlight-dept')) {
+                    q2DeptInfoTip.style.display = 'flex';
+                } else {
+                    q2DeptInfoTip.style.display = 'none';
+                }
+            }
+
             renderSubSkills(cat.skillId, cat.skillName);
 
             q2Section.style.display = 'block';
@@ -342,6 +352,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 targetCard.classList.add('active');
                 selectedCategoryInput.value = savedCategory;
                 displayCategoryName.textContent = catName;
+                
+                // Q2 부서 연관 기술 안내문 노출 여부 제어
+                const q2DeptInfoTip = document.getElementById('q2-dept-info-tip');
+                if (q2DeptInfoTip) {
+                    if (targetCard.classList.contains('highlight-dept')) {
+                        q2DeptInfoTip.style.display = 'flex';
+                    } else {
+                        q2DeptInfoTip.style.display = 'none';
+                    }
+                }
                 
                 let preselectedSkillIds = [];
                 if (savedSkillsJSON) {
