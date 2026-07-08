@@ -41,7 +41,7 @@ public class MyPageController {
         model.addAttribute("activeMenu", "mypage");
         model.addAttribute("activeSubMenu", "myInfo");
 
-        addMyPageHeroModel(userDetails, model);
+
 
         // 아래로는 비동기 작업 처리하는 API 구현 예정입니다.
         model.addAttribute("email", "user@hlinks.co.kr");
@@ -75,7 +75,7 @@ public class MyPageController {
     public String myCoffeeChats(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         model.addAttribute("activeMenu", "mypage");
         model.addAttribute("activeSubMenu", "myCoffeeChats");
-        addMyPageHeroModel(userDetails, model);
+
 
         model.addAttribute("coffeeChatSetting", coffeeChatService.getSetting(userDetails.getUserId()));
         model.addAttribute("sentCoffeeChatRequests", coffeeChatService.getSentRequests(userDetails.getUserId()));
@@ -89,7 +89,7 @@ public class MyPageController {
         Long userId = userDetails.getUserId();
         model.addAttribute("activeMenu", "mypage");
         model.addAttribute("activeSubMenu", "myEvaluation");
-        addMyPageHeroModel(userDetails, model);
+
         model.addAttribute("evaluation", myCompetencyEvaluationService.getEvaluation(userId));
 
         return "mypage/evaluation";
@@ -113,7 +113,7 @@ public class MyPageController {
         // 2. 사이드바 내 서브메뉴 활성화 상태값 설정 및 조회한 카운트값 재사용
         model.addAttribute("activeMenu", "mypage");
         model.addAttribute("activeSubMenu", "myCourses");
-        addMyPageHeroModel(userDetails, model, statusDto.getInProgressCount(), statusDto.getCompletedCount());
+
 
         // 3. templates/mypage/courses.html 렌더링
         return "mypage/courses";
@@ -133,7 +133,7 @@ public class MyPageController {
         // 1. 사이드바 내 서브메뉴 활성화 상태값 설정
         model.addAttribute("activeMenu", "mypage");
         model.addAttribute("activeSubMenu", "myApplications");
-        addMyPageHeroModel(userDetails, model);
+
 
         // 2. 4단계에서 CourseService에 추가했던 목록 조회 메서드 호출
         List<CourseApplicationListResponseDto> applications = courseService.getMyCourseApplicationList(userId);
@@ -156,19 +156,5 @@ public class MyPageController {
         return SuccessResponse.empty();
     }
 
-    private void addMyPageHeroModel(CustomUserDetails userDetails, Model model) {
-        addMyPageHeroModel(userDetails, model, 
-                courseService.getMyInProgressCourseCount(userDetails.getUserId()), 
-                courseService.getMyCompletedCourseCount(userDetails.getUserId()));
-    }
 
-    private void addMyPageHeroModel(CustomUserDetails userDetails, Model model, int inProgressCount, int completedCount) {
-        model.addAttribute("loginId", userDetails.getUsername());
-        model.addAttribute("name", userDetails.getName());
-        model.addAttribute("departmentName", userDetails.getDepartmentName());
-        model.addAttribute("jobName", userDetails.getJobName());
-        model.addAttribute("positionName", userDetails.getPositionName());
-        model.addAttribute("inProgressCount", inProgressCount);
-        model.addAttribute("completedCount", completedCount);
-    }
 }

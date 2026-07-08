@@ -604,3 +604,34 @@
         flex: 1;
     }
 }
+
+/* 수강현황과 동일한 필터 버튼 및 탭 스타일 */
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+.filter-btn {
+    background: #F1F5F9;
+    border: none;
+    color: #475569;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.filter-btn.is-active, .filter-btn:hover {
+    background: #E2E8F0;
+    color: #3B4043;
+}
+.filter-count {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 1px 6px;
+    border-radius: 9999px;
+    font-size: 11px;
+    margin-left: 4px;
+}
+

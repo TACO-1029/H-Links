@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside class="mypage-aside-nav" th:fragment="aside(activeSubMenu)">
+    <h3 class="mypage-aside-nav__title">마이페이지</h3>
+    <ul class="mypage-aside-nav__list">
+        <li>
+            <a th:href="@{/mypage}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myInfo'} ? 'is-active'">내 정보</a>
+        </li>
+        <li>
+            <a th:href="@{/mypage/courses}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myCourses'} ? 'is-active'">수강현황</a>
+        </li>
+        <li>
+            <a th:href="@{/mypage/applications}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myApplications'} ? 'is-active'">신청 내역</a>
+        </li>
+        <li>
+            <a th:href="@{/mypage/evaluation}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myEvaluation'} ? 'is-active'">역량 평가</a>
+        </li>
+        <li>
+            <a th:href="@{/mypage/coffee-chats}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myCoffeeChats'} ? 'is-active'">커피챗</a>
+        </li>
+    </ul>
+</aside>
+</body>
+</html>
