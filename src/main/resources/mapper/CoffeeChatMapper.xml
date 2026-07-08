@@ -42,11 +42,20 @@
             u.USER_ID AS userId,
             u.NAME AS name,
             u.EMAIL AS email,
+            department.DEPARTMENT_NAME AS departmentName,
+            job.JOB_NAME AS jobName,
+            position.POSITION_NAME AS positionName,
             u.KCY_RESULT AS kcyResult,
             NVL(setting.EMAIL_NOTIFY_YN, 'N') AS emailNotifyYn
         FROM USERS u
         LEFT JOIN USER_COFFEE_CHAT_SETTING setting
           ON setting.USER_ID = u.USER_ID
+        LEFT JOIN DEPARTMENT department
+          ON department.DEPARTMENT_ID = u.DEPARTMENT_ID
+        LEFT JOIN JOB job
+          ON job.JOB_ID = u.JOB_ID
+        LEFT JOIN POSITION position
+          ON position.POSITION_ID = u.POSITION_ID
         WHERE u.USER_ID = #{userId}
           AND u.STATUS = 'ACTIVE'
     </select>
@@ -111,7 +120,7 @@
             #{subject},
             #{content},
             #{sendStatus},
-            #{errorMessage},
+            #{errorMessage, jdbcType=VARCHAR},
             SYSDATE,
             CASE WHEN #{sendStatus} = 'SENT' THEN SYSDATE ELSE NULL END
         )
@@ -121,7 +130,7 @@
         UPDATE MAIL_SEND_LOG
         SET
             SEND_STATUS = #{sendStatus},
-            ERROR_MESSAGE = #{errorMessage},
+            ERROR_MESSAGE = #{errorMessage, jdbcType=VARCHAR},
             SENT_AT = CASE WHEN #{sendStatus} = 'SENT' THEN SYSDATE ELSE SENT_AT END
         WHERE MAIL_LOG_ID = #{mailLogId}
     </update>

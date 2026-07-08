@@ -41,6 +41,14 @@ public class CoffeeChatController {
         return SuccessResponse.from(coffeeChatService.requestCoffeeChat(userDetails.getUserId(), request));
     }
 
+    @PostMapping("/mails")
+    public SuccessResponse<CoffeeChatCreateResponse> sendCoffeeChatMail(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody CoffeeChatCreateRequest request
+    ) {
+        return SuccessResponse.from(coffeeChatService.sendCoffeeChatMail(userDetails.getUserId(), request));
+    }
+
     @PatchMapping("/requests/{requestId}/accept")
     public SuccessResponse<Void> acceptRequest(
             @AuthenticationPrincipal CustomUserDetails userDetails,
