@@ -71,6 +71,12 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
     @Override
     @Transactional
     public CoffeeChatCreateResponse requestCoffeeChat(Long requesterUserId, CoffeeChatCreateRequest request) {
+        return sendCoffeeChatMail(requesterUserId, request);
+    }
+
+    @Override
+    @Transactional
+    public CoffeeChatCreateResponse sendCoffeeChatMail(Long requesterUserId, CoffeeChatCreateRequest request) {
         Long receiverUserId = request.getReceiverUserId();
 
         if (requesterUserId.equals(receiverUserId)) {
@@ -88,10 +94,6 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
             throw new BaseException(CoffeeChatErrorCode.KCY_RESULT_REQUIRED);
         }
 
-        if (coffeeChatMapper.countRequestedCoffeeChat(requesterUserId, receiverUserId) > 0) {
-            throw new BaseException(CoffeeChatErrorCode.REQUEST_ALREADY_EXISTS);
-        }
-
         KcyType requesterType = KcyType.from(requester.getKcyResult());
         KcyType receiverType = KcyType.from(receiver.getKcyResult());
         KcyMatchGrade matchGrade = KcyCompatibilityPolicy.gradeOf(requesterType, receiverType);
@@ -106,7 +108,7 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
                 receiverType.getCode(),
                 matchGrade.name(),
                 message,
-                CoffeeChatRequestStatus.REQUESTED.name()
+                CoffeeChatRequestStatus.ACCEPTED.name()
         );
         competencyScoreService.applyActionScore(
                 requesterUserId,
@@ -119,7 +121,7 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
 
         return CoffeeChatCreateResponse.builder()
                 .requestId(requestId)
-                .status(CoffeeChatRequestStatus.REQUESTED.name())
+                .status(CoffeeChatRequestStatus.ACCEPTED.name())
                 .mailStatus(mailStatus.name())
                 .build();
     }
@@ -178,7 +180,7 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
             return message.trim();
         }
 
-        return requesterName + " 님이 " + receiverKcyTitle + " 성향의 " + gradeLabel + "로 함께 커피챗을 제안했습니다.";
+        return requesterName + " 님이 " + receiverKcyTitle + " 성향의 " + gradeLabel + "로 커피챗 메일을 보냈습니다.";
     }
 
     private MailSendStatus sendCoffeeChatMail(
@@ -189,7 +191,7 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
             KcyMatchGrade matchGrade,
             String message
     ) {
-        String subject = "[H-LINKs] " + requester.getName() + " 님이 커피챗을 신청했습니다";
+        String subject = "[H-LINKs] " + requester.getName() + " 님이 커피챗을 제안했습니다";
         String content = buildMailContent(requester, receiver, receiverType, matchGrade, message);
         JavaMailSender javaMailSender = javaMailSenderProvider.getIfAvailable();
 
@@ -209,6 +211,9 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
             SimpleMailMessage mailMessage = new SimpleMailMessage();
             mailMessage.setFrom(mailFrom);
             mailMessage.setTo(receiver.getEmail());
+            if (StringUtils.hasText(requester.getEmail())) {
+                mailMessage.setReplyTo(requester.getEmail());
+            }
             mailMessage.setSubject(subject);
             mailMessage.setText(content);
 
@@ -256,24 +261,30 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
         return """
                 %s 님, 안녕하세요.
 
-                %s 님이 H-LINKs에서 커피챗을 신청했습니다.
+                %s 님이 H-LINKs에서 커피챗을 제안했습니다.
 
                 매칭 정보
-                - 상대방: %s
-                - 나의 KCY 성향: %s
+                - 보낸 사람: %s / %s / %s
+                - 받는 사람의 KCY 성향: %s
                 - 매칭 등급: %s
 
-                신청 메시지
+                제안 메시지
                 %s
 
-                H-LINKs 마이페이지에서 받은 커피챗 요청을 확인해 주세요.
+                커피챗을 원하신다면 이 메일에 회신해 일정을 조율해 주세요.
                 """.formatted(
                 receiver.getName(),
                 requester.getName(),
                 requester.getName(),
+                defaultText(requester.getDepartmentName(), "소속 부서 미정"),
+                defaultText(requester.getPositionName(), "직급 미정"),
                 receiverType.getTitle(),
                 matchGrade.getLabel(),
                 message
         );
+    }
+
+    private String defaultText(String value, String defaultValue) {
+        return StringUtils.hasText(value) ? value : defaultValue;
     }
 }
