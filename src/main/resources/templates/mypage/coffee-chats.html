@@ -15,122 +15,94 @@
 <div th:replace="~{fragments/header :: header}"></div>
 
 <main class="mypage-shell layout-container">
-    <section class="mypage-hero" aria-labelledby="mypage-title" th:replace="~{fragments/mypage :: hero}">
-        <div class="mypage-hero__identity">
-            <div class="mypage-avatar mypage-avatar--large" aria-hidden="true"
-                 th:text="${name != null ? #strings.substring(name, 0, 1) : '도'}">
-                최
-            </div>
-            <div class="mypage-hero__text">
-                <span class="mypage-badge"
-                      th:text="${loginId != null ? '사번 ' + loginId : '사번 EMP-2026-0147'}">
-                    사번 EMP-2026-0147
-                </span>
-                <h1 id="mypage-title" class="mypage-hero__title">
-                    <span th:text="${name != null ? name : '도건우'}">도건우</span>
-                    <span th:text="${positionName != null ? positionName : '사원'}">사원</span>
-                </h1>
-                <p class="mypage-hero__meta">
-                    <span th:text="${departmentName != null ? departmentName : 'DX 부트캠프'}">DX 부트캠프</span>
-                    <span aria-hidden="true">·</span>
-                    <span th:text="${jobName != null ? jobName : 'Frontend Engineer'}">Frontend Engineer</span>
-                </p>
-            </div>
-        </div>
+    <div class="mypage-content-layout">
+        <!-- 좌측 서브메뉴 구조 -->
+        <aside th:replace="~{mypage/fragments/aside :: aside('myCoffeeChats')}"></aside>
 
-        <div class="mypage-summary" aria-label="학습 요약">
-            <article class="mypage-summary-card">
-                <span class="mypage-summary-card__label">수강 중</span>
-                <strong class="mypage-summary-card__value"
-                        th:text="${inProgressCount != null ? inProgressCount : 0}">0</strong>
-            </article>
-            <article class="mypage-summary-card">
-                <span class="mypage-summary-card__label">수료 완료</span>
-                <strong class="mypage-summary-card__value mypage-summary-card__value--blue"
-                        th:text="${completedCount != null ? completedCount : 0}">0</strong>
-            </article>
-        </div>
-    </section>
-
-    <section class="mypage-coffee-page" aria-label="커피챗 관리">
-        <article class="mypage-card mypage-coffee-card mypage-coffee-card--wide">
-            <div class="mypage-coffee-card__header">
-                <div>
-                    <p class="mypage-card__eyebrow">커피챗</p>
-                    <h2>커피챗 알림</h2>
-                    <p id="coffeeChatSettingMessage" class="mypage-coffee-card__notice">
-                        커피챗 알림을 켜면 KCY 결과에서 보완 성향 동료에게 추천될 수 있습니다.
-                    </p>
-                </div>
-                <label class="mypage-toggle">
-                    <input id="coffeeChatNotifyToggle"
-                           type="checkbox"
-                           th:checked="${coffeeChatSetting != null and coffeeChatSetting.emailNotifyEnabled}">
-                    <span aria-hidden="true"></span>
-                    <strong>수신</strong>
-                </label>
-            </div>
-
-            <div class="mypage-coffee-history mypage-coffee-history--split">
-                <section>
-                    <h3>받은 요청</h3>
-                    <article class="mypage-coffee-request"
-                             th:each="request : ${receivedCoffeeChatRequests}"
-                             th:attr="data-request-id=${request.requestId}">
-                        <strong th:text="${request.partnerName}">김수달</strong>
-                        <div class="mypage-coffee-request__badges">
-                            <span th:text="${request.matchGrade + ' 매칭'}">S 매칭</span>
-                            <span class="mypage-coffee-request__status"
-                                  th:text="${request.statusLabel}">대기 중</span>
+        <!-- 우측 메인 영역 -->
+        <section class="mypage-main-content">
+            <section class="mypage-coffee-page" aria-label="커피챗 관리">
+                <article class="mypage-card mypage-coffee-card mypage-coffee-card--wide">
+                    <div class="mypage-coffee-card__header">
+                        <div>
+                            <p class="mypage-card__eyebrow">커피챗</p>
+                            <h2>커피챗 알림</h2>
+                            <p id="coffeeChatSettingMessage" class="mypage-coffee-card__notice">
+                                커피챗 알림을 켜면 KCY 결과에서 보완 성향 동료에게 추천될 수 있습니다.
+                            </p>
                         </div>
-                        <p th:text="${request.message}">커피챗 요청 메시지</p>
-                        <div class="mypage-coffee-actions" th:if="${request.status == 'REQUESTED'}">
-                            <button class="mypage-coffee-action-button mypage-coffee-action-button--accept"
-                                    type="button"
-                                    data-coffee-action="accept">
-                                승인
-                            </button>
-                            <button class="mypage-coffee-action-button"
-                                    type="button"
-                                    data-coffee-action="reject">
-                                거절
-                            </button>
-                            <div class="mypage-coffee-confirm" hidden>
-                                <strong data-confirm-title>처리할까요?</strong>
-                                <div>
-                                    <button type="button" data-confirm-submit>확인</button>
-                                    <button type="button" data-confirm-cancel>취소</button>
+                        <label class="mypage-toggle">
+                            <input id="coffeeChatNotifyToggle"
+                                   type="checkbox"
+                                   th:checked="${coffeeChatSetting != null and coffeeChatSetting.emailNotifyEnabled}">
+                            <span aria-hidden="true"></span>
+                            <strong>수신</strong>
+                        </label>
+                    </div>
+
+                    <div class="mypage-coffee-history mypage-coffee-history--split">
+                        <section>
+                            <h3>받은 요청</h3>
+                            <article class="mypage-coffee-request"
+                                     th:each="request : ${receivedCoffeeChatRequests}"
+                                     th:attr="data-request-id=${request.requestId}">
+                                <strong th:text="${request.partnerName}">김수달</strong>
+                                <div class="mypage-coffee-request__badges">
+                                    <span th:text="${request.matchGrade + ' 매칭'}">S 매칭</span>
+                                    <span class="mypage-coffee-request__status"
+                                          th:text="${request.statusLabel}">대기 중</span>
                                 </div>
-                            </div>
-                        </div>
-                    </article>
-                    <p class="mypage-coffee-empty"
-                       data-empty="received"
-                       th:classappend="${receivedCoffeeChatRequests == null or #lists.isEmpty(receivedCoffeeChatRequests)} ? '' : ' is-hidden'">
-                        받은 커피챗 요청이 없습니다.
-                    </p>
-                </section>
+                                <p th:text="${request.message}">커피챗 요청 메시지</p>
+                                <div class="mypage-coffee-actions" th:if="${request.status == 'REQUESTED'}">
+                                    <button class="mypage-coffee-action-button mypage-coffee-action-button--accept"
+                                            type="button"
+                                            data-coffee-action="accept">
+                                        승인
+                                    </button>
 
-                <section>
-                    <h3>보낸 요청</h3>
-                    <article class="mypage-coffee-request"
-                             th:each="request : ${sentCoffeeChatRequests}">
-                        <strong th:text="${request.partnerName}">이강아지</strong>
-                        <div class="mypage-coffee-request__badges">
-                            <span th:text="${request.matchGrade + ' 매칭'}">A 매칭</span>
-                            <span class="mypage-coffee-request__status"
-                                  th:text="${request.statusLabel}">대기 중</span>
-                        </div>
-                        <p th:text="${request.message}">커피챗 요청 메시지</p>
-                    </article>
-                    <p class="mypage-coffee-empty"
-                       th:classappend="${sentCoffeeChatRequests == null or #lists.isEmpty(sentCoffeeChatRequests)} ? '' : ' is-hidden'">
-                        보낸 커피챗 요청이 없습니다.
-                    </p>
-                </section>
-            </div>
-        </article>
-    </section>
+                                    <button class="mypage-coffee-action-button"
+                                            type="button"
+                                            data-coffee-action="reject">
+                                        거절
+                                    </button>
+                                    <div class="mypage-coffee-confirm" hidden>
+                                        <strong data-confirm-title>처리할까요?</strong>
+                                        <div>
+                                            <button type="button" data-confirm-submit>확인</button>
+                                            <button type="button" data-confirm-cancel>취소</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                            <p class="mypage-coffee-empty"
+                               data-empty="received"
+                               th:classappend="${receivedCoffeeChatRequests == null or #lists.isEmpty(receivedCoffeeChatRequests)} ? '' : ' is-hidden'">
+                                받은 커피챗 요청이 없습니다.
+                            </p>
+                        </section>
+
+                        <section>
+                            <h3>보낸 요청</h3>
+                            <article class="mypage-coffee-request"
+                                     th:each="request : ${sentCoffeeChatRequests}">
+                                <strong th:text="${request.partnerName}">이강아지</strong>
+                                <div class="mypage-coffee-request__badges">
+                                    <span th:text="${request.matchGrade + ' 매칭'}">A 매칭</span>
+                                    <span class="mypage-coffee-request__status"
+                                          th:text="${request.statusLabel}">대기 중</span>
+                                </div>
+                                <p th:text="${request.message}">커피챗 요청 메시지</p>
+                            </article>
+                            <p class="mypage-coffee-empty"
+                               th:classappend="${sentCoffeeChatRequests == null or #lists.isEmpty(sentCoffeeChatRequests)} ? '' : ' is-hidden'">
+                                보낸 커피챗 요청이 없습니다.
+                            </p>
+                        </section>
+                    </div>
+                </article>
+            </section>
+        </section>
+    </div>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>

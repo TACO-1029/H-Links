@@ -17,67 +17,11 @@
 
 <main class="mypage-shell layout-container">
 
-    <!-- 마이페이지 공통 히어로 헤더 영역 -->
-    <section class="mypage-hero" aria-labelledby="mypage-title">
-        <div class="mypage-hero__identity">
-            <div class="mypage-avatar mypage-avatar--large" aria-hidden="true"
-                 th:text="${#authentication.principal.name != null ? #strings.substring(#authentication.principal.name, 0, 1) : 'H'}">
-                H
-            </div>
-            <div class="mypage-hero__text">
-                <span class="mypage-badge"
-                      th:text="'사번 ' + ${#authentication.principal.username}">
-                    사번 EMP-0000
-                </span>
-                <h1 id="mypage-title" class="mypage-hero__title">
-                    <span th:text="${#authentication.principal.name}">사용자명</span>
-                    <span th:text="${#authentication.principal.positionName}">사원</span>
-                </h1>
-                <p class="mypage-hero__meta">
-                    <span th:text="${#authentication.principal.departmentName}">소속 본부/팀</span>
-                    <span aria-hidden="true">·</span>
-                    <span th:text="${#authentication.principal.jobName}">직무 엔지니어</span>
-                </p>
-            </div>
-        </div>
-
-        <div class="mypage-summary" aria-label="학습 요약">
-            <article class="mypage-summary-card">
-                <span class="mypage-summary-card__label">수강 중</span>
-                <strong class="mypage-summary-card__value" th:text="${statusDto.inProgressCount}">3</strong>
-            </article>
-            <article class="mypage-summary-card">
-                <span class="mypage-summary-card__label">수료 완료</span>
-                <strong class="mypage-summary-card__value mypage-summary-card__value--blue" th:text="${statusDto.completedCount}">1</strong>
-            </article>
-            <article class="mypage-summary-card">
-                <span class="mypage-summary-card__label">보완 필요</span>
-                <strong class="mypage-summary-card__value mypage-summary-card__value--red" th:text="${statusDto.reinforcementCount}">4</strong>
-            </article>
-        </div>
-    </section>
-
     <!-- 와이어프레임 매칭을 위한 좌측 서브메뉴 & 우측 수강현황 레이아웃 구성 -->
     <div class="mypage-content-layout">
         
         <!-- 좌측 서브메뉴 구조 -->
-        <aside class="mypage-aside-nav">
-            <h3 class="mypage-aside-nav__title">마이페이지</h3>
-            <ul class="mypage-aside-nav__list">
-                <li>
-                    <a th:href="@{/mypage}" class="mypage-aside-nav__link">내 정보</a>
-                </li>
-                <li>
-                    <a th:href="@{/mypage/courses}" class="mypage-aside-nav__link is-active">수강현황</a>
-                </li>
-                <li>
-                    <a th:href="@{/mypage/applications}" class="mypage-aside-nav__link">신청 내역</a>
-                </li>
-                <li>
-                    <a th:href="@{/mypage/evaluation}" class="mypage-aside-nav__link">역량 평가</a>
-                </li>
-            </ul>
-        </aside>
+        <aside th:replace="~{mypage/fragments/aside :: aside('myCourses')}"></aside>
 
         <!-- 우측 메인 영역 -->
         <section class="mypage-main-content" aria-label="내 수강 현황">
@@ -94,10 +38,18 @@
 
                     <!-- 수강 상태별 필터 탭 -->
                     <div class="filter-buttons">
-                        <button class="filter-btn is-active" onclick="filterCourses('ALL', this)">전체</button>
-                        <button class="filter-btn" onclick="filterCourses('NOT_STARTED', this)">수강 전</button>
-                        <button class="filter-btn" onclick="filterCourses('IN_PROGRESS', this)">수강 중</button>
-                        <button class="filter-btn" onclick="filterCourses('COMPLETED', this)">수료 완료</button>
+                        <button class="filter-btn is-active" onclick="filterCourses('ALL', this)">
+                            전체 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE')])}">0</span>
+                        </button>
+                        <button class="filter-btn" onclick="filterCourses('NOT_STARTED', this)">
+                            수강 전 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE') and learningStatus == 'NOT_STARTED'])}">0</span>
+                        </button>
+                        <button class="filter-btn" onclick="filterCourses('IN_PROGRESS', this)">
+                            수강 중 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE') and learningStatus == 'IN_PROGRESS'])}">0</span>
+                        </button>
+                        <button class="filter-btn" onclick="filterCourses('COMPLETED', this)">
+                            수료 완료 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE') and learningStatus == 'COMPLETED'])}">0</span>
+                        </button>
                     </div>
 
                     <!-- 수강 리스트 -->
