@@ -606,7 +606,7 @@
         // 이전으로 버튼 활성화 상태 처리 (Q1에서는 비활성화, Q2부터 활성화)
         const undoBtn = cardWrapper.querySelector('.teams-undo-btn');
         if (undoBtn) {
-            undoBtn.disabled = (state.selectedOptionIds.length === 0);
+            undoBtn.disabled = (state.history.length === 0);
         }
 
         // 전역 프로그레스 바 동시 갱신
@@ -673,7 +673,9 @@
             selectedOptionIds: [...state.selectedOptionIds],
             angerScoreTypes: [...state.angerScoreTypes],
             tetrisFinished: state.tetrisFinished,
-            turnIndex: state.turnIndex
+            turnIndex: state.turnIndex,
+            occupied: typeof occupied !== 'undefined' ? JSON.parse(JSON.stringify(occupied)) : null,
+            blockStates: typeof blockStates !== 'undefined' ? JSON.parse(JSON.stringify(blockStates)) : null
         });
 
         const lines = document.querySelectorAll('.token.is-highlighted');
@@ -704,7 +706,9 @@
             selectedOptionIds: [...state.selectedOptionIds],
             angerScoreTypes: [...state.angerScoreTypes],
             tetrisFinished: state.tetrisFinished,
-            turnIndex: state.turnIndex
+            turnIndex: state.turnIndex,
+            occupied: typeof occupied !== 'undefined' ? JSON.parse(JSON.stringify(occupied)) : null,
+            blockStates: typeof blockStates !== 'undefined' ? JSON.parse(JSON.stringify(blockStates)) : null
         });
 
         // Add user response to flow
@@ -729,6 +733,8 @@
         state.angerScoreTypes = lastState.angerScoreTypes;
         state.tetrisFinished = lastState.tetrisFinished || false;
         state.turnIndex = lastState.turnIndex || 0;
+        if (lastState.occupied) occupied = lastState.occupied;
+        if (lastState.blockStates) blockStates = lastState.blockStates;
 
         // Pop last question from question history
         state.questionHistory.pop();
@@ -757,7 +763,7 @@
                 // "이전으로" 버튼의 활성화 여부 재평가
                 const undoBtn = prevCard.querySelector('.teams-undo-btn');
                 if (undoBtn) {
-                    undoBtn.disabled = (state.selectedOptionIds.length === 0);
+                    undoBtn.disabled = (state.history.length === 0);
                 }
             }
         }
@@ -872,7 +878,9 @@
                 selectedOptionIds: [...state.selectedOptionIds],
                 angerScoreTypes: [...state.angerScoreTypes],
                 tetrisFinished: state.tetrisFinished,
-                turnIndex: state.turnIndex
+                turnIndex: state.turnIndex,
+                occupied: typeof occupied !== 'undefined' ? JSON.parse(JSON.stringify(occupied)) : null,
+                blockStates: typeof blockStates !== 'undefined' ? JSON.parse(JSON.stringify(blockStates)) : null
             });
             state.turnIndex++;
             appendUserMessage("끝까지 할래요 📝", state.turnIndex);
@@ -1287,7 +1295,9 @@
             selectedOptionIds: [...state.selectedOptionIds],
             angerScoreTypes: [...state.angerScoreTypes],
             tetrisFinished: state.tetrisFinished,
-            turnIndex: state.turnIndex
+            turnIndex: state.turnIndex,
+            occupied: typeof occupied !== 'undefined' ? JSON.parse(JSON.stringify(occupied)) : null,
+            blockStates: typeof blockStates !== 'undefined' ? JSON.parse(JSON.stringify(blockStates)) : null
         });
 
         state.turnIndex++;
