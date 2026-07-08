@@ -27,7 +27,7 @@
 
                     <div class="mypage-profile-summary">
                         <div class="mypage-avatar mypage-avatar--square" aria-hidden="true"
-                             th:text="${name != null ? #strings.substring(name, 0, 1) : '도'}">
+                             th:text="${!(#strings.isEmpty(name)) ? #strings.substring(name, 0, 1) : '도'}">
                             최
                         </div>
                         <div class="mypage-profile-summary__text">
