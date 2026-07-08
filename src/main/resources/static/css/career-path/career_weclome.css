@@ -85,12 +85,17 @@
 }
 
 .career-reveal {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.js-enabled .career-reveal {
     opacity: 0;
     transform: translateY(36px);
     transition: opacity 0.55s ease, transform 0.55s ease, box-shadow 0.2s ease;
 }
 
-.career-reveal.is-visible {
+.js-enabled .career-reveal.is-visible {
     opacity: 1;
     transform: translateY(0);
 }
@@ -147,7 +152,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .career-reveal {
+    .js-enabled .career-reveal {
         opacity: 1;
         transform: none;
         transition: none;
