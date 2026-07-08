@@ -1,15 +1,29 @@
 package com.hlinks.domain.career.ai;
 
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class LevelTestPromptBuilder {
 
     public String build(String skillName, int questionCount, int lowCount, int mediumCount, int highCount) {
+        return build(skillName, questionCount, lowCount, mediumCount, highCount, "");
+    }
+
+    public String build(
+            String skillName,
+            int questionCount,
+            int lowCount,
+            int mediumCount,
+            int highCount,
+            String courseContext
+    ) {
         return """
                 아래 IT 세부 기술에 관한 학습자 평가용 객관식 레벨테스트 문항을 생성하세요.
 
                 [대상 기술]
+                %s
+
                 %s
 
                 [역할]
@@ -38,6 +52,7 @@ public class LevelTestPromptBuilder {
                 - 정답 문항은 1, 2, 3, 4 중 랜덤한 하나여야 합니다. 일관성이나 규칙 없이 랜덤하게 배정되어야 합니다.
                 - answerText에는 정답 선택지의 핵심 내용 및 정답인 이유를 명확히 작성하세요.
                 - explanation에는 문제 전체에 대한 해설, 오답이 왜 오답인지, 관련 공식 레퍼런스나 동작 원리를 상세히 작성하세요.
+                - 참고 강의 Context가 제공된 경우, 해당 Context의 개념과 실무 상황을 우선 반영하되 문제 본문에는 "Context", "Chroma", "Vector DB", "검색된 청크" 같은 시스템 용어를 노출하지 마세요.
 
                 [객관성 및 난이도 조절 규칙 (필수 준수)]
                 - 주관성 전면 배제: "가장 효과적인 것?", "가장 널리/일반적으로 사용되는 것?", "가장 권장되는 것?"과 같이 논란의 여지가 있거나 상황에 따라 정답이 변할 수 있는 주관적 표현의 출제는 절대 금지합니다.
@@ -94,10 +109,25 @@ public class LevelTestPromptBuilder {
                 }
                 """.formatted(
                 skillName,
+                buildCourseContextBlock(courseContext),
                 questionCount,
                 lowCount,
                 mediumCount,
                 highCount
         );
+    }
+
+    private String buildCourseContextBlock(String courseContext) {
+        if (!StringUtils.hasText(courseContext)) {
+            return "";
+        }
+
+        return """
+                [참고 강의 Context]
+                아래 내용은 H-Links에 등록된 강의 자막에서 검색된 관련 학습 내용입니다.
+                레벨테스트 문항의 주제, 실무 상황, 선택지, 해설을 구성할 때 우선 참고하세요.
+
+                %s
+                """.formatted(courseContext.trim());
     }
 }
