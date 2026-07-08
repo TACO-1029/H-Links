@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.hr.mapper.AdminDashboardMapper">
+
+    <sql id="dashboardFilter">
+        <if test="filter.courseType != null and filter.courseType != 'all'">
+            AND c.COURSE_TYPE = UPPER(#{filter.courseType})
+        </if>
+        <if test="filter.departmentId != null">
+            AND u.DEPARTMENT_ID = #{filter.departmentId}
+        </if>
+        <if test="filter.keyword != null and filter.keyword != ''">
+            AND LOWER(c.COURSE_TITLE) LIKE '%' || LOWER(#{filter.keyword}) || '%'
+        </if>
+        <if test="filter.learningStatus != null and filter.learningStatus != 'all'">
+            <choose>
+                <when test="filter.learningStatus == 'ACTIVE'">
+                    AND ca.APPLICATION_STATUS != 'CANCELED'
+                    AND NVL(cls.STATUS, 'NOT_STARTED') IN ('NOT_STARTED', 'IN_PROGRESS')
+                </when>
+                <when test="filter.learningStatus == 'COMPLETED'">
+                    AND cls.STATUS = 'COMPLETED'
+                </when>
+                <when test="filter.learningStatus == 'CANCELED'">
+                    AND (ca.APPLICATION_STATUS = 'CANCELED' OR cls.STATUS = 'CANCELED')
+                </when>
+            </choose>
+        </if>
+        <if test="filter.completionStatus != null and filter.completionStatus != 'all'">
+            <choose>
+                <when test="filter.completionStatus == 'COMPLETED'">
+                    AND cls.STATUS = 'COMPLETED'
+                </when>
+                <when test="filter.completionStatus == 'INCOMPLETE'">
+                    AND ca.APPLICATION_STATUS != 'CANCELED'
+                    AND NVL(cls.STATUS, 'NOT_STARTED') != 'COMPLETED'
+                </when>
+            </choose>
+        </if>
+    </sql>
+
+    <select id="countCourseCompletions" resultType="int">
+        SELECT COUNT(DISTINCT cls.COURSE_LEARNING_ID)
+        FROM COURSE_LEARNING_STATUS cls
+        JOIN COURSE c ON c.COURSE_ID = cls.COURSE_ID
+        JOIN USERS u ON u.USER_ID = cls.USER_ID
+        LEFT JOIN COURSE_APPLICATION ca ON ca.APPLICATION_ID = cls.APPLICATION_ID
+        WHERE NVL(ca.APPLIED_AT, cls.UPDATED_AT) &gt;= #{filter.startDate}
+          AND NVL(ca.APPLIED_AT, cls.UPDATED_AT) &lt; #{filter.endDate} + 1
+        <include refid="dashboardFilter"/>
+    </select>
+
+    <select id="selectCourseCompletions" resultType="com.hlinks.domain.hr.dto.AdminCourseCompletionStatusRow">
+        SELECT *
+        FROM (
+            SELECT
+                c.COURSE_TITLE AS courseTitle,
+                CASE c.COURSE_TYPE
+                    WHEN 'ONLINE' THEN '온라인'
+                    WHEN 'OFFLINE' THEN '오프라인'
+                    ELSE c.COURSE_TYPE
+                END AS courseTypeLabel,
+                u.NAME AS learnerName,
+                NVL(d.DEPARTMENT_NAME, '-') AS departmentName,
+                NVL(cls.PROGRESS_RATE, 0) AS progressRate,
+                CASE
+                    WHEN COUNT(qa.ATTEMPT_ID) = 0 THEN '미응시'
+                    WHEN COUNT(DISTINCT qa.CHAPTER_ID) &lt; COUNT(DISTINCT cc.CHAPTER_ID) THEN '일부 응시'
+                    ELSE '응시 완료'
+                END AS quizStatusLabel,
+                CASE
+                    WHEN cls.STATUS = 'COMPLETED' THEN '수료'
+                    WHEN cls.STATUS = 'CANCELED' THEN '미수료'
+                    ELSE '미수료'
+                END AS completionStatusLabel,
+                CASE
+                    WHEN cls.STATUS = 'COMPLETED' THEN 'green'
+                    WHEN cls.STATUS = 'IN_PROGRESS' THEN 'blue'
+                    WHEN cls.STATUS = 'NOT_STARTED' THEN 'amber'
+                    ELSE 'gray'
+                END AS completionTone,
+                NVL(TO_CHAR(cls.COMPLETED_AT, 'YYYY.MM.DD'), '-') AS completedAtStr
+            FROM COURSE_LEARNING_STATUS cls
+            JOIN COURSE c ON c.COURSE_ID = cls.COURSE_ID
+            JOIN USERS u ON u.USER_ID = cls.USER_ID
+            LEFT JOIN COURSE_APPLICATION ca ON ca.APPLICATION_ID = cls.APPLICATION_ID
+            LEFT JOIN DEPARTMENT d ON d.DEPARTMENT_ID = u.DEPARTMENT_ID
+            LEFT JOIN COURSE_CHAPTER cc ON cc.COURSE_ID = c.COURSE_ID AND cc.USE_YN = 'Y'
+            LEFT JOIN QUIZ_ATTEMPT qa
+              ON qa.USER_ID = cls.USER_ID
+             AND qa.COURSE_ID = cls.COURSE_ID
+             AND qa.CHAPTER_ID = cc.CHAPTER_ID
+            WHERE NVL(ca.APPLIED_AT, cls.UPDATED_AT) &gt;= #{filter.startDate}
+              AND NVL(ca.APPLIED_AT, cls.UPDATED_AT) &lt; #{filter.endDate} + 1
+            <include refid="dashboardFilter"/>
+            GROUP BY
+                cls.COURSE_LEARNING_ID,
+                c.COURSE_TITLE,
+                c.COURSE_TYPE,
+                u.NAME,
+                d.DEPARTMENT_NAME,
+                cls.PROGRESS_RATE,
+                cls.STATUS,
+                cls.COMPLETED_AT,
+                cls.UPDATED_AT
+            ORDER BY cls.UPDATED_AT DESC, cls.COURSE_LEARNING_ID DESC
+        )
+        OFFSET #{offset} ROWS FETCH NEXT #{pageSize} ROWS ONLY
+    </select>
+</mapper>
