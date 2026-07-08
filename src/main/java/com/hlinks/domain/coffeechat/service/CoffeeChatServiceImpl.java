@@ -108,7 +108,7 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
                 receiverType.getCode(),
                 matchGrade.name(),
                 message,
-                CoffeeChatRequestStatus.ACCEPTED.name()
+                CoffeeChatRequestStatus.MAILED.name()
         );
         competencyScoreService.applyActionScore(
                 requesterUserId,
@@ -121,7 +121,7 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
 
         return CoffeeChatCreateResponse.builder()
                 .requestId(requestId)
-                .status(CoffeeChatRequestStatus.ACCEPTED.name())
+                .status(CoffeeChatRequestStatus.MAILED.name())
                 .mailStatus(mailStatus.name())
                 .build();
     }
@@ -134,31 +134,6 @@ public class CoffeeChatServiceImpl implements CoffeeChatService {
     @Override
     public List<CoffeeChatHistoryDto> getReceivedRequests(Long userId) {
         return coffeeChatMapper.findReceivedRequests(userId);
-    }
-
-    @Override
-    @Transactional
-    public void acceptRequest(Long receiverUserId, Long requestId) {
-        int updatedCount = coffeeChatMapper.updateReceivedRequestStatus(
-                receiverUserId,
-                requestId,
-                CoffeeChatRequestStatus.ACCEPTED.name()
-        );
-
-        if (updatedCount == 0) {
-            throw new BaseException(CoffeeChatErrorCode.REQUEST_NOT_FOUND);
-        }
-    }
-
-    @Override
-    @Transactional
-    public void rejectRequest(Long receiverUserId, Long requestId) {
-        coffeeChatMapper.deleteMailLogsByReceivedRequest(receiverUserId, requestId);
-        int deletedCount = coffeeChatMapper.deleteReceivedRequest(receiverUserId, requestId);
-
-        if (deletedCount == 0) {
-            throw new BaseException(CoffeeChatErrorCode.REQUEST_NOT_FOUND);
-        }
     }
 
     private boolean isEmailNotifyEnabled(Long userId) {

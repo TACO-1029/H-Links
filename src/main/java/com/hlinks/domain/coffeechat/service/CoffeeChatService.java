@@ -21,8 +21,4 @@ public interface CoffeeChatService {
     List<CoffeeChatHistoryDto> getSentRequests(Long userId);
 
     List<CoffeeChatHistoryDto> getReceivedRequests(Long userId);
-
-    void acceptRequest(Long receiverUserId, Long requestId);
-
-    void rejectRequest(Long receiverUserId, Long requestId);
 }

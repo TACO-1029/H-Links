@@ -10,9 +10,7 @@ import com.hlinks.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,23 +45,5 @@ public class CoffeeChatController {
             @Valid @RequestBody CoffeeChatCreateRequest request
     ) {
         return SuccessResponse.from(coffeeChatService.sendCoffeeChatMail(userDetails.getUserId(), request));
-    }
-
-    @PatchMapping("/requests/{requestId}/accept")
-    public SuccessResponse<Void> acceptRequest(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable("requestId") Long requestId
-    ) {
-        coffeeChatService.acceptRequest(userDetails.getUserId(), requestId);
-        return SuccessResponse.empty();
-    }
-
-    @DeleteMapping("/requests/{requestId}")
-    public SuccessResponse<Void> rejectRequest(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable("requestId") Long requestId
-    ) {
-        coffeeChatService.rejectRequest(userDetails.getUserId(), requestId);
-        return SuccessResponse.empty();
     }
 }
