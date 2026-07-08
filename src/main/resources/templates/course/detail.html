@@ -289,23 +289,117 @@
             font-weight: 500;
         }
 
-        .course-material-link {
+        .course-material-area {
+            display: grid;
+            gap: 10px;
+            width: min(100%, 420px);
+        }
+
+        .course-material-preview {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #E2E8F0;
+            border-radius: 14px;
+            background: #FFFFFF;
+            color: #1E293B;
+            text-align: left;
+            cursor: pointer;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .course-material-preview:hover {
+            border-color: #10B981;
+        }
+
+        .course-material-preview.is-hidden,
+        .course-material-upload-form.is-hidden {
+            display: none;
+        }
+
+        .course-material-preview__icon {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            color: #2563EB;
-            font-weight: 700;
-            text-decoration: none;
+            justify-content: center;
+            flex: 0 0 auto;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.12);
+            color: #10B981;
+            font-size: 20px;
         }
 
-        .course-material-link:hover {
-            color: #1D4ED8;
-            text-decoration: underline;
+        .course-material-preview__body {
+            display: grid;
+            gap: 3px;
+            min-width: 0;
+            flex: 1;
         }
 
-        .course-material-link.is-disabled {
+        .course-material-preview__title {
+            color: #1E293B;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .course-material-preview__file {
+            overflow: hidden;
             color: #64748B;
-            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .course-material-preview__close {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            width: 30px;
+            height: 30px;
+            border-radius: 999px;
+            background: #F8FAFC;
+            color: #64748B;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .course-material-preview__close:hover {
+            background: #E2E8F0;
+            color: #1E293B;
+        }
+
+        .course-material-upload-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .course-material-upload-form input[type="file"] {
+            min-width: 0;
+            flex: 1;
+            padding: 9px 10px;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            background: #FFFFFF;
+            color: #64748B;
+            font-size: 13px;
+        }
+
+        .course-material-upload-form button {
+            flex: 0 0 auto;
+            min-height: 40px;
+            padding: 0 14px;
+            border-radius: 12px;
+            background: #10B981;
+            color: #FFFFFF;
+            font-size: 13px;
+            font-weight: 800;
         }
 
         .course-alert-overlay {
@@ -1074,13 +1168,34 @@
                             <div class="detail-row" th:if="${course.online}">
                                 <div class="detail-dt">강의 자료</div>
                                 <div class="detail-dd">
-                                    <a class="course-material-link"
-                                       data-course-material-download
-                                       th:href="${course.courseMaterialUrl != null and course.courseMaterialUrl != '' ? course.courseMaterialUrl : '#'}"
-                                       th:data-material-url="${course.courseMaterialUrl != null ? course.courseMaterialUrl : ''}"
-                                       th:classappend="${course.courseMaterialUrl == null or course.courseMaterialUrl == ''} ? ' is-disabled'">
-                                        강의 자료 다운로드
-                                    </a>
+                                    <div class="course-material-area">
+                                        <div class="course-material-preview"
+                                             role="button"
+                                             tabindex="0"
+                                             data-course-material-preview
+                                             th:data-material-url="${course.courseMaterialUrl != null ? course.courseMaterialUrl : ''}"
+                                             th:classappend="${course.courseMaterialUrl == null or course.courseMaterialUrl == ''} ? ' is-hidden'">
+                                            <span class="course-material-preview__icon" aria-hidden="true">
+                                                <i class="bi bi-file-earmark-text"></i>
+                                            </span>
+                                            <span class="course-material-preview__body">
+                                                <span class="course-material-preview__title">강의 자료가 등록되었습니다</span>
+                                                <span class="course-material-preview__file"
+                                                      data-course-material-file-name
+                                                      th:text="${course.courseMaterialUrl != null and course.courseMaterialUrl != '' ? '자료 미리보기' : '등록된 자료 없음'}">자료 미리보기</span>
+                                            </span>
+                                            <button class="course-material-preview__close"
+                                                    type="button"
+                                                    data-course-material-close
+                                                    aria-label="강의 자료 미리보기 닫기">×</button>
+                                        </div>
+                                        <form class="course-material-upload-form"
+                                              data-course-material-upload-form
+                                              th:classappend="${course.courseMaterialUrl != null and course.courseMaterialUrl != ''} ? ' is-hidden'">
+                                            <input type="file" name="courseMaterialFile" aria-label="강의 자료 파일 선택">
+                                            <button type="button">자료 업로드</button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                             <div class="detail-row">
@@ -1321,7 +1436,10 @@
         const courseId = /*[[${course.courseId}]]*/ null;
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
-        const materialDownloadLink = document.querySelector('[data-course-material-download]');
+        const materialPreview = document.querySelector('[data-course-material-preview]');
+        const materialCloseButton = document.querySelector('[data-course-material-close]');
+        const materialUploadForm = document.querySelector('[data-course-material-upload-form]');
+        const materialFileName = document.querySelector('[data-course-material-file-name]');
         const sections = {
             courseInfoSection: document.getElementById('courseInfoSection'),
             curriculumSection: document.getElementById('curriculumSection')
@@ -1385,16 +1503,7 @@
             });
         });
 
-        if (materialDownloadLink) {
-            materialDownloadLink.addEventListener('click', function (event) {
-                if (this.dataset.materialUrl) {
-                    return;
-                }
-
-                event.preventDefault();
-                showCourseAlert('등록된 강의 자료가 없습니다.');
-            });
-        }
+        bindCourseMaterial();
 
         async function submitCourseApplication(method, button, fallbackMessage) {
             if (!courseId) {
@@ -1454,6 +1563,73 @@
                     hideCourseAlert();
                 }
             });
+        }
+
+        function bindCourseMaterial() {
+            if (materialPreview) {
+                syncMaterialFileName(materialPreview.dataset.materialUrl);
+
+                materialPreview.addEventListener('click', function () {
+                    openMaterialPreview(this.dataset.materialUrl);
+                });
+
+                materialPreview.addEventListener('keydown', function (event) {
+                    if (event.key !== 'Enter' && event.key !== ' ') {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    openMaterialPreview(this.dataset.materialUrl);
+                });
+            }
+
+            if (materialCloseButton) {
+                materialCloseButton.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    hideMaterialPreview();
+                });
+
+            }
+
+            if (materialUploadForm) {
+                materialUploadForm.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                });
+            }
+        }
+
+        function hideMaterialPreview() {
+            if (materialPreview) {
+                materialPreview.classList.add('is-hidden');
+            }
+
+            if (materialUploadForm) {
+                materialUploadForm.classList.remove('is-hidden');
+            }
+        }
+
+        function openMaterialPreview(materialUrl) {
+            if (!materialUrl) {
+                showCourseAlert('등록된 강의 자료가 없습니다.');
+                return;
+            }
+
+            window.open(materialUrl, '_blank', 'noopener');
+        }
+
+        function syncMaterialFileName(materialUrl) {
+            if (!materialFileName || !materialUrl) {
+                return;
+            }
+
+            try {
+                const pathname = new URL(materialUrl, window.location.origin).pathname;
+                const fileName = decodeURIComponent(pathname.substring(pathname.lastIndexOf('/') + 1));
+                materialFileName.textContent = fileName || '자료 미리보기';
+            } catch (error) {
+                materialFileName.textContent = '자료 미리보기';
+            }
         }
 
         function showCourseAlert(message) {
