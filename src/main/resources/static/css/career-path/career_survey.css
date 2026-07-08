@@ -80,9 +80,9 @@
 }
 
 .category-card.active {
-    border-color: var(--color-brand);
-    background: rgba(16, 185, 129, 0.04);
-    box-shadow: 0 0 0 1px var(--color-brand);
+    border-color: var(--color-brand) !important;
+    background: rgba(16, 185, 129, 0.04) !important;
+    box-shadow: 0 0 0 1px var(--color-brand) !important;
 }
 
 .category-card-header {
@@ -99,13 +99,13 @@
 }
 
 .category-card .check-icon {
-    display: none;
+    visibility: hidden;
     color: var(--color-brand);
     font-weight: var(--font-bold);
 }
 
 .category-card.active .check-icon {
-    display: inline;
+    visibility: visible;
 }
 
 .category-card p {
