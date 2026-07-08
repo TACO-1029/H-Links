@@ -77,6 +77,7 @@ public class MyCourseStatusResponseDto {
         private Long courseId;
         private String courseTitle;
         private Long chapterId;
+        private Long chapterOrder;
         private String chapterTitle;
         private int score;
         private String questionText;

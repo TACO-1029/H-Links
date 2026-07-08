@@ -28,6 +28,23 @@ public class CustomUserDetails implements UserDetails {
         return user.getName();
     }
 
+    public String getEmail() {
+        return user.getEmail();
+    }
+
+    public String getPhone() {
+        return user.getPhone();
+    }
+
+    public java.time.LocalDateTime getUpdatedAt() {
+        return user.getUpdatedAt();
+    }
+
+    public void updateProfile(String phone, java.time.LocalDateTime updatedAt) {
+        user.setPhone(phone);
+        user.setUpdatedAt(updatedAt);
+    }
+
     public Long getDepartmentId() {
         return user.getDepartmentId();
     }

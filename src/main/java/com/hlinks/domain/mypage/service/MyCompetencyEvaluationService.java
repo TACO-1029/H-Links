@@ -7,6 +7,7 @@ import com.hlinks.domain.mypage.ai.service.CompetencyAiSummaryService;
 import com.hlinks.domain.mypage.dto.MyCompetencyEvaluationDto;
 import com.hlinks.domain.mypage.mapper.MyCompetencyEvaluationMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -33,6 +34,7 @@ public class MyCompetencyEvaluationService {
     private final CompetencyAiSummaryService competencyAiSummaryService;
     private final ObjectMapper objectMapper;
 
+    @Cacheable(cacheNames = "competencyEvaluation", key = "#userId")
     public MyCompetencyEvaluationDto getEvaluation(Long userId) {
         List<MyCompetencyEvaluationDto.CompetencyScoreDto> scores =
                 enrichScores(myCompetencyEvaluationMapper.findCompetencyScores(userId));

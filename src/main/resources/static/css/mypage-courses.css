@@ -204,13 +204,13 @@
     background: var(--color-brand-pressed) !important;
 }
 .btn-continue.btn-continue-course {
-    background: #2563EB !important;
+    background: var(--color-accent) !important;
 }
 .btn-continue.btn-continue-course:hover {
-    background: #1D4ED8 !important;
+    background: #D99200 !important;
 }
 .btn-continue.btn-continue-course:active {
-    background: #1E40AF !important;
+    background: #B97800 !important;
 }
 .course-item-tag.completed {
     background-color: #ECFDF5;
@@ -441,6 +441,85 @@
 }
 
 /* 모달 팝업 스타일 */
+.wrong-notes-section {
+    margin-top: 0;
+}
+
+.wrong-notes-page .quiz-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.wrong-note-course-group {
+    padding: 20px;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.wrong-note-course-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.wrong-note-course-title {
+    min-width: 0;
+    margin: 0;
+    color: #1E293B;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.4;
+}
+
+.wrong-note-course-count {
+    min-height: 26px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: #FEE2E2;
+    color: #B91C1C;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.wrong-note-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.wrong-notes-page .quiz-card {
+    min-height: 118px;
+    border-color: #E2E8F0;
+    background: #F8FAFC;
+}
+
+.wrong-notes-page .quiz-card-top {
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.wrong-notes-page .quiz-course-title {
+    display: none;
+}
+
+.wrong-notes-page .quiz-chapter-footer {
+    margin-top: auto;
+    border-top: 0;
+    padding-top: 0;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 800;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -529,8 +608,8 @@
     font-weight: 500;
     color: #475569;
     line-height: 1.6;
-    background: #FEF2F2;
+    background: #F0FDF4;
     padding: 16px;
     border-radius: 12px;
-    border: 1px solid #FEE2E2;
+    border: 1px solid #DCFCE7;
 }

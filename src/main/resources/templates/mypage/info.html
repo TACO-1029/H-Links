@@ -2,12 +2,15 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>내 정보</title>
     <link rel="stylesheet" th:href="@{/css/tokens.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/header.css}">
     <link rel="stylesheet" th:href="@{/css/footer.css}">
     <link rel="stylesheet" th:href="@{/css/mypage.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 </head>
 <body class="mypage-page">
 <div th:replace="~{fragments/header :: header}"></div>
@@ -23,6 +26,10 @@
                 <article class="mypage-card mypage-profile-card">
                     <header class="mypage-card__header">
                         <p class="mypage-card__eyebrow">내 기본 정보</p>
+                        <button type="button" class="mypage-profile-edit-button" aria-label="사용자 정보 수정"
+                                onclick="openProfileEditModal()">
+                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                        </button>
                     </header>
 
                     <div class="mypage-profile-summary">
@@ -39,8 +46,6 @@
                                 <span th:text="${departmentName != null ? departmentName : 'DX 부트캠프'}">DX 부트캠프</span>
                                 <span aria-hidden="true">·</span>
                                 <span th:text="${jobName != null ? jobName : 'Frontend Engineer'}">Frontend Engineer</span>
-                                <span aria-hidden="true">·</span>
-                                <span>정상 이용 중</span>
                             </p>
                         </div>
                     </div>
@@ -51,37 +56,21 @@
                             <dd th:text="${loginId != null ? loginId : 'EMP-2026-0147'}">EMP-2026-0147</dd>
                         </div>
                         <div class="mypage-info-row">
-                            <dt>소속 부서</dt>
-                            <dd th:text="${departmentName != null ? departmentName : 'DX 부트캠프'}">DX 부트캠프</dd>
-                        </div>
-                        <div class="mypage-info-row">
                             <dt>이름</dt>
                             <dd th:text="${name != null ? name : '도건우'}">도건우</dd>
-                        </div>
-                        <div class="mypage-info-row">
-                            <dt>직무</dt>
-                            <dd th:text="${jobName != null ? jobName : 'Frontend Engineer'}">Frontend Engineer</dd>
                         </div>
                         <div class="mypage-info-row">
                             <dt>이메일</dt>
                             <dd th:text="${email != null ? email : 'woojin.choi@enterprise.co.kr'}">woojin.choi@enterprise.co.kr</dd>
                         </div>
                         <div class="mypage-info-row">
-                            <dt>직급</dt>
-                            <dd th:text="${positionName != null ? positionName : '사원'}">사원</dd>
-                        </div>
-                        <div class="mypage-info-row">
                             <dt>연락처</dt>
-                            <dd th:text="${phone != null ? phone : '010-1234-5678'}">010-1234-5678</dd>
-                        </div>
-                        <div class="mypage-info-row">
-                            <dt>초기 비밀번호 변경</dt>
-                            <dd th:text="${firstLoginChanged != null ? firstLoginChanged : '미완료'}">미완료</dd>
+                            <dd id="mypagePhoneValue" th:text="${phone != null ? phone : '010-1234-5678'}">010-1234-5678</dd>
                         </div>
                         <div class="mypage-info-row mypage-info-row--spacer" aria-hidden="true"></div>
                         <div class="mypage-info-row">
                             <dt>최근 정보 수정일</dt>
-                            <dd th:text="${updatedAt != null ? updatedAt : '2026.06.30'}">2026.06.30</dd>
+                            <dd id="mypageUpdatedAtValue" th:text="${updatedAt != null ? updatedAt : '2026.06.30'}">2026.06.30</dd>
                         </div>
                     </dl>
                 </article>
@@ -89,22 +78,9 @@
                 <aside class="mypage-side">
                     <article class="mypage-card mypage-side-card">
                         <div class="mypage-side-card__header">
-                            <h2 class="mypage-side-card__title">권한과 관심 분야</h2>
+                            <h2 class="mypage-side-card__title">관심 분야</h2>
                             <a class="mypage-side-card__link" th:href="@{/interests/edit}">관심분야 수정</a>
                         </div>
-
-                        <section class="mypage-chip-section">
-                            <h3>서비스 권한</h3>
-                            <div class="mypage-chip-group">
-                                <span class="mypage-chip mypage-chip--dark"
-                                      th:each="role : ${roles}"
-                                      th:text="${role}">임직원</span>
-                                <span class="mypage-chip mypage-chip--dark"
-                                      th:if="${roles == null}">임직원</span>
-                                <span class="mypage-chip mypage-chip--dark"
-                                      th:if="${roles == null}">학습자</span>
-                            </div>
-                        </section>
 
                         <section class="mypage-chip-section">
                             <h3>관심 분야</h3>
@@ -118,6 +94,30 @@
                                 </span>
                             </div>
                         </section>
+                    </article>
+
+                    <article class="mypage-card mypage-side-card mypage-streak-card">
+                        <div class="mypage-side-card__header">
+                            <div>
+                                <p class="mypage-card__eyebrow">학습 스트릭</p>
+                                <h2 class="mypage-side-card__title">최근 학습 기록</h2>
+                            </div>
+                        </div>
+                        <div class="mypage-streak-summary">
+                            <div>
+                                <strong th:text="${learningStreak != null ? learningStreak.currentStreak : 0}">0</strong>
+                                <span>일 연속</span>
+                            </div>
+                            <div>
+                                <strong th:text="${learningStreak != null ? learningStreak.activeDays : 0}">0</strong>
+                                <span>학습일</span>
+                            </div>
+                            <div>
+                                <strong th:text="${learningStreak != null ? learningStreak.totalLogs : 0}">0</strong>
+                                <span>기록</span>
+                            </div>
+                        </div>
+                        <div id="mypageLearningStreakChart" class="mypage-streak-chart" aria-label="최근 학습 기록 캘린더"></div>
                     </article>
 
                     <article class="mypage-insight-card mypage-insight-card--kcy">
@@ -162,23 +162,222 @@
                         </th:block>
                     </article>
 
-                    <article class="mypage-insight-card mypage-insight-card--career">
-                        <p class="mypage-insight-card__eyebrow">커리어패스</p>
-                        <p class="mypage-insight-card__date"
-                           th:text="${careerDate != null ? '진단일: ' + careerDate : '진단일: 2026.06.18'}">
-                            진단일: 2026.06.18
-                        </p>
-                        <h2 th:text="${careerTitle != null ? careerTitle : '프론트엔드 리드 트랙'}">프론트엔드 리드 트랙</h2>
-                        <p th:text="${careerDescription != null ? careerDescription : 'UI 아키텍처와 클라우드 기반 배포 역량을 함께 강화하면 제품형 엔지니어로 성장 가능성이 높습니다.'}">
-                            UI 아키텍처와 클라우드 기반 배포 역량을 함께 강화하면 제품형 엔지니어로 성장 가능성이 높습니다.
-                        </p>
-                    </article>
                 </aside>
             </section>
         </section>
     </div>
 </main>
 
+<div id="profileEditModal" class="mypage-profile-modal" aria-hidden="true">
+    <div class="mypage-profile-modal__panel" role="dialog" aria-modal="true" aria-labelledby="profileEditTitle">
+        <div class="mypage-profile-modal__header">
+            <div>
+                <p class="mypage-card__eyebrow">내 정보 수정</p>
+            </div>
+            <button type="button" class="mypage-profile-modal__close" aria-label="닫기" onclick="closeProfileEditModal()">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <form id="profileEditForm" class="mypage-profile-form">
+            <label class="mypage-profile-field">
+                <span>연락처</span>
+                <input id="profilePhoneInput" name="phone" type="tel" maxlength="30"
+                       th:value="${phone != null ? phone : ''}" autocomplete="tel" required>
+            </label>
+
+            <label class="mypage-profile-field">
+                <span>현재 비밀번호</span>
+                <input id="profileCurrentPasswordInput" name="currentPassword" type="password"
+                       autocomplete="current-password" required>
+            </label>
+
+            <label class="mypage-profile-field">
+                <span>새 비밀번호</span>
+                <input id="profileNewPasswordInput" name="newPassword" type="password"
+                       autocomplete="new-password" placeholder="변경하지 않으려면 비워두세요">
+            </label>
+
+            <label class="mypage-profile-field">
+                <span>새 비밀번호 확인</span>
+                <input id="profileNewPasswordConfirmInput" name="newPasswordConfirm" type="password"
+                       autocomplete="new-password">
+            </label>
+
+            <p id="profileEditMessage" class="mypage-profile-form__message" aria-live="polite"></p>
+
+            <div class="mypage-profile-form__actions">
+                <button type="button" class="mypage-profile-form__button mypage-profile-form__button--secondary"
+                        onclick="closeProfileEditModal()">취소</button>
+                <button type="submit" class="mypage-profile-form__button">저장</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script th:inline="javascript">
+    const mypageLearningStreak = /*[[${learningStreak}]]*/ {
+        startDate: '',
+        endDate: '',
+        activeDays: 0,
+        totalLogs: 0,
+        currentStreak: 0,
+        days: []
+    };
+</script>
+<script>
+    const learningStreakChartElement = document.getElementById('mypageLearningStreakChart');
+
+    function renderLearningStreakChart() {
+        if (!learningStreakChartElement || !window.echarts || !mypageLearningStreak) {
+            return;
+        }
+
+        const chart = window.echarts.init(learningStreakChartElement);
+        const days = Array.isArray(mypageLearningStreak.days) ? mypageLearningStreak.days : [];
+        const chartData = days.map(function (day) {
+            return [day.date, day.count];
+        });
+        const maxCount = Math.max(1, ...days.map(function (day) {
+            return day.count || 0;
+        }));
+
+        chart.setOption({
+            tooltip: {
+                formatter: function (params) {
+                    return params.value[0] + '<br>학습 기록 ' + params.value[1] + '건';
+                }
+            },
+            visualMap: {
+                min: 0,
+                max: maxCount,
+                show: false,
+                inRange: {
+                    color: ['#ECFDF5', '#A7F3D0', '#34D399', '#009E7A', '#047857']
+                }
+            },
+            calendar: {
+                top: 20,
+                left: 28,
+                right: 8,
+                bottom: 18,
+                range: [mypageLearningStreak.startDate, mypageLearningStreak.endDate],
+                cellSize: ['auto', 13],
+                splitLine: { show: false },
+                itemStyle: {
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF'
+                },
+                dayLabel: {
+                    firstDay: 0,
+                    nameMap: ['일', '월', '화', '수', '목', '금', '토'],
+                    color: '#64748B',
+                    fontSize: 10
+                },
+                monthLabel: {
+                    color: '#64748B',
+                    fontSize: 10
+                },
+                yearLabel: {
+                    show: false
+                }
+            },
+            series: [{
+                type: 'heatmap',
+                coordinateSystem: 'calendar',
+                data: chartData
+            }]
+        });
+
+        window.addEventListener('resize', function () {
+            chart.resize();
+        });
+    }
+
+    renderLearningStreakChart();
+
+    const profileEditModal = document.getElementById('profileEditModal');
+    const profileEditForm = document.getElementById('profileEditForm');
+    const profileEditMessage = document.getElementById('profileEditMessage');
+    const profilePhoneInput = document.getElementById('profilePhoneInput');
+    const profileCurrentPasswordInput = document.getElementById('profileCurrentPasswordInput');
+    const profileNewPasswordInput = document.getElementById('profileNewPasswordInput');
+    const profileNewPasswordConfirmInput = document.getElementById('profileNewPasswordConfirmInput');
+
+    function openProfileEditModal() {
+        profileEditMessage.textContent = '';
+        profileEditMessage.classList.remove('is-error', 'is-success');
+        profileCurrentPasswordInput.value = '';
+        profileNewPasswordInput.value = '';
+        profileNewPasswordConfirmInput.value = '';
+        profileEditModal.classList.add('is-open');
+        profileEditModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        profilePhoneInput.focus();
+    }
+
+    function closeProfileEditModal() {
+        profileEditModal.classList.remove('is-open');
+        profileEditModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    profileEditModal.addEventListener('click', function (event) {
+        if (event.target === profileEditModal) {
+            closeProfileEditModal();
+        }
+    });
+
+    profileEditForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+
+        if (csrfToken && csrfHeader) {
+            headers[csrfHeader] = csrfToken;
+        }
+
+        const submitButton = profileEditForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        profileEditMessage.textContent = '';
+        profileEditMessage.classList.remove('is-error', 'is-success');
+
+        try {
+            const response = await fetch('/mypage/profile', {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify({
+                    phone: profilePhoneInput.value.trim(),
+                    currentPassword: profileCurrentPasswordInput.value,
+                    newPassword: profileNewPasswordInput.value,
+                    newPasswordConfirm: profileNewPasswordConfirmInput.value
+                })
+            });
+
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || '사용자 정보 수정에 실패했습니다.');
+            }
+
+            document.getElementById('mypagePhoneValue').textContent = result.data.phone || '-';
+            document.getElementById('mypageUpdatedAtValue').textContent = result.data.updatedAt || '-';
+            profileEditMessage.textContent = '사용자 정보가 저장되었습니다.';
+            profileEditMessage.classList.add('is-success');
+            setTimeout(closeProfileEditModal, 700);
+        } catch (error) {
+            profileEditMessage.textContent = error.message;
+            profileEditMessage.classList.add('is-error');
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+</script>
 </body>
 </html>
