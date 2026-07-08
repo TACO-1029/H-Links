@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlinks.domain.mypage.mapper.MyLearningStreakMapper">
+    <select id="selectDailyLearningLogs" resultType="com.hlinks.domain.mypage.dto.MyLearningStreakRow">
+        SELECT
+            TO_CHAR(TRUNC(ll.EVENT_AT), 'YYYY-MM-DD') AS learningDate,
+            COUNT(*) AS logCount
+        FROM LEARNING_LOG ll
+        WHERE ll.USER_ID = #{userId}
+          AND ll.EVENT_AT &gt;= TRUNC(SYSDATE) - (#{days} - 1)
+          AND ll.EVENT_AT &lt; TRUNC(SYSDATE) + 1
+        GROUP BY TRUNC(ll.EVENT_AT)
+        ORDER BY TRUNC(ll.EVENT_AT)
+    </select>
+</mapper>

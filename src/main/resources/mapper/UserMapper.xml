@@ -19,6 +19,9 @@
         u.LOGIN_ID AS loginId,
         u.PASSWORD AS password,
         u.NAME AS name,
+        u.EMAIL AS email,
+        u.PHONE AS phone,
+        u.UPDATED_AT AS updatedAt,
         u.STATUS AS status
         FROM USERS u
         LEFT JOIN DEPARTMENT d
@@ -28,6 +31,34 @@
         LEFT JOIN POSITION p
         ON u.POSITION_ID = p.POSITION_ID
         WHERE u.LOGIN_ID = #{loginId}
+    </select>
+
+    <select id="findByUserId"
+            parameterType="long"
+            resultType="com.hlinks.domain.user.dto.LoginUserDto">
+        SELECT
+        u.USER_ID AS userId,
+        u.DEPARTMENT_ID AS departmentId,
+        d.DEPARTMENT_NAME AS departmentName,
+        u.JOB_ID AS jobId,
+        j.JOB_NAME AS jobName,
+        u.POSITION_ID AS positionId,
+        p.POSITION_NAME AS positionName,
+        u.LOGIN_ID AS loginId,
+        u.PASSWORD AS password,
+        u.NAME AS name,
+        u.EMAIL AS email,
+        u.PHONE AS phone,
+        u.UPDATED_AT AS updatedAt,
+        u.STATUS AS status
+        FROM USERS u
+        LEFT JOIN DEPARTMENT d
+        ON u.DEPARTMENT_ID = d.DEPARTMENT_ID
+        LEFT JOIN JOB j
+        ON u.JOB_ID = j.JOB_ID
+        LEFT JOIN POSITION p
+        ON u.POSITION_ID = p.POSITION_ID
+        WHERE u.USER_ID = #{userId}
     </select>
 
     <select id="findRoleCodesByUserId"
@@ -41,5 +72,16 @@
         WHERE ur.USER_ID = #{userId}
         ORDER BY r.ROLE_CODE
     </select>
+
+    <update id="updateMyProfile">
+        UPDATE USERS
+        SET
+        PHONE = #{phone},
+        <if test="encodedPassword != null">
+            PASSWORD = #{encodedPassword},
+        </if>
+        UPDATED_AT = SYSDATE
+        WHERE USER_ID = #{userId}
+    </update>
 
 </mapper>

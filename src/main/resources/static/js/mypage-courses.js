@@ -40,6 +40,64 @@ function closeQuizModal() {
     document.getElementById('quizModal').classList.remove('is-open');
 }
 
+// 오답노트 전용 강의별 그룹 렌더링
+function groupWrongNotesByCourse() {
+    const wrongNotesPage = document.querySelector('.wrong-notes-page');
+    if (!wrongNotesPage) {
+        return;
+    }
+
+    const noteGrid = wrongNotesPage.querySelector('.quiz-grid');
+    if (!noteGrid) {
+        return;
+    }
+
+    const cards = Array.from(noteGrid.querySelectorAll(':scope > .quiz-card'));
+    if (cards.length === 0) {
+        return;
+    }
+
+    const groups = new Map();
+    cards.forEach(card => {
+        const titleElement = card.querySelector('.quiz-course-title');
+        const courseTitle = card.dataset.courseTitle || titleElement?.textContent?.trim() || '강의명 없음';
+
+        if (!groups.has(courseTitle)) {
+            groups.set(courseTitle, []);
+        }
+        groups.get(courseTitle).push(card);
+    });
+
+    const groupedContent = document.createDocumentFragment();
+    groups.forEach((groupCards, courseTitle) => {
+        const group = document.createElement('section');
+        group.className = 'wrong-note-course-group';
+
+        const header = document.createElement('div');
+        header.className = 'wrong-note-course-header';
+
+        const title = document.createElement('h3');
+        title.className = 'wrong-note-course-title';
+        title.textContent = courseTitle;
+
+        const count = document.createElement('span');
+        count.className = 'wrong-note-course-count';
+        count.textContent = `${groupCards.length}개`;
+
+        const cardGrid = document.createElement('div');
+        cardGrid.className = 'wrong-note-card-grid';
+
+        groupCards.forEach(card => cardGrid.appendChild(card));
+        header.append(title, count);
+        group.append(header, cardGrid);
+        groupedContent.appendChild(group);
+    });
+
+    noteGrid.replaceChildren(groupedContent);
+}
+
+document.addEventListener('DOMContentLoaded', groupWrongNotesByCourse);
+
 // 강의 상세 모달 핸들러
 function openCourseDetailModal(btnElement) {
     const title = btnElement.getAttribute('data-title');

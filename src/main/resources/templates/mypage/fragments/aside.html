@@ -8,18 +8,27 @@
             <a th:href="@{/mypage}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myInfo'} ? 'is-active'">내 정보</a>
         </li>
         <li>
-            <a th:href="@{/mypage/courses}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myCourses'} ? 'is-active'">수강현황</a>
+            <a th:href="@{/mypage/courses}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myCourses'} ? 'is-active'">강의 수강 현황</a>
         </li>
         <li>
-            <a th:href="@{/mypage/applications}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myApplications'} ? 'is-active'">신청 내역</a>
+            <a th:href="@{/mypage/wrong-notes}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myWrongNotes'} ? 'is-active'">나의 오답 노트</a>
         </li>
         <li>
-            <a th:href="@{/mypage/evaluation}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myEvaluation'} ? 'is-active'">역량 평가</a>
+            <a th:href="@{/mypage/applications}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myApplications'} ? 'is-active'">강의 신청 내역</a>
+        </li>
+        <li>
+            <a th:href="@{/mypage/evaluation}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myEvaluation'} ? 'is-active'">역량 분석</a>
         </li>
         <li>
             <a th:href="@{/mypage/coffee-chats}" class="mypage-aside-nav__link" th:classappend="${activeSubMenu == 'myCoffeeChats'} ? 'is-active'">커피챗</a>
         </li>
     </ul>
+    <form class="mypage-aside-nav__logout-form" th:action="@{/logout}" method="post">
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}">
+        <button type="submit" class="mypage-aside-nav__logout-button">로그아웃</button>
+    </form>
 </aside>
 </body>
 </html>

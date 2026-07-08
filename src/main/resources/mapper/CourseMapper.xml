@@ -979,6 +979,7 @@
             qa.COURSE_ID as courseId,
             c.COURSE_TITLE as courseTitle,
             qa.CHAPTER_ID as chapterId,
+            cc.CHAPTER_ORDER as chapterOrder,
             cc.CHAPTER_TITLE as chapterTitle,
             NVL((
                 SELECT TRUNC(COUNT(CASE WHEN qa2.CORRECT_YN = 'Y' THEN 1 END) * 100 / NULLIF(COUNT(*), 0))

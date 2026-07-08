@@ -26,33 +26,32 @@
 
         <!-- 우측 메인 영역 -->
         <section class="mypage-main-content" aria-label="내 수강 현황">
-            
+            <div class="applications-header">
+                <div class="applications-header__title-area">
+                    <h2>강의 수강 현황</h2>
+                    <p>수강 중인 강의와 최근 학습 활동을 한눈에 확인합니다.</p>
+                </div>
+            </div>
+
+            <!-- 수강 상태별 필터 탭 -->
+            <div class="filter-buttons">
+                <button class="filter-btn is-active" onclick="filterCourses('ALL', this)">
+                    전체 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE')])}">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterCourses('NOT_STARTED', this)">
+                    수강 전 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE') and learningStatus == 'NOT_STARTED'])}">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterCourses('IN_PROGRESS', this)">
+                    수강 중 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE') and learningStatus == 'IN_PROGRESS'])}">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterCourses('COMPLETED', this)">
+                    수료 완료 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE') and learningStatus == 'COMPLETED'])}">0</span>
+                </button>
+            </div>
+
             <div class="courses-layout">
                 <!-- 좌측 수강 목록 리스트 -->
                 <div class="courses-left-section">
-                    <div class="section-header">
-                        <h2 class="section-title">
-                            나의 수강 현황 
-                            <span class="section-badge" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE')])}">0</span>
-                        </h2>
-                    </div>
-
-                    <!-- 수강 상태별 필터 탭 -->
-                    <div class="filter-buttons">
-                        <button class="filter-btn is-active" onclick="filterCourses('ALL', this)">
-                            전체 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE')])}">0</span>
-                        </button>
-                        <button class="filter-btn" onclick="filterCourses('NOT_STARTED', this)">
-                            수강 전 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE') and learningStatus == 'NOT_STARTED'])}">0</span>
-                        </button>
-                        <button class="filter-btn" onclick="filterCourses('IN_PROGRESS', this)">
-                            수강 중 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE') and learningStatus == 'IN_PROGRESS'])}">0</span>
-                        </button>
-                        <button class="filter-btn" onclick="filterCourses('COMPLETED', this)">
-                            수료 완료 <span class="filter-count" th:text="${#lists.size(statusDto.inProgressCourses.?[!(categoryType == 'CAREER_HIGH' and courseType == 'OFFLINE') and learningStatus == 'COMPLETED'])}">0</span>
-                        </button>
-                    </div>
-
                     <!-- 수강 리스트 -->
                     <div th:if="${#lists.isEmpty(statusDto.inProgressCourses)}" class="applications-empty">
                         <div class="applications-empty__icon">
@@ -110,17 +109,11 @@
                                     <span>이어보기</span>
                                 </a>
                                 
-                                <!-- 상세보기 버튼 (모달 호출) -->
-                                <button class="btn-continue" style="background: #475569; padding: 6px 8px; font-size: 12px; justify-content: center; width: 100%; box-sizing: border-box;"
-                                        th:data-title="${course.courseTitle}"
-                                        th:data-category="${course.categoryType == 'CAREER_PATH' ? '커리어패스' : '커리어하이'}"
-                                        th:data-appno="${course.applicationNo}"
-                                        th:data-lastplay="${course.lastPlayTimeStr}"
-                                        th:data-completion="${course.completionStatus}"
-                                        th:data-type="${course.courseType == 'OFFLINE' ? '오프라인 특강' : '온라인 과정'}"
-                                        onclick="openCourseDetailModal(this)">
+                                <!-- 상세보기 버튼 -->
+                                <a class="btn-continue" style="background: #475569; padding: 6px 8px; font-size: 12px; justify-content: center; width: 100%; box-sizing: border-box;"
+                                   th:href="@{/courses/{courseId}(courseId=${course.courseId})}">
                                     <span>상세보기</span>
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -128,33 +121,11 @@
 
                 <!-- 우측 위젯 영역 -->
                 <div class="courses-right-section">
-                    <!-- 최근 수료 강의 -->
-                    <div class="right-card">
-                        <div class="right-card-title-row">
-                            <h3 class="right-card-title">최근 수료 강의</h3>
-                            <span class="right-card-badge" th:text="${statusDto.recentCompletedCourse != null} ? '1건' : '0건'">?건</span>
-                        </div>
-                        <div th:if="${statusDto.recentCompletedCourse != null}" class="completed-box">
-                            <div class="completed-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div class="completed-info">
-                                <h4 class="completed-name" th:text="${statusDto.recentCompletedCourse.courseTitle}">최근 수료 강의명 예시</h4>
-                                <span class="completed-date" th:text="'수료일: ' + ${statusDto.recentCompletedCourse.completedAtStr}">-</span>
-                            </div>
-                        </div>
-                        <div th:unless="${statusDto.recentCompletedCourse != null}" style="text-align: center; color: #94A3B8; font-size: 12px; padding: 16px 0;">
-                            최근 수료한 강의가 없습니다.
-                        </div>
-                    </div>
-
                     <!-- 최근 학습 활동 -->
                     <div class="right-card">
                         <div class="right-card-title-row">
                             <h3 class="right-card-title">최근 학습 활동</h3>
-                            <span class="right-card-badge">실시간 기록</span>
+<!--                            <span class="right-card-badge">실시간 기록</span>-->
                         </div>
                         
                         <div class="timeline-list">
@@ -174,75 +145,10 @@
                 </div>
             </div>
 
-            <!-- 하단 퀴즈 오답노트 -->
-            <div class="quiz-section">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        퀴즈 오답노트 
-                        <span class="section-badge" th:text="${#lists.size(statusDto.quizWrongNotes)}">0개</span>
-                    </h2>
-                </div>
-                
-                <div class="quiz-grid">
-                    <div th:each="note : ${statusDto.quizWrongNotes}" 
-                         class="quiz-card"
-                         th:data-question="${note.questionText}"
-                         th:data-explanation="${note.explanation}"
-                         th:data-chapter="${note.chapterTitle}"
-                         th:data-submitted="${note.submittedOptionText}"
-                         th:data-correct="${note.correctOptionText}"
-                         onclick="openQuizModal(this)">
-                        
-                        <div class="quiz-card-top">
-                            <span class="quiz-tag">오답노트</span>
-                            <span class="quiz-score" th:text="${note.score} + '점'">0점</span>
-                        </div>
-                        <h3 class="quiz-course-title" th:text="${note.courseTitle}">Docker & Kubernetes</h3>
-                        <div class="quiz-chapter-footer" th:text="${note.chapterTitle}">n주차 형성평가</div>
-                    </div>
-                </div>
-                
-                <div th:if="${#lists.isEmpty(statusDto.quizWrongNotes)}" style="text-align: center; color: #94A3B8; font-size: 13px; padding: 32px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; margin-top: 16px;">
-                    오답 기록이 없습니다. 퀴즈를 성실히 풀으셨군요!
-                </div>
-            </div>
-            
         </section>
     </div>
 
 </main>
-
-<!-- 오답노트 상세 보기 모달 팝업 -->
-<div id="quizModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 class="modal-title" id="modalChapterTitle">2주차 형성평가</h3>
-            <button class="btn-modal-close" onclick="closeQuizModal()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div>
-                <h4 class="info-section-title">질문 문제</h4>
-                <div class="question-box" id="modalQuestionText">문제 내용</div>
-            </div>
-            <div>
-                <h4 class="info-section-title" style="color: #EF4444;">내가 제출한 오답</h4>
-                <div class="submitted-option-box" id="modalSubmittedOption">선택한 오답 내용</div>
-            </div>
-            <div>
-                <h4 class="info-section-title" style="color: #10B981;">정답 선지</h4>
-                <div class="correct-option-box" id="modalCorrectOption">정답 내용</div>
-            </div>
-            <div>
-                <h4 class="info-section-title">틀린 문항 오답 해설</h4>
-                <div class="explanation-box" id="modalExplanationText">해설 내용</div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- 강의 상세 정보 보기 모달 팝업 -->
 <div id="courseDetailModal" class="modal">
