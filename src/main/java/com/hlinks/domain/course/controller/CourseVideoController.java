@@ -7,6 +7,7 @@ import com.hlinks.global.storage.DownloadedFile;
 import com.hlinks.global.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.ContentDisposition;
@@ -18,7 +19,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.MalformedURLException;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -47,15 +50,10 @@ public class CourseVideoController {
         }
 
         DownloadedFile downloadedFile = fileStorageService.download(videoKey);
-
-        try {
-            Resource resource = new UrlResource(downloadedFile.path().toUri());
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType("video/mp4"))
-                    .body(resource);
-        } catch (MalformedURLException e) {
-            throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "강의 영상 경로가 올바르지 않습니다.", e);
-        }
+        Resource resource = toResponseResource(downloadedFile);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("video/mp4"))
+                .body(resource);
     }
 
     @GetMapping("/images/courses/{courseId}/{fileName:.+}")
@@ -107,20 +105,57 @@ public class CourseVideoController {
 
         try {
             Path materialPath = downloadedFile.path();
-            Resource resource = new UrlResource(materialPath.toUri());
             MediaType mediaType = Optional.ofNullable(Files.probeContentType(materialPath))
                     .map(MediaType::parseMediaType)
                     .orElse(MediaType.APPLICATION_OCTET_STREAM);
             ContentDisposition contentDisposition = ContentDisposition.attachment()
                     .filename(fileName, StandardCharsets.UTF_8)
                     .build();
+            Resource resource = toResponseResource(downloadedFile);
 
             return ResponseEntity.ok()
                     .contentType(mediaType)
                     .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
                     .body(resource);
+        } catch (BaseException e) {
+            downloadedFile.close();
+            throw e;
         } catch (Exception e) {
+            downloadedFile.close();
             throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "강의 자료 경로가 올바르지 않습니다.", e);
+        }
+    }
+
+    private Resource toResponseResource(DownloadedFile downloadedFile) {
+        Path path = downloadedFile.path();
+
+        try {
+            InputStream inputStream = new FilterInputStream(Files.newInputStream(path)) {
+                @Override
+                public void close() throws IOException {
+                    try {
+                        super.close();
+                    } finally {
+                        downloadedFile.close();
+                    }
+                }
+            };
+
+            return new InputStreamResource(inputStream) {
+                @Override
+                public long contentLength() throws IOException {
+                    return Files.size(path);
+                }
+
+                @Override
+                public String getFilename() {
+                    Path fileName = path.getFileName();
+                    return fileName == null ? null : fileName.toString();
+                }
+            };
+        } catch (IOException e) {
+            downloadedFile.close();
+            throw new BaseException(ErrorResponseCode.INTERNAL_SERVER_ERROR, "파일 응답 리소스 생성에 실패했습니다.", e);
         }
     }
 
