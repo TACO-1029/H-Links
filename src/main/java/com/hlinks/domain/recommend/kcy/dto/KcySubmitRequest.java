@@ -22,7 +22,6 @@ public class KcySubmitRequest {
     private List<String> tiebreakerBlocks;
 
     @Min(value = 0, message = "소요 시간은 음수일 수 없습니다.")
-    @Max(value = 3600, message = "소요 시간이 비정상적으로 깁니다.")
     private Integer timeTaken;
 
     @Min(value = 0, message = "그리드 채움 비율은 0% 이상이어야 합니다.")

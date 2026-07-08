@@ -209,7 +209,6 @@ public class KcyServiceImpl implements KcyService {
     @Override
     @Transactional
     public KcyScoreDto submit(Long userId, KcySubmitRequest request) {
-        // 검증 로직은 필요에 따라 유연하게 (Adaptive 에서는 개수가 가변적)
         if (request.getSelectedOptionIds() == null) {
              request.setSelectedOptionIds(new ArrayList<>());
         }
@@ -221,6 +220,9 @@ public class KcyServiceImpl implements KcyService {
             request.getTimeTaken(),
             request.getFillRate()
         );
+
+        // 50:50 동점 축 미세 보정 (Tiebreaker)
+        applyTiebreakerAdjustments(score, request);
 
         KcyType resultType = score.toKcyType();
         int updatedCount = kcyMapper.updateUserKcyResult(userId, resultType.getCode());
@@ -238,11 +240,11 @@ public class KcyServiceImpl implements KcyService {
     }
 
     private KcyScoreDto calculateCurrentScore(List<Long> optionIds, List<String> angerTypes, List<String> tetrisBlocks, Integer timeTaken, Integer fillRate) {
-        if (timeTaken != null && (timeTaken < 0 || timeTaken > 3600)) {
-            throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE);
+        if (timeTaken != null && (timeTaken < 0)) {
+            throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE, timeTaken.toString());
         }
         if (fillRate != null && (fillRate < 0 || fillRate > 100)) {
-            throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE);
+            throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE, fillRate.toString());
         }
         if (optionIds != null && !optionIds.isEmpty()) {
             List<KcyQuestionDto> activeQuestions = kcyMapper.findActiveQuestions();
@@ -264,9 +266,12 @@ public class KcyServiceImpl implements KcyService {
             }
         }
         if (angerTypes != null) {
-            java.util.Set<String> validAxes = java.util.Set.of("ACTION", "OUTLINE", "WIDE", "DEEP", "INDEPENDENT", "CORPORATE", "PROMPTER", "MANUAL");
+            Set<String> validAxes = Set.of("ACTION", "OUTLINE", "WIDE", "DEEP", "INDEPENDENT", "CORPORATE", "PROMPTER", "MANUAL");
             for (String type : angerTypes) {
-                if (type == null || !validAxes.contains(type)) {
+                if (type == null || "".equals(type)) {
+                    continue;
+                }
+                if (!validAxes.contains(type)) {
                     throw new BaseException(KcyErrorCode.KCY_INVALID_INPUT_VALUE);
                 }
             }
@@ -301,7 +306,9 @@ public class KcyServiceImpl implements KcyService {
         // 1. 하이라이터 훅 점수 추가 (MCQ 대비 가중치 미미하게 1점 부여)
         if (angerTypes != null) {
             for (String type : angerTypes) {
-                score.addScore(type, 1);
+                if (type != null) {
+                    score.addScore(type, 1);
+                }
             }
         }
 
@@ -450,5 +457,81 @@ public class KcyServiceImpl implements KcyService {
         }
 
         return trimmedName.substring(0, 1);
+    }
+
+    private void applyTiebreakerAdjustments(KcyScoreDto score, KcySubmitRequest request) {
+        // 1. ACTION vs OUTLINE
+        if (score.getActionScore() == score.getOutlineScore()) {
+            String winner = findEarlierChoiceWinner(request, "ACTION", "OUTLINE");
+            if ("ACTION".equals(winner)) score.setActionScore(score.getActionScore() + 1);
+            else if ("OUTLINE".equals(winner)) score.setOutlineScore(score.getOutlineScore() + 1);
+        }
+        // 2. WIDE vs DEEP
+        if (score.getWideScore() == score.getDeepScore()) {
+            String winner = findEarlierChoiceWinner(request, "WIDE", "DEEP");
+            if ("WIDE".equals(winner)) score.setWideScore(score.getWideScore() + 1);
+            else if ("DEEP".equals(winner)) score.setDeepScore(score.getDeepScore() + 1);
+        }
+        // 3. INDEPENDENT vs CORPORATE
+        if (score.getIndependentScore() == score.getCorporateScore()) {
+            String winner = findEarlierChoiceWinner(request, "INDEPENDENT", "CORPORATE");
+            if ("INDEPENDENT".equals(winner)) score.setIndependentScore(score.getIndependentScore() + 1);
+            else if ("CORPORATE".equals(winner)) score.setCorporateScore(score.getCorporateScore() + 1);
+        }
+        // 4. PROMPTER vs MANUAL
+        if (score.getPrompterScore() == score.getManualScore()) {
+            String winner = findEarlierChoiceWinner(request, "PROMPTER", "MANUAL");
+            if ("PROMPTER".equals(winner)) score.setPrompterScore(score.getPrompterScore() + 1);
+            else if ("MANUAL".equals(winner)) score.setManualScore(score.getManualScore() + 1);
+        }
+    }
+
+    private String findEarlierChoiceWinner(KcySubmitRequest request, String axisA, String axisB) {
+        // 기준 1: 하이라이팅 훅(angerScoreTypes)에서 더 많이 나타난 축 확인
+        if (request.getAngerScoreTypes() != null) {
+            long countA = request.getAngerScoreTypes().stream().filter(axisA::equalsIgnoreCase).count();
+            long countB = request.getAngerScoreTypes().stream().filter(axisB::equalsIgnoreCase).count();
+            if (countA > countB) return axisA;
+            if (countB > countA) return axisB;
+        }
+
+        // 기준 2: 사용자가 푼 MCQ 중 가장 먼저 나온 선택지들의 가중치를 바탕으로 판별
+        if (request.getSelectedOptionIds() != null && !request.getSelectedOptionIds().isEmpty()) {
+            List<KcyQuestionDto> activeQuestions = kcyMapper.findActiveQuestions();
+            if (activeQuestions != null && !activeQuestions.isEmpty()) {
+                List<Long> qIds = activeQuestions.stream()
+                        .map(KcyQuestionDto::getKcyQuestionId)
+                        .collect(Collectors.toList());
+                List<KcyOptionDto> activeOptions = kcyMapper.findOptionsByQuestionIds(qIds);
+                if (activeOptions != null) {
+                    Map<Long, KcyOptionDto> optionMap = activeOptions.stream()
+                            .collect(Collectors.toMap(KcyOptionDto::getKcyOptionId, opt -> opt));
+                    for (Long optId : request.getSelectedOptionIds()) {
+                        KcyOptionDto opt = optionMap.get(optId);
+                        if (opt != null) {
+                            int valA = getOptionAxisScore(opt, axisA);
+                            int valB = getOptionAxisScore(opt, axisB);
+                            if (valA > valB) return axisA;
+                            if (valB > valA) return axisB;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private int getOptionAxisScore(KcyOptionDto opt, String axis) {
+        return switch (axis.toUpperCase()) {
+            case "ACTION" -> opt.getActionScore();
+            case "OUTLINE" -> opt.getOutlineScore();
+            case "WIDE" -> opt.getWideScore();
+            case "DEEP" -> opt.getDeepScore();
+            case "INDEPENDENT" -> opt.getIndependentScore();
+            case "CORPORATE" -> opt.getCorporateScore();
+            case "PROMPTER" -> opt.getPrompterScore();
+            case "MANUAL" -> opt.getManualScore();
+            default -> 0;
+        };
     }
 }
