@@ -254,22 +254,37 @@
     </select>
 
     <insert id="insertLevelTestAnswerLog" parameterType="com.hlinks.domain.career.entity.LevelTestAnswerLog">
-        <selectKey keyProperty="levelAnswerId" resultType="long" order="BEFORE">
-            SELECT LEVEL_TEST_ANSWER_LOG_SEQ.NEXTVAL FROM DUAL
-        </selectKey>
-        INSERT INTO LEVEL_TEST_ANSWER_LOG (
-            LEVEL_ANSWER_ID,
-            USER_ID,
-            LEVEL_QUESTION_ID,
-            SELECTED_OPTION_ID,
-            CORRECT_YN
-        ) VALUES (
-            #{levelAnswerId},
-            #{userId},
-            #{levelQuestionId},
-            #{selectedOptionId, jdbcType=NUMERIC},
-            #{correctYn}
+        MERGE INTO LEVEL_TEST_ANSWER_LOG target
+        USING (
+            SELECT
+                #{userId} AS USER_ID,
+                #{levelQuestionId} AS LEVEL_QUESTION_ID,
+                #{selectedOptionId, jdbcType=NUMERIC} AS SELECTED_OPTION_ID,
+                #{correctYn} AS CORRECT_YN
+            FROM DUAL
+        ) source
+        ON (
+            target.USER_ID = source.USER_ID
+            AND target.LEVEL_QUESTION_ID = source.LEVEL_QUESTION_ID
         )
+        WHEN MATCHED THEN
+            UPDATE SET
+                target.SELECTED_OPTION_ID = source.SELECTED_OPTION_ID,
+                target.CORRECT_YN = source.CORRECT_YN
+        WHEN NOT MATCHED THEN
+            INSERT (
+                LEVEL_ANSWER_ID,
+                USER_ID,
+                LEVEL_QUESTION_ID,
+                SELECTED_OPTION_ID,
+                CORRECT_YN
+            ) VALUES (
+                LEVEL_TEST_ANSWER_LOG_SEQ.NEXTVAL,
+                source.USER_ID,
+                source.LEVEL_QUESTION_ID,
+                source.SELECTED_OPTION_ID,
+                source.CORRECT_YN
+            )
     </insert>
 
     <select id="getSkillNameById" resultType="string">
