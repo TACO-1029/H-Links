@@ -1166,10 +1166,13 @@
             stateVal.isPlaced = false;
         }
 
+        // CSS contain/transform/filter 등으로 인한 position: fixed 좌표계 왜곡 방지를 위해 body로 이동
+        document.body.appendChild(activeDrag);
+
         activeDrag.style.position = 'fixed';
         activeDrag.style.left = `${clientX - dragOffset.x}px`;
         activeDrag.style.top = `${clientY - dragOffset.y}px`;
-        activeDrag.style.zIndex = '1000';
+        activeDrag.style.zIndex = '99999';
         activeDrag.style.transform = 'scale(1.05) rotate(2deg)';
         activeDrag.style.opacity = '0.85';
 
@@ -1282,11 +1285,29 @@
         });
 
         // 1. 테트리스가 어태치되어있던 풀 오버레이 영역을 비활성화/숨김 처리
-        const overlay = document.querySelector('.attachment-tetris');
+        // 1. 테트리스가 어태치되어있던 풀 오버레이 영역 해제하되, 말풍선은 보존 (비활성화 처리)
+        const overlays = document.querySelectorAll('.attachment-tetris');
+        const overlay = overlays[overlays.length - 1];
         if (overlay) {
             overlay.classList.remove('tetris-full-overlay');
             const tetrisArticle = overlay.querySelector('#stage-tetris');
-            if (tetrisArticle) tetrisArticle.style.display = 'none';
+            if (tetrisArticle) {
+                // 조작 UI 숨기기
+                const ctrlRow = tetrisArticle.querySelector('.board-control-row');
+                if (ctrlRow) ctrlRow.style.display = 'none';
+                
+                const footer = tetrisArticle.querySelector('.kcy-test-card__footer');
+                if (footer) footer.style.display = 'none';
+                
+                const shelfWrapper = tetrisArticle.querySelector('.bottom-shelf-wrapper');
+                if (shelfWrapper) shelfWrapper.style.display = 'none';
+                
+                // 마우스 드래그 상호작용 비활성화
+                tetrisArticle.style.pointerEvents = 'none';
+                
+                // 보드 크기와 패딩을 컴팩트하게 조율하여 말풍선 내에 아담하게 들어가도록 처리
+                tetrisArticle.style.padding = '8px';
+            }
         }
 
         // 2. 사용자 말풍선으로 테트리스 배포 상황 피드백 노출
