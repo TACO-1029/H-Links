@@ -2,7 +2,7 @@
 <html lang="ko"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:fragment="commonHead">
+<th:block th:fragment="commonHead">
     <meta charset="UTF-8">
     <title>H-Links</title>
     <link rel="apple-touch-icon" sizes="57x57" th:href="@{/favicon/apple-icon-57x57.png}">
@@ -22,8 +22,5 @@
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" th:content="@{/favicon/ms-icon-144x144.png}">
     <meta name="theme-color" content="#ffffff">
-</head>
-<body>
-
-</body>
+</th:block>
 </html>
