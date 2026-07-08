@@ -5,6 +5,7 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${currentChapter.chapterTitle} + ' - 온라인 학습'">온라인 학습 - H-Link</title>
+    <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
 
     <link rel="stylesheet" th:href="@{/css/tokens.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
