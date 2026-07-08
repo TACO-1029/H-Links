@@ -102,7 +102,16 @@
                         </div>
                         <h2 class="career-dashboard__report-title mb-0">레벨 테스트 종합 진단서</h2>
                     </div>
-                    <a th:href="${diagnosis != null} ? @{/courses/career-path/result(diagnosisId=${diagnosis.diagnosisId})} : @{/courses/career-path/start}"
+                    <button th:if="${dashboardStatus == 'CREATING'}"
+                            class="btn career-dashboard__report-button"
+                            type="button"
+                            data-pending-modal-open>
+                        <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                        <span>최신 분석 보고서 보러가기</span>
+                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                    </button>
+                    <a th:unless="${dashboardStatus == 'CREATING'}"
+                       th:href="${diagnosis != null} ? @{/courses/career-path/result(diagnosisId=${diagnosis.diagnosisId})} : @{/courses/career-path/start}"
                        class="btn career-dashboard__report-button">
                         <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
                         <span>최신 분석 보고서 보러가기</span>
@@ -165,6 +174,44 @@
     </section>
 </main>
 
+<div class="career-pending-modal"
+     id="careerPendingModal"
+     th:if="${status == 'CREATING'}"
+     aria-hidden="true">
+    <div class="career-pending-modal__dialog"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="careerPendingModalTitle">
+        <button class="career-pending-modal__close"
+                type="button"
+                data-pending-modal-close
+                aria-label="닫기">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+        <div class="career-pending-modal__icon" aria-hidden="true">
+            <i class="bi bi-hourglass-split"></i>
+        </div>
+        <p class="career-pending-modal__eyebrow">분석 준비 중</p>
+        <h2 class="career-pending-modal__title" id="careerPendingModalTitle">
+            아직 진단 결과를 만들고 있어요.
+        </h2>
+        <p class="career-pending-modal__description">
+            AI가 레벨 테스트 문항과 분석 데이터를 구성하는 중입니다. 잠시 후 결과를 확인할 수 있어요.
+        </p>
+        <div class="career-pending-modal__actions">
+            <a class="career-pending-modal__primary"
+               th:href="@{/courses/career-path/level-test-pending}">
+                진행 상태 보기
+            </a>
+            <button class="career-pending-modal__secondary"
+                    type="button"
+                    data-pending-modal-close>
+                대시보드에 머물기
+            </button>
+        </div>
+    </div>
+</div>
+
 <div th:replace="~{fragments/footer :: footer}"></div>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -205,6 +252,44 @@
 
         revealDashboardElements(document.querySelectorAll('.career-dashboard-rise'));
 
+        const pendingModal = document.getElementById('careerPendingModal');
+        const pendingModalOpenButton = document.querySelector('[data-pending-modal-open]');
+        const pendingModalCloseButtons = document.querySelectorAll('[data-pending-modal-close]');
+
+        const openPendingModal = () => {
+            if (!pendingModal) {
+                return;
+            }
+
+            pendingModal.classList.add('is-open');
+            pendingModal.setAttribute('aria-hidden', 'false');
+            pendingModal.querySelector('[data-pending-modal-close]')?.focus();
+        };
+
+        const closePendingModal = () => {
+            if (!pendingModal) {
+                return;
+            }
+
+            pendingModal.classList.remove('is-open');
+            pendingModal.setAttribute('aria-hidden', 'true');
+            pendingModalOpenButton?.focus();
+        };
+
+        pendingModalOpenButton?.addEventListener('click', openPendingModal);
+        pendingModalCloseButtons.forEach((button) => {
+            button.addEventListener('click', closePendingModal);
+        });
+        pendingModal?.addEventListener('click', (event) => {
+            if (event.target === pendingModal) {
+                closePendingModal();
+            }
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && pendingModal?.classList.contains('is-open')) {
+                closePendingModal();
+            }
+        });
     });
 </script>
 </body>
