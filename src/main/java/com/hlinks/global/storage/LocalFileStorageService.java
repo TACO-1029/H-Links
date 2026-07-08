@@ -2,6 +2,7 @@ package com.hlinks.global.storage;
 
 import com.hlinks.global.exception.BaseException;
 import com.hlinks.global.response.code.ErrorResponseCode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 
 @Service
+@Slf4j
 @ConditionalOnProperty(name = "hlinks.storage.type", havingValue = "local", matchIfMissing = true)
 public class LocalFileStorageService implements FileStorageService {
 
@@ -59,7 +61,8 @@ public class LocalFileStorageService implements FileStorageService {
 
         try {
             Files.deleteIfExists(resolveSafePath(key));
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            log.warn("로컬 파일 삭제 실패. key={}", key, e);
         }
     }
 
