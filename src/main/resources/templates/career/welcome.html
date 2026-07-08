@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>커리어패스 - H-Link</title>
+    <script>
+        document.documentElement.classList.add('js-enabled');
+    </script>
+    <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/tokens.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/header.css}">
@@ -14,14 +18,14 @@
 
 <main class="career-welcome-container">
     <div class="career-welcome-bubble-wrap">
-        <div class="s-avatar-wrap" aria-hidden="true">
+        <div class="s-avatar-wrap career-reveal career-reveal--intro" aria-hidden="true">
             <img
                     th:src="@{/images/secretary.png}"
                     onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/bottts/svg?seed=HLinkPanda';"
                     alt="">
         </div>
 
-        <div class="career-welcome-bubble">
+        <div class="career-welcome-bubble career-reveal career-reveal--intro">
             <span><strong>처음</strong>이신가요? 딱 맞는 학습 순서를 정리해 드릴게요.</span>
         </div>
     </div>
@@ -34,56 +38,17 @@
     </section>
 
     <section class="career-feature-list" aria-label="커리어패스 주요 기능">
-        <article class="career-feature-card">
-            <div class="career-feature-media" aria-hidden="true">
-                <div class="media-placeholder icon-diagnosis">💻</div>
-            </div>
-
-            <div class="career-feature-desc">
-                <h2>역량진단</h2>
-                <h3>
-                    전문가가 꼼꼼하게,<br>
-                    나의 성장만을 위해 설계한.
-                </h3>
-                <p>
-                    정확한 현재 수준을 진단하는 것만이, 도달하고자 하는 목적 수준을 설정할 수 있습니다.
-                </p>
-            </div>
+        <article class="career-feature-card career-reveal">
+            <img th:src="@{/images/career-path/welcome/welcome_1.webp}"
+                 alt="AI 기반 커리어 진단 화면">
         </article>
-
-        <article class="career-feature-card">
-            <div class="career-feature-media" aria-hidden="true">
-                <div class="media-placeholder icon-curation">📋</div>
-            </div>
-
-            <div class="career-feature-desc">
-                <h2>초개인화 큐레이션</h2>
-                <h3>
-                    내 진단 결과에 따라 전문가가,<br>
-                    나만을 위해서만.
-                </h3>
-                <p>
-                    약 5,200개 학습 콘텐츠 중 목표 달성을 위한 콘텐츠만을 큐레이션하여 최적의 로드맵을 제시합니다.
-                </p>
-            </div>
+        <article class="career-feature-card career-reveal">
+            <img th:src="@{/images/career-path/welcome/welcome_2.webp}"
+                 alt="개인 맞춤 학습 로드맵 화면">
         </article>
-
-        <article class="career-feature-card">
-            <div class="career-feature-media" aria-hidden="true">
-                <div class="media-placeholder icon-efficiency">⚡</div>
-            </div>
-
-            <div class="career-feature-desc">
-                <h2>학습 효율성</h2>
-                <h3>
-                    목표 도달까지 최적의 루트로,<br>
-                    남들과는 다르게.
-                </h3>
-                <p>
-                    모두 다른 수준과 상황에서 왜 똑같이 학습하나요? 출발지가 다른 우리 모두를 위해,
-                    가장 효과적이고 효율적인 방법을 제공합니다.
-                </p>
-            </div>
+        <article class="career-feature-card career-reveal">
+            <img th:src="@{/images/career-path/welcome/welcome_3.webp}"
+                 alt="커리어 성장 경로 추천 화면">
         </article>
     </section>
 
@@ -95,5 +60,27 @@
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+<script>
+    const careerRevealItems = document.querySelectorAll('.career-reveal');
+
+    if ('IntersectionObserver' in window) {
+        const careerRevealObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) {
+                    return;
+                }
+
+                entry.target.classList.add('is-visible');
+                careerRevealObserver.unobserve(entry.target);
+            });
+        }, { threshold: 0.18 });
+
+        careerRevealItems.forEach((element) => {
+            careerRevealObserver.observe(element);
+        });
+    } else {
+        careerRevealItems.forEach((element) => element.classList.add('is-visible'));
+    }
+</script>
 </body>
 </html>
