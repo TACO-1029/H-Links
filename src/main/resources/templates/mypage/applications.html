@@ -17,63 +17,11 @@
 
 <main class="mypage-shell layout-container">
 
-    <!-- 마이페이지 공통 히어로 헤더 영역 -->
-    <section class="mypage-hero" aria-labelledby="mypage-title">
-        <div class="mypage-hero__identity">
-            <div class="mypage-avatar mypage-avatar--large" aria-hidden="true"
-                 th:text="${#authentication.principal.name != null ? #strings.substring(#authentication.principal.name, 0, 1) : 'H'}">
-                H
-            </div>
-            <div class="mypage-hero__text">
-                <span class="mypage-badge"
-                      th:text="'사번 ' + ${#authentication.principal.username}">
-                    사번 EMP-0000
-                </span>
-                <h1 id="mypage-title" class="mypage-hero__title">
-                    <span th:text="${#authentication.principal.name}">사용자명</span>
-                    <span th:text="${#authentication.principal.positionName}">사원</span>
-                </h1>
-                <p class="mypage-hero__meta">
-                    <span th:text="${#authentication.principal.departmentName}">소속 본부/팀</span>
-                    <span aria-hidden="true">·</span>
-                    <span th:text="${#authentication.principal.jobName}">직무 엔지니어</span>
-                </p>
-            </div>
-        </div>
-
-        <div class="mypage-summary" aria-label="학습 요약">
-            <article class="mypage-summary-card">
-                <span class="mypage-summary-card__label">수강 중</span>
-                <strong class="mypage-summary-card__value" th:text="${inProgressCount != null ? inProgressCount : '4'}">4</strong>
-            </article>
-            <article class="mypage-summary-card">
-                <span class="mypage-summary-card__label">수료 완료</span>
-                <strong class="mypage-summary-card__value mypage-summary-card__value--blue" th:text="${completedCount != null ? completedCount : '1'}">1</strong>
-            </article>
-        </div>
-    </section>
-
     <!-- 와이어프레임 매칭을 위한 좌측 서브메뉴 & 우측 신청 내역 메인 영역 Layout 구성 -->
     <div class="mypage-content-layout">
         
         <!-- 좌측 서브메뉴 구조 -->
-        <aside class="mypage-aside-nav">
-            <h3 class="mypage-aside-nav__title">마이페이지</h3>
-            <ul class="mypage-aside-nav__list">
-                <li>
-                    <a th:href="@{/mypage}" class="mypage-aside-nav__link">내 정보</a>
-                </li>
-                <li>
-                    <a th:href="@{/mypage/courses}" class="mypage-aside-nav__link">수강현황</a>
-                </li>
-                <li>
-                    <a th:href="@{/mypage/applications}" class="mypage-aside-nav__link is-active">신청 내역</a>
-                </li>
-                <li>
-                    <a th:href="@{/mypage/evaluation}" class="mypage-aside-nav__link">역량 평가</a>
-                </li>
-            </ul>
-        </aside>
+        <aside th:replace="~{mypage/fragments/aside :: aside('myApplications')}"></aside>
 
         <!-- 우측 신청 내역 상세 정보 -->
         <section class="mypage-main-content" aria-label="내 신청 내역 목록">
@@ -84,15 +32,24 @@
                     <h2>강의 신청 내역</h2>
                     <p>신청한 강의와 승인 상태를 최신순으로 확인합니다.</p>
                 </div>
-                <div class="filter-dropdown">
-                    <select class="filter-select" onchange="handleStatusFilterChange(this)">
-                        <option value="">전체 상태</option>
-                        <option value="WAITING">대기</option>
-                        <option value="APPROVED">승인</option>
-                        <option value="REJECTED">반려</option>
-                        <option value="CANCELED">취소</option>
-                    </select>
-                </div>
+            </div>
+            
+            <div class="filter-buttons">
+                <button class="filter-btn is-active" onclick="filterApplications('ALL', this)">
+                    전체 <span class="filter-count" th:text="${#lists.size(applications)}">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterApplications('WAITING', this)">
+                    대기 <span class="filter-count" th:text="${#lists.size(applications.?[applicationStatus.name() == 'WAITING'])}">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterApplications('APPROVED', this)">
+                    승인 완료 <span class="filter-count" th:text="${#lists.size(applications.?[applicationStatus.name() == 'APPROVED'])}">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterApplications('REJECTED', this)">
+                    반려 <span class="filter-count" th:text="${#lists.size(applications.?[applicationStatus.name() == 'REJECTED'])}">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterApplications('CANCELED', this)">
+                    취소 완료 <span class="filter-count" th:text="${#lists.size(applications.?[applicationStatus.name() == 'CANCELED'])}">0</span>
+                </button>
             </div>
 
             <!-- 신청 내역 0건일 때의 CTA 화면 처리 -->

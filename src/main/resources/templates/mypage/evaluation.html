@@ -16,48 +16,9 @@
 <div th:replace="~{fragments/header :: header}"></div>
 
 <main class="mypage-shell layout-container">
-    <section class="mypage-hero" aria-labelledby="mypage-title">
-        <div class="mypage-hero__identity">
-            <div class="mypage-avatar mypage-avatar--large" aria-hidden="true"
-                 th:text="${#authentication.principal.name != null ? #strings.substring(#authentication.principal.name, 0, 1) : 'H'}">
-                H
-            </div>
-            <div class="mypage-hero__text">
-                <span class="mypage-badge" th:text="|사번 ${#authentication.principal.username}|">사번 EMP-0000</span>
-                <h1 id="mypage-title" class="mypage-hero__title">
-                    <span th:text="${#authentication.principal.name}">사용자명</span>
-                    <span th:text="${#authentication.principal.positionName}">사원</span>
-                </h1>
-                <p class="mypage-hero__meta">
-                    <span th:text="${#authentication.principal.departmentName}">소속 부서</span>
-                    <span aria-hidden="true">·</span>
-                    <span th:text="${#authentication.principal.jobName}">직무</span>
-                </p>
-            </div>
-        </div>
-
-        <div class="mypage-summary" aria-label="학습 요약">
-            <article class="mypage-summary-card">
-                <span class="mypage-summary-card__label">수강 중</span>
-                <strong class="mypage-summary-card__value" th:text="${inProgressCount}">0</strong>
-            </article>
-            <article class="mypage-summary-card">
-                <span class="mypage-summary-card__label">수료 완료</span>
-                <strong class="mypage-summary-card__value mypage-summary-card__value--blue" th:text="${completedCount}">0</strong>
-            </article>
-        </div>
-    </section>
 
     <div class="mypage-content-layout">
-        <aside class="mypage-aside-nav">
-            <h3 class="mypage-aside-nav__title">마이페이지</h3>
-            <ul class="mypage-aside-nav__list">
-                <li><a th:href="@{/mypage}" class="mypage-aside-nav__link">내 정보</a></li>
-                <li><a th:href="@{/mypage/courses}" class="mypage-aside-nav__link">수강현황</a></li>
-                <li><a th:href="@{/mypage/applications}" class="mypage-aside-nav__link">신청 내역</a></li>
-                <li><a th:href="@{/mypage/evaluation}" class="mypage-aside-nav__link is-active">역량 평가</a></li>
-            </ul>
-        </aside>
+        <aside th:replace="~{mypage/fragments/aside :: aside('myEvaluation')}"></aside>
 
         <section class="mypage-main-content my-evaluation" aria-label="내 역량 평가">
             <div class="my-evaluation__top">

@@ -137,13 +137,22 @@
         });
     };
 
-    // 드롭다운 필터 변경 핸들러
-    window.handleStatusFilterChange = function (selectElement) {
-        const selectedStatus = selectElement.value;
+    // 탭 필터 변경 핸들러
+    window.filterApplications = function (status, btnElement) {
+        // 액티브 버튼 스타일 교체
+        const buttons = document.querySelectorAll('.filter-btn');
+        buttons.forEach(btn => btn.classList.remove('is-active'));
+        if (btnElement) {
+            btnElement.classList.add('is-active');
+        }
+
         const cards = document.querySelectorAll('.application-card');
 
         cards.forEach(card => {
-            if (!selectedStatus || card.getAttribute('data-status-filter') === selectedStatus) {
+            const cardStatus = card.getAttribute('data-status-filter');
+            if (status === 'ALL') {
+                card.style.display = 'flex';
+            } else if (status === cardStatus) {
                 card.style.display = 'flex';
             } else {
                 card.style.display = 'none';
@@ -169,7 +178,7 @@
                     </div>
                     <p class="applications-empty__text">조건에 부합하는 신청 내역이 없습니다.</p>
                 `;
-                listContainer.appendChild(emptyDiv);
+                listContainer?.appendChild(emptyDiv);
             } else {
                 emptyElement.style.display = 'flex';
             }
