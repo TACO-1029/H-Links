@@ -301,4 +301,14 @@ public class CareerServiceImpl implements CareerService {
             throw new RuntimeException("결과 데이터 저장 중 오류가 발생했습니다.", e);
         }
     }
+
+    @Override
+    public List<Long> findDepartmentSkillIdsByUserId(Long userId) {
+        return careerMapper.findDepartmentSkillIdsByUserId(userId);
+    }
+
+    @Override
+    public List<Long> findDepartmentCategoryIdsByUserId(Long userId) {
+        return careerMapper.findDepartmentCategoryIdsByUserId(userId);
+    }
 }
