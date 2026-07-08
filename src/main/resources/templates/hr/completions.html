@@ -111,47 +111,49 @@
           <span>수강 신청 후 학습이 시작되면 이곳에 수료 현황이 표시됩니다.</span>
         </div>
 
-        <div class="admin-dashboard__table-wrap" th:unless="${#lists.isEmpty(completions)}">
-          <table class="table table-hover align-middle admin-dashboard-table">
-            <thead>
-            <tr>
-              <th>강의명</th>
-              <th>강의 유형</th>
-              <th>수강자</th>
-              <th>부서</th>
-              <th>진도율</th>
-              <th>퀴즈 상태</th>
-              <th>수료 상태</th>
-              <th>수료일</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="completion : ${completions}">
-              <td class="admin-dashboard-table__title" th:text="${completion.courseTitle}">강의명</td>
-              <td th:text="${completion.courseTypeLabel}">온라인</td>
-              <td th:text="${completion.learnerName}">수강자</td>
-              <td th:text="${completion.departmentName}">부서</td>
-              <td>
-                <div class="admin-progress">
-                  <div class="progress admin-progress__track" role="progressbar"
-                       th:aria-valuenow="${completion.progressRate}"
-                       aria-valuemin="0"
-                       aria-valuemax="100">
-                    <div class="progress-bar admin-progress__bar" th:style="${'width:' + completion.progressRate + '%'}"></div>
+        <div class="hlinks-table-card" th:unless="${#lists.isEmpty(completions)}">
+          <div class="hlinks-table-wrap">
+            <table class="table table-hover align-middle hlinks-table admin-dashboard-table">
+              <thead>
+              <tr>
+                <th>강의명</th>
+                <th>강의 유형</th>
+                <th>수강자</th>
+                <th>부서</th>
+                <th>진도율</th>
+                <th>퀴즈 상태</th>
+                <th>수료 상태</th>
+                <th>수료일</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr th:each="completion : ${completions}">
+                <td class="hlinks-table__title admin-dashboard-table__title" th:text="${completion.courseTitle}">강의명</td>
+                <td th:text="${completion.courseTypeLabel}">온라인</td>
+                <td th:text="${completion.learnerName}">수강자</td>
+                <td th:text="${completion.departmentName}">부서</td>
+                <td>
+                  <div class="admin-progress">
+                    <div class="progress admin-progress__track" role="progressbar"
+                         th:aria-valuenow="${completion.progressRate}"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                      <div class="progress-bar admin-progress__bar" th:style="${'width:' + completion.progressRate + '%'}"></div>
+                    </div>
+                    <span class="admin-progress__value" th:text="${completion.progressRate + '%'}">0%</span>
                   </div>
-                  <span class="admin-progress__value" th:text="${completion.progressRate + '%'}">0%</span>
-                </div>
-              </td>
-              <td th:text="${completion.quizStatusLabel}">응시 완료</td>
-              <td>
-                <span class="badge rounded-pill admin-status-badge"
-                      th:classappend="${' admin-status-badge--' + completion.completionTone}"
-                      th:text="${completion.completionStatusLabel}">수료</span>
-              </td>
-              <td th:text="${completion.completedAtStr}">2026.07.08</td>
-            </tr>
-            </tbody>
-          </table>
+                </td>
+                <td th:text="${completion.quizStatusLabel}">응시 완료</td>
+                <td>
+                  <span class="badge rounded-pill admin-status-badge"
+                        th:classappend="${' admin-status-badge--' + completion.completionTone}"
+                        th:text="${completion.completionStatusLabel}">수료</span>
+                </td>
+                <td th:text="${completion.completedAtStr}">2026.07.08</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <nav class="admin-pagination hlinks-pagination"

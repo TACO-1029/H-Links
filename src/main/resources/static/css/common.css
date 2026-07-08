@@ -56,6 +56,57 @@ a {
     color: var(--color-text-inverse);
 }
 
+.hlinks-table-card {
+    overflow: hidden;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.hlinks-table-wrap {
+    overflow-x: auto;
+}
+
+.hlinks-table {
+    width: 100%;
+    margin-bottom: 0;
+    --bs-table-bg: var(--color-bg-surface);
+    --bs-table-hover-bg: var(--color-bg-soft);
+}
+
+.hlinks-table th,
+.hlinks-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border-default);
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+    vertical-align: middle;
+}
+
+.hlinks-table th {
+    background: var(--color-bg-soft);
+    color: var(--color-text-primary);
+    font-weight: var(--font-bold);
+    white-space: nowrap;
+}
+
+.hlinks-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.hlinks-table tbody tr.is-clickable {
+    cursor: pointer;
+}
+
+.hlinks-table__title {
+    color: var(--color-text-primary);
+    font-weight: var(--font-semibold);
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+
 button {
     border: 0;
     cursor: pointer;

@@ -156,45 +156,12 @@
   box-shadow: 0 0 0 0.25rem rgba(0, 158, 122, 0.14);
 }
 
-.admin-dashboard__table-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-}
-
 .admin-dashboard-table {
-  width: 100%;
   min-width: 980px;
-  margin-bottom: 0;
-  background: var(--color-bg-surface);
-}
-
-.admin-dashboard-table th,
-.admin-dashboard-table td {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--color-border-default);
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm);
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-.admin-dashboard-table th {
-  background: var(--color-bg-soft);
-  color: var(--color-text-primary);
-  font-weight: var(--font-bold);
-}
-
-.admin-dashboard-table tr:last-child td {
-  border-bottom: 0;
 }
 
 .admin-dashboard-table__title {
   max-width: 260px;
-  color: var(--color-text-primary);
-  font-weight: var(--font-semibold);
-  white-space: normal;
-  word-break: keep-all;
 }
 
 .admin-status-badge {

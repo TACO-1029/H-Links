@@ -63,14 +63,6 @@
       white-space: nowrap;
     }
 
-    .hr-quiz-table-card {
-      overflow: hidden;
-      border: 1px solid var(--color-border-default);
-      border-radius: var(--radius-lg);
-      background: var(--color-bg-surface);
-      box-shadow: var(--shadow-sm);
-    }
-
     .hr-quiz-filter {
       display: grid;
       grid-template-columns: minmax(180px, 1.2fr) minmax(150px, 0.8fr) minmax(260px, 1.6fr) auto;
@@ -140,13 +132,7 @@
       background: var(--color-brand-hover);
     }
 
-    .hr-quiz-table-wrap {
-      overflow-x: visible;
-    }
-
     .hr-quiz-table {
-      width: 100%;
-      border-collapse: collapse;
       table-layout: fixed;
     }
 
@@ -174,30 +160,6 @@
     .hr-quiz-table td {
       min-height: 64px;
       padding: 20px 18px;
-      border-bottom: 1px solid var(--color-border-default);
-      text-align: left;
-      vertical-align: middle;
-    }
-
-    .hr-quiz-table th {
-      background: var(--color-bg-soft);
-      color: var(--color-text-secondary);
-      font-size: var(--text-xs);
-      font-weight: var(--font-bold);
-      white-space: nowrap;
-    }
-
-    .hr-quiz-table tr:last-child td {
-      border-bottom: 0;
-    }
-
-    .hr-quiz-table tbody tr.is-clickable {
-      cursor: pointer;
-      transition: background 160ms ease;
-    }
-
-    .hr-quiz-table tbody tr.is-clickable:hover {
-      background: var(--color-bg-soft);
     }
 
     .hr-quiz-table__question {
@@ -577,10 +539,6 @@
     }
 
     @media (max-width: 1024px) {
-      .hr-quiz-table-wrap {
-        overflow-x: auto;
-      }
-
       .hr-quiz-table {
         min-width: 1080px;
       }
@@ -684,9 +642,9 @@
         <button class="hr-quiz-filter__button" type="submit">조회</button>
       </form>
 
-      <div class="hr-quiz-table-card" th:if="${!#lists.isEmpty(quizzes)}">
-        <div class="hr-quiz-table-wrap">
-          <table class="hr-quiz-table">
+      <div class="hlinks-table-card" th:if="${!#lists.isEmpty(quizzes)}">
+        <div class="hlinks-table-wrap">
+          <table class="table table-hover align-middle hlinks-table hr-quiz-table">
             <colgroup>
               <col class="hr-quiz-table__col-source">
               <col class="hr-quiz-table__col-question">
