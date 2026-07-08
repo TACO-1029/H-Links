@@ -35,18 +35,18 @@
 
                     <div class="mypage-profile-summary">
                         <div class="mypage-avatar mypage-avatar--square" aria-hidden="true"
-                             th:text="${!(#strings.isEmpty(name)) ? #strings.substring(name, 0, 1) : '도'}">
+                             th:text="${!(#strings.isEmpty(name)) ? #strings.substring(name, 0, 1) : '-'}">
                             최
                         </div>
                         <div class="mypage-profile-summary__text">
                             <h2 class="mypage-profile-summary__name">
-                                <span th:text="${name != null ? name : '도건우'}">도건우</span>
-                                <span th:text="${positionName != null ? positionName : '사원'}">사원</span>
+                                <span th:text="${name}">이름</span>
+                                <span th:text="${positionName}">직급</span>
                             </h2>
                             <p>
-                                <span th:text="${departmentName != null ? departmentName : 'DX 부트캠프'}">DX 부트캠프</span>
+                                <span th:text="${departmentName}">부서</span>
                                 <span aria-hidden="true">·</span>
-                                <span th:text="${jobName != null ? jobName : 'Frontend Engineer'}">Frontend Engineer</span>
+                                <span th:text="${jobName}">직무</span>
                             </p>
                         </div>
                     </div>
@@ -54,24 +54,24 @@
                     <dl class="mypage-info-grid">
                         <div class="mypage-info-row">
                             <dt>사번</dt>
-                            <dd th:text="${loginId != null ? loginId : 'EMP-2026-0147'}">EMP-2026-0147</dd>
+                            <dd th:text="${loginId}">사번</dd>
                         </div>
                         <div class="mypage-info-row">
                             <dt>이름</dt>
-                            <dd th:text="${name != null ? name : '도건우'}">도건우</dd>
+                            <dd th:text="${name}">이름</dd>
                         </div>
                         <div class="mypage-info-row">
                             <dt>이메일</dt>
-                            <dd th:text="${email != null ? email : 'woojin.choi@enterprise.co.kr'}">woojin.choi@enterprise.co.kr</dd>
+                            <dd th:text="${email}">이메일</dd>
                         </div>
                         <div class="mypage-info-row">
                             <dt>연락처</dt>
-                            <dd id="mypagePhoneValue" th:text="${phone != null ? phone : '010-1234-5678'}">010-1234-5678</dd>
+                            <dd id="mypagePhoneValue" th:text="${phone}">연락처</dd>
                         </div>
                         <div class="mypage-info-row mypage-info-row--spacer" aria-hidden="true"></div>
                         <div class="mypage-info-row">
                             <dt>최근 정보 수정일</dt>
-                            <dd id="mypageUpdatedAtValue" th:text="${updatedAt != null ? updatedAt : '2026.06.30'}">2026.06.30</dd>
+                            <dd id="mypageUpdatedAtValue" th:text="${updatedAt}">최근 정보 수정일</dd>
                         </div>
                     </dl>
                 </article>
