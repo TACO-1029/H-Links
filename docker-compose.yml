@@ -42,6 +42,13 @@ services:
       HLINKS_CHROMA_COLLECTION_NAME: hlinks_course_transcript_chunks
       OPENAI_EMBEDDING_MODEL: text-embedding-3-small
 
+      COFFEE_CHAT_MAIL_ENABLED: ${COFFEE_CHAT_MAIL_ENABLED:-false}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@hlinks.local}
+
     depends_on:
       oracle:
         condition: service_healthy
