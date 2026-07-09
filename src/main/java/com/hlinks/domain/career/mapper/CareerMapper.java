@@ -91,4 +91,10 @@ public interface CareerMapper {
 
     // 진단의 핵심 카테고리명 조회
     String getCategoryNameByDiagnosisId(@Param("diagnosisId") Long diagnosisId);
+
+    // 사용자의 부서 연관 스킬 ID 목록 조회
+    List<Long> findDepartmentSkillIdsByUserId(@Param("userId") Long userId);
+
+    // 사용자의 부서 연관 스킬들의 상위 카테고리 ID 목록 조회
+    List<Long> findDepartmentCategoryIdsByUserId(@Param("userId") Long userId);
 }

@@ -53,4 +53,10 @@ public interface CareerService {
 
     // 진단 상세 조회
     CareerDiagnosis findDiagnosisById(Long diagnosisId);
+
+    // 사용자의 부서 연관 스킬 ID 목록 조회
+    List<Long> findDepartmentSkillIdsByUserId(Long userId);
+
+    // 사용자의 부서 연관 스킬들의 상위 카테고리 ID 목록 조회
+    List<Long> findDepartmentCategoryIdsByUserId(Long userId);
 }
