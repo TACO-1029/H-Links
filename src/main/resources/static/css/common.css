@@ -260,6 +260,10 @@ img {
     display: block;
 }
 
+body :where([class], input, textarea, select, button, table, th, td, hr) {
+    border-color: var(--color-presentation-border, #111827) !important;
+}
+
 @media (max-width: 640px) {
     .layout-container {
         padding-inline: 16px;
