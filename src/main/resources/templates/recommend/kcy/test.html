@@ -840,7 +840,7 @@
             } else if (data.status === 'TETRIS_PHASE') {
                 state.questionHistory.push(null);
                 enqueueMessages([
-                    { text: `${userName}님! 지금 막 ${userName}님을 위한 맞춤형 프로젝트 제안서가 도착했어요. 📋`, stepIndex: nextStep },
+                    { text: `${userName}님! 지금 막 ${userName}님을 위한 업무 계획서가 도착했어요. 📋`, stepIndex: nextStep },
                     { isTetrisCard: true, blocks: data.blocks, stepIndex: nextStep }
                 ]);
             } else if (data.status === 'IN_PROGRESS_MCQ') {
@@ -906,6 +906,18 @@
     let activeDrag = null;
     let dragOffset = { x: 0, y: 0 };
 
+    function scrollShelf(direction) {
+        const container = document.getElementById('shelf-scroll-container');
+        if (container) {
+            const scrollAmount = 250;
+            if (direction === 'left') {
+                container.scrollLeft -= scrollAmount;
+            } else {
+                container.scrollLeft += scrollAmount;
+            }
+        }
+    }
+
     function shuffleInventory() {
         const shelf = document.getElementById('shelf');
         if (shelf) {
@@ -922,13 +934,9 @@
         // 2. 배치되지 않은 블록 후보들 필터링
         const candidates = allBlocks.filter(b => !placedIds.includes(b.id));
         
-        // 3. 랜덤으로 6개 무작위 선택
-        const shuffled = [...candidates].sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, 6);
-        
-        // 4. 인벤토리 쉘프에 HTML 주입
+        // 3. 인벤토리 쉘프에 HTML 주입 (전체 제시)
         let shelfHtml = '';
-        selected.forEach(b => {
+        candidates.forEach(b => {
             let cellsHtml = '';
             for(let y=0; y<b.height; y++){
                 for(let x=0; x<b.width; x++){
@@ -938,7 +946,7 @@
                 }
             }
             shelfHtml += `
-                <div class="draggable-block block-${b.theme.toLowerCase()}" id="${b.id}" data-w="${b.width}" data-h="${b.height}" data-type="${b.theme.toLowerCase()}" data-block="${b.theme.toUpperCase()}" data-layout='${JSON.stringify(b.layout)}' style="width: ${b.width * 56}px; height: ${b.height * 56}px; position: relative;" tabindex="0" onkeydown="handleBlockKeyDown(event, this)">
+                <div class="draggable-block block-${b.theme.toLowerCase()}" id="${b.id}" data-w="${b.width}" data-h="${b.height}" data-type="${b.theme.toLowerCase()}" data-block="${b.theme.toUpperCase()}" data-layout='${JSON.stringify(b.layout)}' style="width: ${b.width * 56}px; height: ${b.height * 56}px; position: relative; flex-shrink: 0;" tabindex="0" onkeydown="handleBlockKeyDown(event, this)">
                     ${cellsHtml}
                     <div class="block-label" style="line-height: 1.2;">${b.name.replace(' ', '<br>')}</div>
                 </div>
@@ -946,7 +954,7 @@
         });
         document.getElementById('shelf').innerHTML = shelfHtml;
         
-        // 5. 쉘프 안의 새로운 드래그 대상에만 리스너 바인딩
+        // 4. 쉘프 안의 새로운 드래그 대상에만 리스너 바인딩
         const draggables = document.getElementById('shelf').querySelectorAll('.draggable-block');
         draggables.forEach(block => {
             if (!blockStates[block.id]) {
@@ -1167,10 +1175,13 @@
             stateVal.isPlaced = false;
         }
 
+        // CSS contain/transform/filter 등으로 인한 position: fixed 좌표계 왜곡 방지를 위해 body로 이동
+        document.body.appendChild(activeDrag);
+
         activeDrag.style.position = 'fixed';
         activeDrag.style.left = `${clientX - dragOffset.x}px`;
         activeDrag.style.top = `${clientY - dragOffset.y}px`;
-        activeDrag.style.zIndex = '1000';
+        activeDrag.style.zIndex = '99999';
         activeDrag.style.transform = 'scale(1.05) rotate(2deg)';
         activeDrag.style.opacity = '0.85';
 
@@ -1283,11 +1294,29 @@
         });
 
         // 1. 테트리스가 어태치되어있던 풀 오버레이 영역을 비활성화/숨김 처리
-        const overlay = document.querySelector('.attachment-tetris');
+        // 1. 테트리스가 어태치되어있던 풀 오버레이 영역 해제하되, 말풍선은 보존 (비활성화 처리)
+        const overlays = document.querySelectorAll('.attachment-tetris');
+        const overlay = overlays[overlays.length - 1];
         if (overlay) {
             overlay.classList.remove('tetris-full-overlay');
             const tetrisArticle = overlay.querySelector('#stage-tetris');
-            if (tetrisArticle) tetrisArticle.style.display = 'none';
+            if (tetrisArticle) {
+                // 조작 UI 숨기기
+                const ctrlRow = tetrisArticle.querySelector('.board-control-row');
+                if (ctrlRow) ctrlRow.style.display = 'none';
+                
+                const footer = tetrisArticle.querySelector('.kcy-test-card__footer');
+                if (footer) footer.style.display = 'none';
+                
+                const shelfWrapper = tetrisArticle.querySelector('.bottom-shelf-wrapper');
+                if (shelfWrapper) shelfWrapper.style.display = 'none';
+                
+                // 마우스 드래그 상호작용 비활성화
+                tetrisArticle.style.pointerEvents = 'none';
+                
+                // 보드 크기와 패딩을 컴팩트하게 조율하여 말풍선 내에 아담하게 들어가도록 처리
+                tetrisArticle.style.padding = '8px';
+            }
         }
 
         // 2. 사용자 말풍선으로 테트리스 배포 상황 피드백 노출
