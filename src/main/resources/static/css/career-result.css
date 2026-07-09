@@ -636,7 +636,7 @@
 
 .roadmap-step.is-locked .roadmap-step__status::before {
     content: "\F47A";
-    font-family: "bootstrap-icons";
+    font-family: bootstrap-icons;
     color: #64748b;
     font-size: 18px;
     position: absolute;
@@ -750,6 +750,21 @@
 
 .roadmap-step.is-locked .roadmap-course__action {
     pointer-events: none;
+}
+
+.roadmap-course__action.is-disabled,
+.roadmap-step.is-active .roadmap-course__action.is-disabled {
+    pointer-events: none;
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #94a3b8;
+    box-shadow: none;
+}
+
+.roadmap-course__action.is-disabled i,
+.roadmap-step.is-active .roadmap-course__action.is-disabled i {
+    background: transparent;
+    color: #94a3b8;
 }
 
 .roadmap-helper {

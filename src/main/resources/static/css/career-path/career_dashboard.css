@@ -1033,7 +1033,7 @@
 
 .career-roadmap-preview-card.is-locked .career-roadmap-preview-card__status::before {
     content: "\F47A";
-    font-family: "bootstrap-icons";
+    font-family: bootstrap-icons;
     font-size: 18px;
 }
 
@@ -1166,6 +1166,28 @@
 
 .career-roadmap-preview-card.is-locked .career-roadmap-preview-card__action {
     color: #64748b;
+}
+
+.career-roadmap-preview-card.is-empty {
+    cursor: default;
+}
+
+.career-roadmap-preview-card.is-empty:hover {
+    transform: none;
+}
+
+.career-roadmap-preview-card.is-empty .career-roadmap-preview-card__action,
+.career-roadmap-preview-card.is-active.is-empty .career-roadmap-preview-card__action {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #94a3b8;
+    box-shadow: none;
+}
+
+.career-roadmap-preview-card.is-empty .career-roadmap-preview-card__action i,
+.career-roadmap-preview-card.is-active.is-empty .career-roadmap-preview-card__action i {
+    background: transparent;
+    color: #94a3b8;
 }
 
 .career-roadmap-helper {

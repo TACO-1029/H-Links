@@ -161,9 +161,9 @@
             <th:block th:if="${careerRoadmap != null && !#lists.isEmpty(careerRoadmap.steps)}">
                 <a th:each="step : ${careerRoadmap.steps}"
                    th:with="course=${#lists.isEmpty(step.courses) ? null : step.courses[0]}"
-                   th:href="${course != null ? '/courses/' + course.courseId : '#'}"
+                   th:href="${course != null ? '/courses/' + course.courseId : null}"
                    class="career-roadmap-preview-card career-dashboard-rise"
-                   th:classappend="${step.stepOrder == 1} ? ' is-active' : ' is-next'">
+                   th:classappend="|${step.stepOrder == 1 ? ' is-active' : ' is-next'}${course == null ? ' is-empty' : ''}|">
                     <div class="career-roadmap-preview-card__node">
                         <span th:text="${#numbers.formatInteger(step.stepOrder, 2)}">01</span>
                     </div>
@@ -192,11 +192,12 @@
                         </div>
 
                         <div class="career-roadmap-preview-card__action">
-                            <span th:text="${step.stepOrder == 1} ? '지금 시작' : '다음 강의 보기'">
+                            <span th:text="${course == null ? '강의 준비 중' : (step.stepOrder == 1 ? '지금 시작' : '다음 강의 보기')}">
                                 지금 시작
                             </span>
-                            <i th:if="${step.stepOrder == 1}" class="bi bi-play-fill" aria-hidden="true"></i>
-                            <i th:if="${step.stepOrder > 1}" class="bi bi-arrow-right" aria-hidden="true"></i>
+                            <i th:if="${course != null && step.stepOrder == 1}" class="bi bi-play-fill" aria-hidden="true"></i>
+                            <i th:if="${course != null && step.stepOrder > 1}" class="bi bi-arrow-right" aria-hidden="true"></i>
+                            <i th:if="${course == null}" class="bi bi-lock" aria-hidden="true"></i>
                         </div>
                     </div>
                 </a>
