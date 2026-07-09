@@ -17,5 +17,45 @@ services:
       retries: 10
       start_period: 40s
 
+  app:
+    build: .
+    container_name: h-links-app
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./storage:/app/storage
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@oracle:1521/XEPDB1
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      HLINKS_FFMPEG_COMMAND: ffmpeg
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+      HLINKS_STORAGE_TYPE: s3
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ap-northeast-2
+      AWS_S3_BUCKET: amzn-hlinks-s3-bucket
+
+      HLINKS_CHROMA_BASE_URL: http://chroma:8000
+      HLINKS_CHROMA_COLLECTION_NAME: hlinks_course_transcript_chunks
+      OPENAI_EMBEDDING_MODEL: text-embedding-3-small
+
+    depends_on:
+      oracle:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+
+  chroma:
+    image: chromadb/chroma
+    container_name: h-links-chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma-data:/data
+
 volumes:
   oracle-data:
+  chroma-data:
