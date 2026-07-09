@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const difficultySkillsContainer = document.getElementById('difficulty-skills-container');
 
     // 1. Q1 카테고리 스킬 분류 동적 생성
-    let categories = dbSkills.filter(skill => skill.skillType === 'CATEGORY' || !skill.parentSkillId);
+    let categories = dbSkills.filter(skill => (skill.skillType === 'CATEGORY' || !skill.parentSkillId) && skill.skillId < 1000);
     if (categories.length === 0) {
         categories = fallbackCategories;
     }
