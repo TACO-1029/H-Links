@@ -16,7 +16,6 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -145,7 +144,6 @@ public class CareerRoadmapRecommendationServiceImpl implements CareerRoadmapReco
 
         List<RecommendedCourseDto> prerequisiteCourses = prerequisiteRowsByCourse.values().stream()
                 .map(this::toPrerequisiteCourse)
-                .sorted(Comparator.comparing(RecommendedCourseDto::getCourseId))
                 .toList();
 
         for (RecommendedCourseDto prerequisiteCourse : prerequisiteCourses) {
@@ -284,8 +282,8 @@ public class CareerRoadmapRecommendationServiceImpl implements CareerRoadmapReco
         }
 
         return "%s %s 보완".formatted(
-                primarySkill.getSkillName(),
-                primarySkill.getRecommendedCoverageLevel()
+                resolveSkillName(primarySkill),
+                resolveRecommendedCoverageLevel(primarySkill)
         );
     }
 
@@ -296,11 +294,37 @@ public class CareerRoadmapRecommendationServiceImpl implements CareerRoadmapReco
 
         return "%s 점수가 %d점으로 측정되어 %s 수준의 %s 학습을 추천합니다."
                 .formatted(
-                        primarySkill.getSkillName(),
+                        resolveSkillName(primarySkill),
                         primarySkill.getUserScore(),
-                        primarySkill.getRecommendedCoverageLevel(),
+                        resolveRecommendedCoverageLevel(primarySkill),
                         course.getCourseTitle()
                 );
+    }
+
+    private String resolveSkillName(RecommendedCourseSkillDto primarySkill) {
+        if (primarySkill == null || primarySkill.getSkillName() == null || primarySkill.getSkillName().isBlank()) {
+            return "핵심 역량";
+        }
+
+        return primarySkill.getSkillName();
+    }
+
+    private String resolveRecommendedCoverageLevel(RecommendedCourseSkillDto primarySkill) {
+        if (primarySkill == null) {
+            return "BASIC";
+        }
+
+        if (primarySkill.getRecommendedCoverageLevel() != null
+                && !primarySkill.getRecommendedCoverageLevel().isBlank()) {
+            return primarySkill.getRecommendedCoverageLevel();
+        }
+
+        if (primarySkill.getCourseCoverageLevel() != null
+                && !primarySkill.getCourseCoverageLevel().isBlank()) {
+            return primarySkill.getCourseCoverageLevel();
+        }
+
+        return "BASIC";
     }
 
     private String buildSummary(String category, List<CareerRoadmapStepDto> steps) {
