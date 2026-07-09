@@ -42,4 +42,49 @@
         ORDER BY C.COURSE_ID DESC, CS.WEIGHT DESC
     </select>
 
+    <select id="findPrerequisiteCandidates"
+            resultType="com.hlinks.domain.recommend.course.dto.CoursePrerequisiteCandidateDto">
+        SELECT
+            CP.COURSE_ID        AS targetCourseId,
+            CP.REQUIRED_YN      AS requiredYn,
+            C.COURSE_ID         AS courseId,
+            C.CATEGORY_TYPE     AS categoryType,
+            C.COURSE_TYPE       AS courseType,
+            C.COURSE_TITLE      AS courseTitle,
+            C.DESCRIPTION       AS description,
+            C.INSTRUCTOR_NAME   AS instructorName,
+            C.THUMBNAIL_URL     AS thumbnailUrl,
+            CS.SKILL_ID         AS skillId,
+            S.SKILL_NAME        AS skillName,
+            CS.WEIGHT           AS weight,
+            CS.COVERAGE_LEVEL   AS coverageLevel,
+            CS.COVERAGE_REASON  AS coverageReason
+        FROM COURSE_PREREQUISITE CP
+        JOIN COURSE C
+          ON C.COURSE_ID = CP.PREREQUISITE_COURSE_ID
+        LEFT JOIN COURSE_SKILL CS
+          ON CS.COURSE_ID = C.COURSE_ID
+        LEFT JOIN SKILL S
+          ON S.SKILL_ID = CS.SKILL_ID
+        LEFT JOIN ONLINE_COURSE ONL
+          ON ONL.COURSE_ID = C.COURSE_ID
+        LEFT JOIN OFFLINE_COURSE OFF
+          ON OFF.COURSE_ID = C.COURSE_ID
+        WHERE CP.COURSE_ID IN
+        <foreach collection="courseIds" item="courseId" open="(" separator="," close=")">
+            #{courseId}
+        </foreach>
+          AND (
+              (C.COURSE_TYPE = 'ONLINE' AND NVL(ONL.STATUS, 'OPEN') != 'HIDDEN')
+              OR
+              (C.COURSE_TYPE = 'OFFLINE' AND NVL(OFF.STATUS, 'OPEN') != 'HIDDEN')
+          )
+          AND (S.SKILL_ID IS NULL OR S.USE_YN = 'Y')
+        ORDER BY
+            CP.COURSE_ID,
+            CASE CP.REQUIRED_YN WHEN 'Y' THEN 0 ELSE 1 END,
+            C.COURSE_ID,
+            CS.WEIGHT DESC
+    </select>
+
 </mapper>
