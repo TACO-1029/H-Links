@@ -39,6 +39,7 @@ public class AiLevelTestService {
     private final CareerMapper careerMapper;
     private final ObjectMapper objectMapper;
     private final TransactionTemplate transactionTemplate;
+    private final CareerLevelTestContextService levelTestContextService;
 
     @Async
     public void buildLevelTestAsync(Long diagnosisId, List<Long> skillIds, List<String> difficulties) {
@@ -91,7 +92,15 @@ public class AiLevelTestService {
                     throw new BaseException(CareerErrorCode.INVALID_SKILL_COUNT);
                 }
 
-                String prompt = promptBuilder.build(skillName, lowCount + mediumCount + highCount, lowCount, mediumCount, highCount);
+                String courseContext = levelTestContextService.retrieveContext(skillName, difficulty);
+                String prompt = promptBuilder.build(
+                        skillName,
+                        lowCount + mediumCount + highCount,
+                        lowCount,
+                        mediumCount,
+                        highCount,
+                        courseContext
+                );
                 
                 // HTTP API Call to OpenAI is executed outside the transaction boundary
                 AiLevelTestGenerateResponse response = requestAiLevelTestGeneration(prompt);
