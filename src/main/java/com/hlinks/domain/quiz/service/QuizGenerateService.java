@@ -60,6 +60,7 @@ public class QuizGenerateService {
         try {
             courseTranscriptIndexService.index(
                     chapter.getCourseId(),
+                    chapter.getChapterId(),
                     resolveCourseTitle(chapter),
                     transcriptText
             );

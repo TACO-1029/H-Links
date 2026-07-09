@@ -30,9 +30,13 @@ public class CourseTranscriptIndexService {
      * 실패하더라도 퀴즈 생성/강의 등록 자체가 중단되지 않도록
      * 호출부에서는 이 메서드의 예외를 fallback 처리하는 것을 권장한다.
      */
-    public void index(Long courseId, String courseTitle, String transcriptText) {
+    public void index(Long courseId, Long chapterId, String courseTitle, String transcriptText) {
         if (courseId == null) {
             throw new AiQuizException("강의 자막 인덱싱을 위한 courseId가 없습니다.");
+        }
+
+        if (chapterId == null) {
+            throw new AiQuizException("강의 자막 인덱싱을 위한 chapterId가 없습니다.");
         }
 
         if (!StringUtils.hasText(transcriptText)) {
@@ -53,7 +57,7 @@ public class CourseTranscriptIndexService {
             int chunkIndex = i + 1;
             String chunkText = chunks.get(i);
 
-            indexChunk(courseId, courseTitle, chunkIndex, chunkText);
+            indexChunk(courseId, chapterId, courseTitle, chunkIndex, chunkText);
         }
 
         log.info("강의 자막 Chroma 인덱싱 완료. courseId={}, chunkCount={}", courseId, chunks.size());
@@ -61,6 +65,7 @@ public class CourseTranscriptIndexService {
 
     private void indexChunk(
             Long courseId,
+            Long chapterId,
             String courseTitle,
             int chunkIndex,
             String chunkText
@@ -69,7 +74,7 @@ public class CourseTranscriptIndexService {
             List<Double> embedding = embeddingClient.embed(chunkText);
 
             chromaClient.upsert(
-                    buildChunkId(courseId, chunkIndex),
+                    buildChunkId(courseId, chapterId, chunkIndex),
                     chunkText,
                     embedding,
                     buildMetadata(courseId, courseTitle, chunkIndex)
@@ -84,8 +89,8 @@ public class CourseTranscriptIndexService {
         }
     }
 
-    private String buildChunkId(Long courseId, int chunkIndex) {
-        return "course-%d-chunk-%d".formatted(courseId, chunkIndex);
+    private String buildChunkId(Long courseId, Long chapterId, int chunkIndex) {
+        return "course-%d-chapter-%d-chunk-%d".formatted(courseId, chapterId, chunkIndex);
     }
 
     private Map<String, Object> buildMetadata(
