@@ -4,10 +4,8 @@ import com.hlinks.domain.career.entity.CareerDiagnosis;
 import com.hlinks.domain.career.service.CareerService;
 import com.hlinks.domain.recommend.course.dto.CourseRecommendationRequest;
 import com.hlinks.domain.recommend.course.dto.CourseRecommendationResponse;
-import com.hlinks.domain.recommend.course.dto.CareerRoadmapResponse;
 import com.hlinks.domain.recommend.course.dto.LevelTestSkillResultRequest;
 import com.hlinks.domain.recommend.course.dto.RecommendedCourseDto;
-import com.hlinks.domain.recommend.course.service.CareerRoadmapRecommendationService;
 import com.hlinks.domain.recommend.course.service.CourseRecommendationService;
 import com.hlinks.global.security.CustomUserDetails;
 import com.hlinks.global.exception.BaseException;
@@ -40,7 +38,6 @@ public class CareerController {
 
     private final CareerService careerService;
     private final CourseRecommendationService courseRecommendationService;
-    private final CareerRoadmapRecommendationService careerRoadmapRecommendationService;
     private final ObjectMapper objectMapper;
 
     @GetMapping
@@ -219,10 +216,7 @@ public class CareerController {
         model.addAttribute("lowestSkill", resultData.lowestSkillName());
         model.addAttribute("userName", userDetails.getName());
         model.addAttribute("aiSummary", resultData.aiSummary());
-        CourseRecommendationResponse courseRecommendation = recommendCourses(resultData.category(), resultData.results());
-        CareerRoadmapResponse careerRoadmap = recommendRoadmap(resultData.category(), resultData.results());
-        model.addAttribute("recommendedCourses", courseRecommendation.getCourses());
-        model.addAttribute("careerRoadmap", careerRoadmap);
+        model.addAttribute("recommendedCourses", recommendCourses(resultData.category(), resultData.results()).getCourses());
         return "career/result";
     }
 
@@ -328,36 +322,6 @@ public class CareerController {
                 .build();
     }
 
-    private CareerRoadmapResponse recommendRoadmap(String category, List<Map<String, Object>> resultsList) {
-        if (resultsList == null || resultsList.isEmpty()) {
-            return emptyCareerRoadmap(category);
-        }
-
-        try {
-            CourseRecommendationRequest request = new CourseRecommendationRequest();
-            request.setCategory(category);
-            request.setLimit(4);
-            request.setResults(resultsList.stream()
-                    .map(this::toLevelTestSkillResultRequest)
-                    .toList());
-
-            return careerRoadmapRecommendationService.recommendRoadmapByLevelTest(request);
-        } catch (Exception e) {
-            log.warn("Failed to load career roadmap recommendations from level test result", e);
-            return emptyCareerRoadmap(category);
-        }
-    }
-
-    private CareerRoadmapResponse emptyCareerRoadmap(String category) {
-        return CareerRoadmapResponse.builder()
-                .category(category)
-                .summary("레벨테스트 결과와 연결된 단계별 로드맵을 준비 중입니다.")
-                .requestedSkillCount(0)
-                .stepCount(0)
-                .steps(List.of())
-                .build();
-    }
-
     private LevelTestSkillResultRequest toLevelTestSkillResultRequest(Map<String, Object> result) {
         LevelTestSkillResultRequest request = new LevelTestSkillResultRequest();
         request.setSkillId(((Number) result.get("skillId")).longValue());
@@ -415,13 +379,8 @@ public class CareerController {
                         resultData.category(),
                         resultData.results()
                 ).getCourses();
-                CareerRoadmapResponse careerRoadmap = recommendRoadmap(
-                        resultData.category(),
-                        resultData.results()
-                );
 
                 model.addAttribute("recommendedCourses", recommendedCourses);
-                model.addAttribute("careerRoadmap", careerRoadmap);
                 model.addAttribute("recommendationCategory", resultData.category());
                 model.addAttribute("recommendationLowestSkill", resultData.lowestSkillName());
                 model.addAttribute("recommendationDiagnosisId", latestDiagnosis.getDiagnosisId());
@@ -429,7 +388,6 @@ public class CareerController {
                 log.warn("Failed to load initial career recommendation courses - userId={}, diagnosisId={}",
                         userId, latestDiagnosis.getDiagnosisId(), e);
                 model.addAttribute("recommendedCourses", List.of());
-                model.addAttribute("careerRoadmap", emptyCareerRoadmap("IT 기술"));
                 model.addAttribute("recommendationDiagnosisId", latestDiagnosis.getDiagnosisId());
             }
         }

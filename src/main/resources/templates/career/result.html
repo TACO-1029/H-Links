@@ -131,11 +131,8 @@
                     <span class="meta-value red" th:text="${lowestSkill}">React</span>
                 </div>
                 <div class="summary-meta-item">
-                    <span class="meta-label">추천 로드맵</span>
-                    <span class="meta-value"
-                          th:text="${careerRoadmap != null ? '총 ' + careerRoadmap.stepCount + '단계 학습 순서' : '로드맵 준비 중'}">
-                        총 3단계 학습 순서
-                    </span>
+                    <span class="meta-label">추천 코스 분량</span>
+                    <span class="meta-value" th:text="'총 ' + ${recommendedCourses.size()} + '개 맞춤 매핑 과정'">총 3개 맞춤 매핑 과정</span>
                 </div>
             </div>
         </div>
@@ -161,86 +158,47 @@
             </div>
         </div>
 
-        <!-- 단계별 커리어패스 로드맵 -->
-        <section class="roadmap-section result-rise"
-                 th:if="${careerRoadmap != null && !#lists.isEmpty(careerRoadmap.steps)}"
-                 aria-labelledby="career-roadmap-title">
-            <div class="roadmap-header">
-                <div>
-                    <span class="roadmap-eyebrow">CAREER ROADMAP</span>
-                    <h2 id="career-roadmap-title">
-                        지금 순서대로 따라가면 되는 <span>단계별 강의 추천</span>
-                    </h2>
-                    <p>
-                        진단 결과를 바탕으로, 지금 가장 필요한 강의를 순서대로 추천해드려요.
-                        정해진 순서대로 학습하면 목표 달성에 더 가까워질 수 있어요.
-                    </p>
+        <!-- 강의 추천 카드 그리드 -->
+        <div class="course-grid">
+            <a th:each="course : ${recommendedCourses}"
+               th:href="@{/courses/{courseId}(courseId=${course.courseId})}"
+               class="course-card course-card-link result-rise">
+                <div class="course-thumb-placeholder"
+                     th:classappend="${course.thumbnailUrl != null} ? 'has-thumbnail'">
+                    <img th:if="${course.thumbnailUrl != null}"
+                         th:src="${course.thumbnailUrl}"
+                         alt="">
                 </div>
-                <div class="roadmap-progress-card">
-                    <div class="roadmap-progress-card__icon" aria-hidden="true">
-                        <i class="bi bi-flag-fill"></i>
+
+                <div class="course-info">
+                    <div>
+                        <h4 class="course-title" th:text="${course.courseTitle}">추천 강의명</h4>
+                        <div class="course-instructor"
+                             th:text="${course.instructorName != null ? course.instructorName : '강사 정보 준비 중'}">
+                            강사명
+                        </div>
                     </div>
-                    <div class="roadmap-progress-card__body">
-                        <span>진행 챕터</span>
-                        <strong th:text="|0 / ${careerRoadmap.stepCount} 챕터|">
-                            0 / 4 챕터
-                        </strong>
-                        <div class="roadmap-progress-card__bar">
-                            <span style="width: 0%"></span>
+
+                    <div>
+                        <div class="course-rating"
+                             style="color: var(--color-text-secondary);"
+                             th:text="'추천 점수 ' + ${#numbers.formatDecimal(course.recommendationScore, 1, 1)} + '점'">
+                            추천 점수 42.0점
+                        </div>
+
+                        <div class="course-tag-btn"
+                             th:text="${#lists.isEmpty(course.matchedSkills) ? '#맞춤 추천' : '#' + course.matchedSkills[0].skillName + ' ' + course.matchedSkills[0].recommendedCoverageLevel}">
+                            #Java BASIC
                         </div>
                     </div>
                 </div>
+            </a>
+
+            <div th:if="${recommendedCourses.isEmpty()}" class="course-empty-card result-rise">
+                현재 레벨테스트 결과와 직접 연결된 추천 강의를 찾지 못했습니다.
+                강의 데이터가 보강되면 이 영역에 맞춤 강의가 표시됩니다.
             </div>
-
-            <ol class="roadmap-list">
-                <li th:each="step : ${careerRoadmap.steps}"
-                    class="roadmap-step"
-                    th:classappend="${step.stepOrder == 1} ? ' is-active' : ' is-next'">
-                    <div class="roadmap-step__index">
-                        <span th:text="${#numbers.formatInteger(step.stepOrder, 2)}">01</span>
-                    </div>
-
-                    <div class="roadmap-step__content">
-                        <div class="roadmap-step__status"
-                             th:text="${step.stepOrder == 1} ? '먼저 시작' : '다음 단계'">
-                            먼저 시작
-                        </div>
-
-                        <h3 th:text="${step.title}">Java INTERMEDIATE 보완</h3>
-
-                        <th:block th:with="course=${#lists.isEmpty(step.courses) ? null : step.courses[0]}">
-                            <div class="roadmap-course__thumb">
-                                <img th:src="${course != null && course.thumbnailUrl != null ? course.thumbnailUrl : '/images/common/hyundai_futurenet.webp'}"
-                                     onerror="this.onerror=null; this.src='/images/common/hyundai_futurenet.webp';"
-                                     alt="추천 강의 썸네일">
-                            </div>
-
-                            <p th:text="${step.description}">
-                                진단 결과에 맞춰 먼저 이어서 들으면 좋은 단계입니다.
-                            </p>
-
-                            <div class="roadmap-course__meta">
-                                <span th:text="${step.targetSkillName}">Java</span>
-                                <em th:text="${step.targetCoverageLevel}">INTERMEDIATE</em>
-                            </div>
-
-                            <a class="roadmap-course__action"
-                               th:href="${course != null ? '/courses/' + course.courseId : '#'}">
-                                <span th:text="${step.stepOrder == 1} ? '지금 시작' : '다음 강의 보기'">
-                                    지금 시작
-                                </span>
-                                <i th:if="${step.stepOrder == 1}" class="bi bi-play-fill" aria-hidden="true"></i>
-                                <i th:if="${step.stepOrder > 1}" class="bi bi-arrow-right" aria-hidden="true"></i>
-                            </a>
-                        </th:block>
-                    </div>
-                </li>
-            </ol>
-
-            <p class="roadmap-helper">
-                추천 순서를 따라 학습하면 효율적으로 실력을 쌓고 목표에 더 빠르게 도달할 수 있어요.
-            </p>
-        </section>
+        </div>
 
         <!-- 하단 멘토 스피치 박스 -->
         <div class="bottom-speech-bubble result-rise">
