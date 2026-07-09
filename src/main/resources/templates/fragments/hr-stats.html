@@ -13,12 +13,12 @@
       <div class="hr-stats-filter__date-inputs">
         <label class="hr-stats-filter__field">
           <span class="hr-stats-filter__label">시작일</span>
-          <input class="hr-stats-filter__control form-control" type="date" name="startDate" th:value="${filter.startDate}">
+          <input class="hr-stats-filter__control form-control hlinks-input" type="date" name="startDate" th:value="${filter.startDate}">
         </label>
         <span class="hr-stats-filter__date-separator" aria-hidden="true">~</span>
         <label class="hr-stats-filter__field">
           <span class="hr-stats-filter__label">종료일</span>
-          <input class="hr-stats-filter__control form-control" type="date" name="endDate" th:value="${filter.endDate}">
+          <input class="hr-stats-filter__control form-control hlinks-input" type="date" name="endDate" th:value="${filter.endDate}">
         </label>
       </div>
       <div class="hr-stats-filter__presets" aria-label="기간 빠른 선택">
@@ -32,7 +32,7 @@
   </div>
   <label class="hr-stats-filter__field">
     <span class="hr-stats-filter__label">부서</span>
-    <select class="hr-stats-filter__control form-select" name="departmentId">
+    <select class="hr-stats-filter__control form-select hlinks-dropdown" name="departmentId">
       <option value="" th:selected="${filter.departmentId == null}">전체</option>
       <option th:each="department : ${departments}"
               th:value="${department.id}"
@@ -42,7 +42,7 @@
   </label>
   <label class="hr-stats-filter__field">
     <span class="hr-stats-filter__label">직급</span>
-    <select class="hr-stats-filter__control form-select" name="positionId">
+    <select class="hr-stats-filter__control form-select hlinks-dropdown" name="positionId">
       <option value="" th:selected="${filter.positionId == null}">전체</option>
       <option th:each="position : ${positions}"
               th:value="${position.id}"
@@ -69,12 +69,12 @@
       <div class="hr-stats-filter__date-inputs">
         <label class="hr-stats-filter__field">
           <span class="hr-stats-filter__label">시작일</span>
-          <input class="hr-stats-filter__control form-control" type="date" name="startDate" th:value="${filter.startDate}">
+          <input class="hr-stats-filter__control form-control hlinks-input" type="date" name="startDate" th:value="${filter.startDate}">
         </label>
         <span class="hr-stats-filter__date-separator" aria-hidden="true">~</span>
         <label class="hr-stats-filter__field">
           <span class="hr-stats-filter__label">종료일</span>
-          <input class="hr-stats-filter__control form-control" type="date" name="endDate" th:value="${filter.endDate}">
+          <input class="hr-stats-filter__control form-control hlinks-input" type="date" name="endDate" th:value="${filter.endDate}">
         </label>
       </div>
       <div class="hr-stats-filter__presets" aria-label="기간 빠른 선택">
@@ -88,7 +88,7 @@
   </div>
   <label class="hr-stats-filter__field">
     <span class="hr-stats-filter__label">카테고리</span>
-    <select class="hr-stats-filter__control form-select" name="category">
+    <select class="hr-stats-filter__control form-select hlinks-dropdown" name="category">
       <option value="all" th:selected="${filter.category == 'all'}">전체</option>
       <option value="technical" th:selected="${filter.category == 'technical'}">기술 역량</option>
       <option value="job" th:selected="${filter.category == 'job'}">직무 역량</option>
@@ -98,7 +98,7 @@
   </label>
   <label class="hr-stats-filter__field">
     <span class="hr-stats-filter__label">강의 유형</span>
-    <select class="hr-stats-filter__control form-select" name="courseType">
+    <select class="hr-stats-filter__control form-select hlinks-dropdown" name="courseType">
       <option value="all" th:selected="${filter.courseType == 'all'}">전체</option>
       <option value="online" th:selected="${filter.courseType == 'online'}">온라인</option>
       <option value="offline" th:selected="${filter.courseType == 'offline'}">오프라인</option>
@@ -123,12 +123,12 @@
       <div class="hr-stats-filter__date-inputs">
         <label class="hr-stats-filter__field">
           <span class="hr-stats-filter__label">시작일</span>
-          <input class="hr-stats-filter__control form-control" type="date" name="startDate" th:value="${filter.startDate}">
+          <input class="hr-stats-filter__control form-control hlinks-input" type="date" name="startDate" th:value="${filter.startDate}">
         </label>
         <span class="hr-stats-filter__date-separator" aria-hidden="true">~</span>
         <label class="hr-stats-filter__field">
           <span class="hr-stats-filter__label">종료일</span>
-          <input class="hr-stats-filter__control form-control" type="date" name="endDate" th:value="${filter.endDate}">
+          <input class="hr-stats-filter__control form-control hlinks-input" type="date" name="endDate" th:value="${filter.endDate}">
         </label>
       </div>
       <div class="hr-stats-filter__presets" aria-label="기간 빠른 선택">
@@ -169,7 +169,7 @@
   </div>
   <label class="hr-stats-filter__field">
     <span class="hr-stats-filter__label">직급</span>
-    <select class="hr-stats-filter__control form-select" name="positionId">
+    <select class="hr-stats-filter__control form-select hlinks-dropdown" name="positionId">
       <option value="" th:selected="${filter.positionId == null}">전체</option>
       <option th:each="position : ${positions}"
               th:value="${position.id}"
@@ -232,9 +232,9 @@
       </tbody>
     </table>
   </div>
-  <div class="hr-stats-table-wrap"
+  <div class="hlinks-table-wrap hr-stats-table-wrap"
        th:if="${block.rankTable == null and !#lists.isEmpty(block.ranks) and block.ranks[0].hasCourseDetails()}">
-    <table class="hr-stats-table hr-stats-table--compact">
+    <table class="table table-hover align-middle hlinks-table hr-stats-table hr-stats-table--compact">
       <thead>
       <tr>
         <th>순위</th>

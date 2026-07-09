@@ -67,6 +67,15 @@ public class CareerController {
         setActiveMenu(model);
         model.addAttribute("skills", careerService.getAllActiveSkills());
         model.addAttribute("diagnosisId", diagnosisId);
+        if (userDetails != null) {
+            model.addAttribute("userName", userDetails.getName());
+            model.addAttribute("deptSkills", careerService.findDepartmentSkillIdsByUserId(userDetails.getUserId()));
+            model.addAttribute("deptCategoryIds", careerService.findDepartmentCategoryIdsByUserId(userDetails.getUserId()));
+        } else {
+            model.addAttribute("userName", "사용자");
+            model.addAttribute("deptSkills", List.of());
+            model.addAttribute("deptCategoryIds", List.of());
+        }
         return "career/survey";
     }
 
@@ -84,6 +93,15 @@ public class CareerController {
             model.addAttribute("skills", careerService.getAllActiveSkills());
             model.addAttribute("diagnosisId", diagnosisId);
             model.addAttribute("errorMessage", "목표 스킬을 최소 1개 이상 선택해 주세요.");
+            if (userDetails != null) {
+                model.addAttribute("userName", userDetails.getName());
+                model.addAttribute("deptSkills", careerService.findDepartmentSkillIdsByUserId(userDetails.getUserId()));
+                model.addAttribute("deptCategoryIds", careerService.findDepartmentCategoryIdsByUserId(userDetails.getUserId()));
+            } else {
+                model.addAttribute("userName", "사용자");
+                model.addAttribute("deptSkills", List.of());
+                model.addAttribute("deptCategoryIds", List.of());
+            }
             return "career/survey";
         }
 

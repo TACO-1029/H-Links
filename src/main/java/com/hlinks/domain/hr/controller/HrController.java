@@ -1,7 +1,10 @@
 package com.hlinks.domain.hr.controller;
 
+import com.hlinks.domain.hr.dto.AdminDashboardFilter;
+import com.hlinks.domain.hr.service.AdminDashboardService;
 import com.hlinks.domain.quiz.dto.QuizListResponse;
 import com.hlinks.domain.quiz.service.QuizService;
+import com.hlinks.domain.statistics.service.StatisticsFilterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,13 +20,39 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class HrController {
 
+    private static final int COMPLETION_PAGE_SIZE = 10;
+
     private final QuizService quizService;
+    private final AdminDashboardService adminDashboardService;
+    private final StatisticsFilterService statisticsFilterService;
 
     @GetMapping("/hr")
     public String index(Model model) {
-        model.addAttribute("activeMenu", "hr");
-        model.addAttribute("aiQuizCount", quizService.getAiGeneratedQuizzes().size());
+        model.addAttribute("activeMenu", "dashboard");
         return "hr/index";
+    }
+
+    @GetMapping("/hr/completions")
+    public String courseCompletions(
+            AdminDashboardFilter filter,
+            @RequestParam(defaultValue = "1") int page,
+            Model model
+    ) {
+        int totalCount = adminDashboardService.countCourseCompletions(filter);
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalCount / COMPLETION_PAGE_SIZE));
+        int currentPage = Math.max(1, Math.min(page, totalPages));
+        int offset = (currentPage - 1) * COMPLETION_PAGE_SIZE;
+
+        model.addAttribute("activeMenu", "course-completions");
+        model.addAttribute("filter", filter);
+        model.addAttribute("completions", adminDashboardService.getCourseCompletions(filter, offset, COMPLETION_PAGE_SIZE));
+        model.addAttribute("departments", statisticsFilterService.getDepartmentOptions());
+        model.addAttribute("totalCount", totalCount);
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("pageSize", COMPLETION_PAGE_SIZE);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageItems", buildPageItems(currentPage, totalPages));
+        return "hr/completions";
     }
 
     @GetMapping("/hr/quizzes/ai")
@@ -60,9 +89,6 @@ public class HrController {
         int fromIndex = Math.min((currentPage - 1) * pageSize, totalCount);
         int toIndex = Math.min(fromIndex + pageSize, totalCount);
         List<QuizListResponse> pagedQuizzes = filteredQuizzes.subList(fromIndex, toIndex);
-        List<Integer> pageNumbers = IntStream.rangeClosed(1, totalPages)
-                .boxed()
-                .toList();
 
         model.addAttribute("activeMenu", "hr");
         model.addAttribute("quizzes", pagedQuizzes);
@@ -70,7 +96,7 @@ public class HrController {
         model.addAttribute("currentPage", currentPage);
         model.addAttribute("pageSize", pageSize);
         model.addAttribute("totalPages", totalPages);
-        model.addAttribute("pageNumbers", pageNumbers);
+        model.addAttribute("pageItems", buildPageItems(currentPage, totalPages));
         model.addAttribute("courseOptions", courseOptions);
         model.addAttribute("statusOptions", statusOptions);
         model.addAttribute("courseFilter", normalize(course));
@@ -101,11 +127,59 @@ public class HrController {
         return hasText(value) && normalize(value).toLowerCase().contains(keyword);
     }
 
+    private List<PageItem> buildPageItems(int currentPage, int totalPages) {
+        if (totalPages <= 7) {
+            return IntStream.rangeClosed(1, totalPages)
+                    .mapToObj(page -> PageItem.page(page, page == currentPage))
+                    .toList();
+        }
+
+        java.util.ArrayList<PageItem> items = new java.util.ArrayList<>();
+        items.add(PageItem.page(1, currentPage == 1));
+
+        int start = Math.max(2, currentPage - 2);
+        int end = Math.min(totalPages - 1, currentPage + 2);
+
+        if (currentPage <= 3) {
+            start = 2;
+            end = 5;
+        } else if (currentPage >= totalPages - 2) {
+            start = totalPages - 4;
+            end = totalPages - 1;
+        }
+
+        if (start > 2) {
+            items.add(PageItem.ellipsisItem());
+        }
+
+        for (int page = start; page <= end; page += 1) {
+            items.add(PageItem.page(page, page == currentPage));
+        }
+
+        if (end < totalPages - 1) {
+            items.add(PageItem.ellipsisItem());
+        }
+
+        items.add(PageItem.page(totalPages, currentPage == totalPages));
+        return items;
+    }
+
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
     }
 
     private String normalize(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    public record PageItem(Integer page, String label, boolean ellipsis, boolean active) {
+
+        private static PageItem page(int page, boolean active) {
+            return new PageItem(page, String.valueOf(page), false, active);
+        }
+
+        private static PageItem ellipsisItem() {
+            return new PageItem(null, "...", true, false);
+        }
     }
 }

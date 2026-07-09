@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>레벨 테스트 - H-Link</title>
+    <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/tokens.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/header.css}">
@@ -73,6 +74,17 @@
         </div>
     </form>
 </main>
+
+<div class="level-test-pending-modal" id="levelTestPendingModal" aria-hidden="true">
+    <div class="level-test-pending-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="levelTestPendingModalTitle">
+        <div class="level-test-pending-modal__spinner" aria-hidden="true"></div>
+        <p class="level-test-pending-modal__eyebrow">분석 중</p>
+        <h2 class="level-test-pending-modal__title" id="levelTestPendingModalTitle">진단 결과를 만들고 있습니다.</h2>
+        <p class="level-test-pending-modal__description">
+            제출한 답안을 기반으로 역량 점수와 <br>추천 강의를 분석하고 있어요. 잠시만 기다려 주세요.
+        </p>
+    </div>
+</div>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 

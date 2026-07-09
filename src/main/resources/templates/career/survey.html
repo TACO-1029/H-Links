@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>개인 학습 목표 설정 - H-Link</title>
+    <th:block th:replace="~{fragments/head :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/tokens.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <link rel="stylesheet" th:href="@{/css/header.css}">
@@ -54,6 +55,13 @@
             <div class="category-grid" id="category-container">
                 <!-- 동적으로 DB 카테고리 스킬들이 채워집니다 -->
             </div>
+            
+            <!-- Q1 부서 연관 기술 안내문 -->
+            <div class="survey-info-tip" th:if="${deptCategoryIds != null and !deptCategoryIds.isEmpty()}" style="margin-top: 16px; padding: 12px 16px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: var(--radius-md); font-size: var(--text-xs); color: var(--color-text-secondary); display: flex; align-items: center; gap: 8px;">
+                <span>💡</span>
+                <span>현재 <strong th:text="${userName}">홍길동</strong>님의 부서에서는 <strong>하이라이트로 표시</strong>된 기술들을 주로 쓰고 있어요.</span>
+            </div>
+
             <!-- 선택 필드 추적용 히든 인풋 -->
             <input type="hidden" name="selectedCategory" id="selectedCategory" value="">
         </section>
@@ -66,6 +74,13 @@
             <div class="skills-chip-group" id="skills-container">
                 <!-- 자바스크립트로 칩들이 생성됩니다 -->
             </div>
+
+            <!-- Q2 부서 연관 기술 안내문 -->
+            <div class="survey-info-tip" id="q2-dept-info-tip" style="margin-top: 16px; padding: 12px 16px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: var(--radius-md); font-size: var(--text-xs); color: var(--color-text-secondary); display: none; align-items: center; gap: 8px;">
+                <span>💡</span>
+                <span>현재 <strong th:text="${userName}">홍길동</strong>님의 부서에서는 <strong>하이라이트로 표시</strong>된 기술들을 주로 쓰고 있어요.</span>
+            </div>
+
             <div id="skills-empty-message" style="display: none;" class="skills-empty-alert">
                 해당 분야에 매핑된 데이터베이스 기술 스택이 존재하지 않습니다. 임시 데이터로 구성됩니다.
             </div>
@@ -104,6 +119,8 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
     const dbSkills = /*[[${skills}]]*/ [];
+    const deptSkills = /*[[${deptSkills}]]*/ [];
+    const deptCategoryIds = /*[[${deptCategoryIds}]]*/ [];
     /*]]>*/
 </script>
 

@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const difficultySkillsContainer = document.getElementById('difficulty-skills-container');
 
     // 1. Q1 카테고리 스킬 분류 동적 생성
-    let categories = dbSkills.filter(skill => skill.skillType === 'CATEGORY' || !skill.parentSkillId);
+    let categories = dbSkills.filter(skill => (skill.skillType === 'CATEGORY' || !skill.parentSkillId) && skill.skillId < 1000);
     if (categories.length === 0) {
         categories = fallbackCategories;
     }
@@ -119,6 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
     categories.forEach(cat => {
         const card = document.createElement('div');
         card.className = 'category-card';
+        if (typeof deptCategoryIds !== 'undefined' && deptCategoryIds.map(Number).includes(Number(cat.skillId))) {
+            card.classList.add('highlight-dept');
+        }
         card.setAttribute('data-category-id', cat.skillId);
         card.setAttribute('data-category-name', cat.skillName);
 
@@ -144,6 +147,16 @@ document.addEventListener('DOMContentLoaded', () => {
             q3Section.style.display = 'none';
             difficultySkillsContainer.innerHTML = '';
             jsErrorAlert.style.display = 'none';
+
+            // Q2 부서 연관 기술 안내문 노출 여부 제어
+            const q2DeptInfoTip = document.getElementById('q2-dept-info-tip');
+            if (q2DeptInfoTip) {
+                if (card.classList.contains('highlight-dept')) {
+                    q2DeptInfoTip.style.display = 'flex';
+                } else {
+                    q2DeptInfoTip.style.display = 'none';
+                }
+            }
 
             renderSubSkills(cat.skillId, cat.skillName);
 
@@ -192,6 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
         filteredSkills.forEach(skill => {
             const label = document.createElement('label');
             label.className = 'skill-chip';
+            if (typeof deptSkills !== 'undefined' && deptSkills.map(Number).includes(Number(skill.skillId))) {
+                label.classList.add('highlight-dept');
+            }
             
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -336,6 +352,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 targetCard.classList.add('active');
                 selectedCategoryInput.value = savedCategory;
                 displayCategoryName.textContent = catName;
+                
+                // Q2 부서 연관 기술 안내문 노출 여부 제어
+                const q2DeptInfoTip = document.getElementById('q2-dept-info-tip');
+                if (q2DeptInfoTip) {
+                    if (targetCard.classList.contains('highlight-dept')) {
+                        q2DeptInfoTip.style.display = 'flex';
+                    } else {
+                        q2DeptInfoTip.style.display = 'none';
+                    }
+                }
                 
                 let preselectedSkillIds = [];
                 if (savedSkillsJSON) {

@@ -57,7 +57,6 @@
   font-weight: var(--font-bold);
 }
 
-.hr-stats-filter__control,
 .hr-stats-filter__submit,
 .hr-stats-filter__reset {
   min-height: 44px;
@@ -71,12 +70,8 @@
 
 .hr-stats-filter__control {
   width: 100%;
+  min-height: 44px;
   padding: 0 14px;
-}
-
-.hr-stats-filter__control.form-select {
-  padding-right: 36px;
-  background-color: var(--color-bg-surface);
 }
 
 .hr-stats-filter__date {
@@ -630,39 +625,28 @@
 }
 
 .hr-stats-table-wrap {
-  width: 100%;
   margin-top: 18px;
-  overflow-x: auto;
 }
 
 .hr-stats-table {
-  width: 100%;
   min-width: 760px;
-  border-collapse: collapse;
-  color: var(--color-text-primary);
-  font-size: var(--text-sm);
 }
 
 .hr-stats-table--compact {
   min-width: 520px;
   table-layout: fixed;
-  font-size: var(--text-xs);
 }
 
 .hr-stats-table th,
 .hr-stats-table td {
   height: 42px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--color-border-default);
   text-align: center;
   white-space: nowrap;
 }
 
 .hr-stats-table th {
-  background: var(--color-bg-soft);
   color: var(--color-text-secondary);
   font-size: var(--text-xs);
-  font-weight: var(--font-bold);
 }
 
 .hr-stats-table--compact th,

@@ -24,48 +24,89 @@
     </tr>
 </table>
 
-## 🐳 Local DB & App Docker 실행 가이드
+## 🐳 Docker 실행 가이드
 
-H-Links는 평소 개발 중 Oracle DB만 Docker Compose로 실행하고, Spring Boot 애플리케이션은 IntelliJ에서 실행합니다.
-앱 컨테이너까지 필요한 통합 테스트 상황에서는 별도 compose 파일을 함께 사용합니다.
+프로젝트 루트의 `docker-compose.yml` 기준으로 실행합니다.
 
-자세한 Docker 빌드 및 실행 명세는 [docs/docker-build-spec.md](docs/docker-build-spec.md)를 참고합니다.
+### 1. Docker Compose 서비스명
 
-### 1. 개발 기본 실행
+| 서비스명 | 컨테이너 이름 | 역할 |
+| --- | --- | --- |
+| `app` | `h-links-app` | Spring Boot 애플리케이션 |
+| `oracle` | `h-links-oracle` | Oracle XE DB |
+| `chroma` | `h-links-chroma` | Chroma Vector DB |
+
+`container_name`은 실제 컨테이너 이름이고, `docker compose` 명령어에서는 `services` 아래의 서비스명인 `app`, `oracle`, `chroma`를 사용합니다.
+
+### 2. 실행 명령어
+
+전체 빌드 및 실행:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
+```
 
-// 컨테이너 상태 확인
+`app` 서비스만 다시 빌드 및 실행:
+
+```bash
+docker compose up -d --build app
+```
+
+실행 상태 확인:
+
+```bash
 docker compose ps
 ```
 
-- Oracle만 실행됩니다.
-- Spring Boot는 IntelliJ에서 실행합니다.
-- 애플리케이션 접속 주소는 `http://localhost:8080`입니다.
-- datasource URL은 `localhost:1522` 기준을 사용합니다.
-- IntelliJ 로컬 실행 시 ffmpeg는 각자 로컬 PC에 설치된 ffmpeg를 사용합니다.
-
-### 2. 앱 Docker 통합 테스트 실행
+`app` 로그 확인:
 
 ```bash
-./gradlew clean bootJar
-docker compose -f docker-compose.yml -f docker-compose.app.yml up --build
+docker compose logs -f app
 ```
 
-- Oracle과 app이 함께 실행됩니다.
-- Docker app 접속 주소는 `http://localhost:8081`입니다.
-- app 컨테이너 내부에서는 `oracle:1521`로 DB에 접근합니다.
-- app 컨테이너 내부 ffmpeg는 Dockerfile에서 설치된 ffmpeg를 사용합니다.
+접속 주소:
 
-### 3. IntelliJ 실행 설정
-IntelliJ Run/Debug Configurations에서 HLinksApplication 실행 설정에 아래 환경변수를 등록합니다.
-
-또는 EnvFile 플러그인을 사용하는 경우 프로젝트 루트의 .env 파일을 연결합니다. .env 파일은 민감정보를 포함할 수 있으므로 Git에 올리지 않습니다.
 ```bash
-DB_URL={DB_URL}
-DB_USERNAME={USER_NAME}
-DB_PASSWORD={PASSWORD}
+http://localhost:8081
+```
+
+### 3. 환경변수
+
+프로젝트 루트의 `.env` 파일에 필요한 값을 설정합니다. `.env` 파일은 민감정보를 포함할 수 있으므로 Git에 올리지 않습니다.
+
+```bash
+ORACLE_PASSWORD=oracle 관리자 계정 비밀번호
+DB_USERNAME=Spring Boot가 접속할 앱 전용 DB 계정
+DB_PASSWORD=Spring Boot가 접속할 앱 전용 DB 비밀번호
+OPENAI_API_KEY=OpenAI API Key
+AWS_ACCESS_KEY_ID=AWS Access Key
+AWS_SECRET_ACCESS_KEY=AWS Secret Key
+```
+
+- `ORACLE_PASSWORD`는 Spring Boot 앱이 직접 사용하는 비밀번호가 아닙니다. Oracle Docker 이미지가 `SYS`, `SYSTEM` 같은 관리자 계정 비밀번호를 초기화할 때 사용하는 값입니다.
+- Spring Boot 앱은 `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`에 매핑되는 `DB_USERNAME`, `DB_PASSWORD`를 사용합니다.
+
+### 4. 주의사항
+
+아래 명령어는 잘못된 명령어입니다.
+
+```bash
+docker compose up -d --build h-links-app
+```
+
+`h-links-app`은 컨테이너 이름이고, compose 서비스명은 `app`입니다. `app`만 다시 빌드 및 실행할 때는 아래 명령어를 사용합니다.
+
+```bash
+docker compose up -d --build app
+```
+
+`docker compose down -v`는 `oracle-data`, `chroma-data` 볼륨까지 삭제합니다. DB 데이터와 Chroma 데이터가 날아갈 수 있으므로 필요한 경우에만 사용합니다.
+
+일반적인 재빌드 상황에서는 아래 명령어 중 하나를 사용합니다.
+
+```bash
+docker compose up -d --build app
+docker compose up -d --build
 ```
 
 ## 🦴 Commit Convention

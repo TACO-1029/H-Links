@@ -1,0 +1,298 @@
+.admin-dashboard {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+  width: 100%;
+}
+
+.admin-dashboard__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 86px;
+}
+
+.admin-dashboard__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  color: var(--color-brand, #009e7a);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+}
+
+.admin-dashboard__title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  letter-spacing: 0;
+}
+
+.admin-dashboard__description {
+  margin: 10px 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+}
+
+.admin-dashboard__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-stat-card {
+  display: grid;
+  gap: 10px;
+  min-height: 118px;
+  padding: 20px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-stat-card__label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+.admin-stat-card__value {
+  align-self: end;
+  color: var(--color-text-primary);
+  font-size: 30px;
+  font-weight: var(--font-bold);
+  line-height: 1;
+}
+
+.admin-dashboard__panel {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-dashboard__panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-dashboard__panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+}
+
+.admin-dashboard__panel-description {
+  margin: 6px 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.admin-dashboard__filter {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.admin-filter-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-filter-field span {
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+}
+
+.admin-filter-field .hlinks-input,
+.admin-filter-field .hlinks-dropdown {
+  min-height: 42px;
+  font-size: var(--text-sm);
+}
+
+.admin-dashboard__filter-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-dashboard__filter-actions .btn {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+}
+
+.admin-dashboard .btn-primary {
+  --bs-btn-bg: var(--color-brand, #009e7a);
+  --bs-btn-border-color: var(--color-brand, #009e7a);
+  --bs-btn-hover-bg: var(--color-brand-hover, #008a6b);
+  --bs-btn-hover-border-color: var(--color-brand-hover, #008a6b);
+  --bs-btn-active-bg: var(--color-brand-hover, #008a6b);
+  --bs-btn-active-border-color: var(--color-brand-hover, #008a6b);
+}
+
+.admin-dashboard .hlinks-input:focus,
+.admin-dashboard .hlinks-dropdown:focus {
+  border-color: var(--color-brand, #009e7a);
+  box-shadow: 0 0 0 0.25rem rgba(0, 158, 122, 0.14);
+}
+
+.admin-dashboard-table {
+  min-width: 1320px;
+}
+
+.admin-dashboard-table__col-course {
+  width: 23%;
+}
+
+.admin-dashboard-table__col-type {
+  width: 10%;
+}
+
+.admin-dashboard-table__col-learner {
+  width: 11%;
+}
+
+.admin-dashboard-table__col-department {
+  width: 11%;
+}
+
+.admin-dashboard-table__col-progress {
+  width: 14%;
+}
+
+.admin-dashboard-table__col-quiz {
+  width: 10%;
+}
+
+.admin-dashboard-table__col-status {
+  width: 11%;
+}
+
+.admin-dashboard-table__col-date {
+  width: 10%;
+}
+
+.admin-dashboard-table__title {
+  max-width: 260px;
+}
+
+.admin-dashboard-table th:nth-child(5),
+.admin-dashboard-table th:nth-child(6),
+.admin-dashboard-table th:nth-child(7),
+.admin-dashboard-table td:nth-child(5),
+.admin-dashboard-table td:nth-child(6),
+.admin-dashboard-table td:nth-child(7) {
+  text-align: center;
+}
+
+.admin-dashboard-table th:nth-child(8),
+.admin-dashboard-table td:nth-child(8) {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.admin-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 148px;
+  min-height: 28px;
+  margin-inline: auto;
+}
+
+.admin-progress__track {
+  flex: 1;
+  height: 8px;
+  background: var(--color-bg-soft);
+}
+
+.admin-progress__bar {
+  background: var(--color-brand, #009e7a);
+}
+
+.admin-progress__value {
+  width: 34px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  text-align: right;
+}
+
+.admin-dashboard__empty {
+  display: grid;
+  gap: 6px;
+  min-height: 140px;
+  place-items: center;
+  padding: 28px;
+  border: 1px dashed var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-soft);
+  text-align: center;
+}
+
+.admin-dashboard__empty .bi {
+  color: var(--color-brand, #009e7a);
+  font-size: 28px;
+}
+
+.admin-dashboard__empty strong {
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+}
+
+.admin-dashboard__empty span {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 1180px) {
+  .admin-dashboard__summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-dashboard__filter {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-dashboard__header,
+  .admin-dashboard__panel-header {
+    flex-direction: column;
+  }
+
+  .admin-dashboard__summary-grid,
+  .admin-dashboard__filter {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dashboard__filter-actions {
+    justify-content: stretch;
+  }
+
+  .admin-dashboard__filter-actions .btn {
+    width: 100%;
+  }
+}

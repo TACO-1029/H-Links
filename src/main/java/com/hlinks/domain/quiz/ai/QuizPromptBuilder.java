@@ -7,14 +7,20 @@ public class QuizPromptBuilder {
 
     public String build(String sourceText, int quizCount, String difficulty) {
         return """
-                아래 강의 내용을 기반으로 학습용 객관식 퀴즈를 생성하세요.
+                아래 Context를 기반으로 학습용 객관식 퀴즈를 생성하세요.
 
                 [역할]
-                당신은 HRD 학습 플랫폼에서 강의 내용을 바탕으로 학습자의 이해도를 점검하는 객관식 퀴즈 생성기입니다.
+                당신은 HRD 학습 플랫폼에서 강의 자막 Context를 바탕으로 학습자의 이해도를 점검하는 객관식 퀴즈 생성기입니다.
+
+                [Context 설명]
+                - 아래 Context는 강의 영상에서 STT로 추출한 자막 또는 Chroma Vector DB에서 검색된 관련 강의 구간입니다.
+                - Context는 전체 강의 내용이 아니라 퀴즈 생성과 관련성이 높은 일부 구간일 수 있습니다.
+                - 반드시 제공된 Context 안에서 확인 가능한 내용만 사용하세요.
 
                 [생성 규칙]
-                - 반드시 제공된 강의 내용에 근거해서만 퀴즈를 생성하세요.
-                - 강의 내용에 없는 외부 지식, 추측, 과장된 설명은 절대 포함하지 마세요.
+                - 반드시 제공된 Context에 근거해서만 퀴즈를 생성하세요.
+                - Context에 없는 외부 지식, 추측, 과장된 설명은 절대 포함하지 마세요.
+                - Context에 명확한 근거가 없는 내용은 문제, 선택지, 해설에 포함하지 마세요.
                 - quizzes 배열에는 정확히 %d개의 퀴즈를 생성하세요.
                 - 모든 퀴즈의 questionType은 반드시 "MULTIPLE_CHOICE"로 작성하세요.
                 - 모든 퀴즈의 difficulty는 반드시 "%s"로 작성하세요.
@@ -25,15 +31,17 @@ public class QuizPromptBuilder {
                 - answerText에는 정답 선택지의 핵심 내용을 작성하세요.
                 - quiz explanation에는 문제 전체에 대한 핵심 해설을 작성하세요.
                 - option explanation에는 해당 선택지가 왜 정답 또는 오답인지 설명하세요.
+                - 가능하면 explanation에는 Context의 어떤 개념이나 흐름을 근거로 했는지 포함하세요.
 
                 [문제 품질 기준]
                 - 단순히 용어 뜻을 묻는 문제보다 개념의 역할, 목적, 차이, 흐름, 적용 상황을 묻는 문제를 우선 생성하세요.
                 - questionText는 하나의 명확한 질문 문장으로 작성하세요.
-                - 정답은 강의 내용 기준으로 명확해야 합니다.
-                - 오답 선택지는 그럴듯해야 하지만 강의 내용 기준으로 명확히 틀려야 합니다.
+                - 정답은 Context 기준으로 명확해야 합니다.
+                - 오답 선택지는 그럴듯해야 하지만 Context 기준으로 명확히 틀려야 합니다.
                 - 선택지 간 길이와 문체를 최대한 비슷하게 맞추세요.
                 - "모두 정답", "정답 없음", "위 내용 모두", "알 수 없음" 같은 선택지는 사용하지 마세요.
                 - 내부 DB 컬럼명, JSON 필드명, 시스템 구현용 변수명은 문제 내용에 노출하지 마세요.
+                - "Context", "Chunk", "STT", "Vector DB", "Chroma" 같은 시스템 용어는 문제 내용에 노출하지 마세요.
                 - 문제, 선택지, 해설은 모두 자연스러운 한국어 문장으로 작성하세요.
 
                 [난이도 기준]
@@ -86,7 +94,7 @@ public class QuizPromptBuilder {
                   ]
                 }
 
-                [강의 내용]
+                [검색된 강의 Context]
                 %s
                 """.formatted(
                 quizCount,

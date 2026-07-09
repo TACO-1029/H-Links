@@ -19,11 +19,6 @@ public interface CoffeeChatMapper {
 
     CoffeeChatUserProfileDto findUserProfileForCoffeeChat(@Param("userId") Long userId);
 
-    int countRequestedCoffeeChat(
-            @Param("requesterUserId") Long requesterUserId,
-            @Param("receiverUserId") Long receiverUserId
-    );
-
     void insertCoffeeChatRequest(
             @Param("requestId") Long requestId,
             @Param("requesterUserId") Long requesterUserId,
@@ -59,20 +54,4 @@ public interface CoffeeChatMapper {
     List<CoffeeChatHistoryDto> findSentRequests(@Param("userId") Long userId);
 
     List<CoffeeChatHistoryDto> findReceivedRequests(@Param("userId") Long userId);
-
-    int updateReceivedRequestStatus(
-            @Param("receiverUserId") Long receiverUserId,
-            @Param("requestId") Long requestId,
-            @Param("status") String status
-    );
-
-    int deleteReceivedRequest(
-            @Param("receiverUserId") Long receiverUserId,
-            @Param("requestId") Long requestId
-    );
-
-    void deleteMailLogsByReceivedRequest(
-            @Param("receiverUserId") Long receiverUserId,
-            @Param("requestId") Long requestId
-    );
 }
