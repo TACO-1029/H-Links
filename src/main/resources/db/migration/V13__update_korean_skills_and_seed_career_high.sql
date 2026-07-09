@@ -24,7 +24,7 @@ BEGIN
   SELECT COUNT(*) INTO v_cnt FROM COURSE WHERE COURSE_TITLE = '성공적인 협업을 위한 팀워크 빌딩' AND CATEGORY_TYPE = 'CAREER_HIGH';
   IF v_cnt = 0 THEN
     INSERT INTO COURSE (COURSE_ID, CREATED_BY, CATEGORY_TYPE, COURSE_TYPE, COURSE_TITLE, DESCRIPTION, INSTRUCTOR_NAME, TOTAL_DURATION_TIME, THUMBNAIL_URL, CREATED_AT)
-    VALUES (COURSE_SEQ.NEXTVAL, NULL, 'CAREER_HIGH', 'ONLINE', '성공적인 협업을 위한 팀워크 빌딩', '효율적인 팀워크와 조직 내 협업 시너지 창너을 위한 실무 가이드', '김협업', 8, '/images/course/ch_on_teamwork.png', SYSDATE)
+    VALUES (COURSE_SEQ.NEXTVAL, NULL, 'CAREER_HIGH', 'ONLINE', '성공적인 협업을 위한 팀워크 빌딩', '효율적인 팀워크와 조직 내 협업 시너지 창출을 위한 실무 가이드', '김협업', 8, '/images/course/ch_on_teamwork.png', SYSDATE)
     RETURNING COURSE_ID INTO v_course_id;
 
     INSERT INTO ONLINE_COURSE (COURSE_ID, COURSE_MATERIAL_URL, STATUS)
@@ -328,7 +328,7 @@ BEGIN
     RETURNING CHAPTER_ID INTO v_chapter_id;
 
     INSERT INTO CHAPTER_SKILL (CHAPTER_SKILL_ID, CHAPTER_ID, SKILL_ID, WEIGHT, COVERAGE_LEVEL, COVERAGE_REASON)
-    VALUES (CHAPTER_SKILL_SEQ.NEXTVAL, v_course_id, 1401, 1.0, 'BASIC', '테스트 및 설계 피드백 반영을 학습합니다.');
+    VALUES (CHAPTER_SKILL_SEQ.NEXTVAL, v_chapter_id, 1401, 1.0, 'BASIC', '테스트 및 설계 피드백 반영을 학습합니다.');
   END IF;
 
 
