@@ -131,8 +131,11 @@
                     <span class="meta-value red" th:text="${lowestSkill}">React</span>
                 </div>
                 <div class="summary-meta-item">
-                    <span class="meta-label">추천 코스 분량</span>
-                    <span class="meta-value" th:text="'총 ' + ${recommendedCourses.size()} + '개 맞춤 매핑 과정'">총 3개 맞춤 매핑 과정</span>
+                    <span class="meta-label">추천 로드맵</span>
+                    <span class="meta-value"
+                          th:text="${careerRoadmap != null ? '총 ' + careerRoadmap.stepCount + '단계 학습 순서' : '로드맵 준비 중'}">
+                        총 3단계 학습 순서
+                    </span>
                 </div>
             </div>
         </div>
@@ -158,47 +161,73 @@
             </div>
         </div>
 
-        <!-- 강의 추천 카드 그리드 -->
-        <div class="course-grid">
-            <a th:each="course : ${recommendedCourses}"
-               th:href="@{/courses/{courseId}(courseId=${course.courseId})}"
-               class="course-card course-card-link result-rise">
-                <div class="course-thumb-placeholder"
-                     th:classappend="${course.thumbnailUrl != null} ? 'has-thumbnail'">
-                    <img th:if="${course.thumbnailUrl != null}"
-                         th:src="${course.thumbnailUrl}"
-                         alt="">
+        <!-- 단계별 커리어패스 로드맵 -->
+        <section class="roadmap-section result-rise"
+                 th:if="${careerRoadmap != null && !#lists.isEmpty(careerRoadmap.steps)}"
+                 aria-labelledby="career-roadmap-title">
+            <div class="roadmap-header">
+                <div>
+                    <span class="roadmap-eyebrow">CAREER ROADMAP</span>
+                    <h2 id="career-roadmap-title">지금 이어서 들으면 좋은 학습 순서</h2>
+                    <p th:text="${careerRoadmap.summary}">
+                        진단 결과와 선수 강의 관계를 바탕으로 학습 순서를 정리했습니다.
+                    </p>
                 </div>
-
-                <div class="course-info">
-                    <div>
-                        <h4 class="course-title" th:text="${course.courseTitle}">추천 강의명</h4>
-                        <div class="course-instructor"
-                             th:text="${course.instructorName != null ? course.instructorName : '강사 정보 준비 중'}">
-                            강사명
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="course-rating"
-                             style="color: var(--color-text-secondary);"
-                             th:text="'추천 점수 ' + ${#numbers.formatDecimal(course.recommendationScore, 1, 1)} + '점'">
-                            추천 점수 42.0점
-                        </div>
-
-                        <div class="course-tag-btn"
-                             th:text="${#lists.isEmpty(course.matchedSkills) ? '#맞춤 추천' : '#' + course.matchedSkills[0].skillName + ' ' + course.matchedSkills[0].recommendedCoverageLevel}">
-                            #Java BASIC
-                        </div>
-                    </div>
-                </div>
-            </a>
-
-            <div th:if="${recommendedCourses.isEmpty()}" class="course-empty-card result-rise">
-                현재 레벨테스트 결과와 직접 연결된 추천 강의를 찾지 못했습니다.
-                강의 데이터가 보강되면 이 영역에 맞춤 강의가 표시됩니다.
+                <span class="roadmap-count"
+                      th:text="${careerRoadmap.stepCount} + ' STEP'">4 STEP</span>
             </div>
-        </div>
+
+            <ol class="roadmap-list">
+                <li th:each="step : ${careerRoadmap.steps}" class="roadmap-step">
+                    <div class="roadmap-step__index">
+                        <span th:text="${#numbers.formatInteger(step.stepOrder, 2)}">01</span>
+                    </div>
+
+                    <div class="roadmap-step__content">
+                        <div class="roadmap-step__top">
+                            <div>
+                                <h3 th:text="${step.title}">Java 기본기를 먼저 다져요</h3>
+                                <p th:text="${step.description}">
+                                    현재 진단 결과에 맞춰 먼저 보완하면 좋은 단계입니다.
+                                </p>
+                            </div>
+
+                            <span class="roadmap-step__badge"
+                                  th:classappend="${step.requiredPrerequisite} ? ' is-required' : (${step.prerequisite} ? ' is-prerequisite' : '')"
+                                  th:text="${step.requiredPrerequisite} ? '필수 선수' : (${step.prerequisite} ? '선수 학습' : '추천 학습')">
+                                추천 학습
+                            </span>
+                        </div>
+
+                        <div class="roadmap-step__courses">
+                            <a th:each="course : ${step.courses}"
+                               th:href="@{/courses/{courseId}(courseId=${course.courseId})}"
+                               class="roadmap-course">
+                                <div class="roadmap-course__thumb"
+                                     th:classappend="${course.thumbnailUrl != null} ? ' has-thumbnail'">
+                                    <img th:if="${course.thumbnailUrl != null}"
+                                         th:src="${course.thumbnailUrl}"
+                                         onerror="this.onerror=null; this.src='/images/common/hyundai_futurenet.webp';"
+                                         alt="">
+                                </div>
+
+                                <div class="roadmap-course__body">
+                                    <strong th:text="${course.courseTitle}">추천 강의명</strong>
+                                    <span th:text="${course.instructorName != null ? course.instructorName : '강사 정보 준비 중'}">
+                                        강사명
+                                    </span>
+                                </div>
+
+                                <div class="roadmap-course__meta">
+                                    <span th:text="${step.targetSkillName}">Java</span>
+                                    <em th:text="${step.targetCoverageLevel}">BASIC</em>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </li>
+            </ol>
+        </section>
 
         <!-- 하단 멘토 스피치 박스 -->
         <div class="bottom-speech-bubble result-rise">

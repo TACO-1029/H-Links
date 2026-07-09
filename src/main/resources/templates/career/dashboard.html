@@ -125,51 +125,54 @@
     <section class="career-recommendation-section career-dashboard-rise"
              th:if="${recommendationDiagnosisId != null}"
              th:data-diagnosis-id="${recommendationDiagnosisId}"
-             aria-label="커리어패스 추천 강의">
+             aria-label="커리어패스 추천 로드맵">
         <div class="career-recommendation-header">
             <div>
-                <span class="career-recommendation-eyebrow">RECOMMENDED COURSES</span>
-                <h2>커리어패스 추천 강의</h2>
+                <span class="career-recommendation-eyebrow">CAREER ROADMAP</span>
+                <h2>커리어패스 추천 로드맵</h2>
             </div>
             <p>
                 <span th:text="${recommendationLowestSkill != null ? recommendationLowestSkill : '진단 결과'}">진단 결과</span>
-                기반으로 이어서 학습하기 좋은 강의입니다.
+                기반으로 이어서 학습하기 좋은 순서입니다.
             </p>
         </div>
 
-        <div id="careerRecommendationGrid" class="career-recommendation-grid">
-            <div th:if="${#lists.isEmpty(recommendedCourses)}" class="career-recommendation-empty">
-                아직 추천 강의가 없습니다.
+        <div id="careerRecommendationGrid" class="career-roadmap-preview">
+            <div th:if="${careerRoadmap == null || #lists.isEmpty(careerRoadmap.steps)}"
+                 class="career-recommendation-empty">
+                아직 추천 로드맵이 없습니다.
             </div>
-            <a th:each="course : ${recommendedCourses}"
-               th:href="@{/courses/{id}(id=${course.courseId})}"
-               class="career-recommendation-card career-dashboard-rise">
-                <div class="career-recommendation-thumb">
-                    <img th:src="${course.thumbnailUrl != null ? course.thumbnailUrl : '/images/common/hyundai_futurenet.webp'}"
-                         alt="강의 썸네일"
-                         onerror="this.onerror=null; this.src='/images/common/hyundai_futurenet.webp';">
-                    <div class="career-recommendation-badges">
-                        <span class="career-course-badge"
-                              th:classappend="${course.courseType == 'ONLINE' ? ' is-online' : ' is-offline'}"
-                              th:text="${course.courseType == 'ONLINE' ? '온라인' : (course.courseType == 'OFFLINE' ? '오프라인' : '유형 미정')}">온라인</span>
-                        <span class="career-course-badge is-score"
-                              th:text="'추천 ' + ${#numbers.formatDecimal(course.recommendationScore, 1, 1)} + '점'">
-                            추천 42.0점
-                        </span>
+
+            <th:block th:if="${careerRoadmap != null && !#lists.isEmpty(careerRoadmap.steps)}">
+                <a th:each="step : ${careerRoadmap.steps}"
+                   th:href="@{/courses/career-path/result(diagnosisId=${recommendationDiagnosisId})}"
+                   class="career-roadmap-preview-card career-dashboard-rise">
+                    <div class="career-roadmap-preview-card__order">
+                        <span th:text="${#numbers.formatInteger(step.stepOrder, 2)}">01</span>
                     </div>
-                </div>
-                <div class="career-recommendation-body">
-                    <h3 th:text="${course.courseTitle}">추천 강의명</h3>
-                    <p th:text="|강사 : ${course.instructorName != null ? course.instructorName : '인재개발원'}|">강사 : 인재개발원</p>
-                    <div class="career-recommendation-tags">
-                        <span th:if="${#lists.isEmpty(course.matchedSkills)}">#맞춤 추천</span>
-                        <span th:unless="${#lists.isEmpty(course.matchedSkills)}"
-                              th:text="${'#' + course.matchedSkills[0].skillName + ' ' + course.matchedSkills[0].recommendedCoverageLevel}">
-                            #Java BASIC
-                        </span>
+
+                    <div class="career-roadmap-preview-card__body">
+                        <div class="career-roadmap-preview-card__head">
+                            <h3 th:text="${step.title}">Java BASIC 보완</h3>
+                            <span th:classappend="${step.requiredPrerequisite} ? ' is-required' : (${step.prerequisite} ? ' is-prerequisite' : '')"
+                                  th:text="${step.requiredPrerequisite} ? '필수 선수' : (${step.prerequisite} ? '선수 학습' : '추천 학습')">
+                                추천 학습
+                            </span>
+                        </div>
+
+                        <p th:text="${step.description}">
+                            진단 결과에 맞춰 먼저 이어서 들으면 좋은 단계입니다.
+                        </p>
+
+                        <div class="career-roadmap-preview-card__course"
+                             th:if="${!#lists.isEmpty(step.courses)}"
+                             th:with="course=${step.courses[0]}">
+                            <strong th:text="${course.courseTitle}">추천 강의명</strong>
+                            <span th:text="${step.targetSkillName + ' ' + step.targetCoverageLevel}">Java BASIC</span>
+                        </div>
                     </div>
-                </div>
-            </a>
+                </a>
+            </th:block>
         </div>
     </section>
 </main>
